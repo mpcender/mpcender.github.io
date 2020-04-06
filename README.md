@@ -19,3 +19,6 @@ Updated 1/11/19 2:33PM - Initial Program
 
 https://mpcender.github.io/mpcender.github.io/index.md/tenFrame.md/index.html
 
+Tutorial Video available here
+
+https://youtu.be/kuIvK6WumS4
