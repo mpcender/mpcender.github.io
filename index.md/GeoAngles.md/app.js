@@ -76,7 +76,7 @@ function main() {
 
 	var image = new Image();
 	image.src = "./res/orange.png";
-	image.onload = handleTESTImageLoad;
+	image.onload = handleImageLoad;
 
 	protHandler(prot_img);
 
@@ -105,7 +105,7 @@ function main() {
 //--------------------------------------------------------------------------------------------------------------
 
 
-function handleTESTImageLoad(event) {
+function handleImageLoad(event) {
 	
 
 	// Setup for importing resource PNG
@@ -118,6 +118,10 @@ function handleTESTImageLoad(event) {
 	var topCircle = new createjs.Shape();
 	topCircle.graphics.beginFill("#000000")
 		.drawCircle((width*.5), (width*.5)-1, 10*scale);
+	var topHit = new createjs.Shape();
+		topHit.graphics.beginFill("#000000")
+			.drawCircle((width*.5), (width*.5)-1, 40*scale);
+	topCircle.hitArea = topHit;
 	
 	topCircle.id = "top";
 	
@@ -125,17 +129,21 @@ function handleTESTImageLoad(event) {
 	bottomCircle.graphics.beginFill("#000000")
 		.drawCircle((width*.5+1), (height-(width*.5)+1), 10*scale);
 	bottomCircle.id = "bottom";
+	var botHit = new createjs.Shape();
+		botHit.graphics.beginFill("#000000")
+			.drawCircle((width*.5+1), (height-(width*.5)+1), 40*scale);
+	bottomCircle.hitArea = botHit;
 	
 	// Create container for PNG and hitboxes
 	var container = new createjs.Container();
 	container.topInsetX = (width*.5);
-	container.topInsetY = (width*.5)-1;
-	container.bottomInsetX = (width*.5+1);
-	container.bottomInsetY = (height-(width*.5)+1);
+	container.topInsetY = (width*.5);
+	container.bottomInsetX = (width*.5);
+	container.bottomInsetY = (height-(width*.5));
 
 	// Add container to stage
 	container.addChild(bitmap, topCircle, bottomCircle);
-	handleTESTLegContainer(container);
+	handleLegContainer(container);
 	
 	bitmap.setTransform(0, 0, scale, scale);
 
@@ -147,7 +155,7 @@ function handleTESTImageLoad(event) {
 //---------------------------------------------------------------
 // This function enables dragger movement of leg objects
 //-----------------------------------------------------------------
-function handleTESTLegContainer(dragger){
+function handleLegContainer(dragger){
 
 	stage.addChild(dragger);
 	dragger.x = dragger.y = legToBoard;
@@ -177,69 +185,81 @@ function handleTESTLegContainer(dragger){
 	dragger.pressupStore = dragger._listeners.pressup;			
 }
 
-
-//////////////////
-
+// setRegPt - Set Registration Point
+// Update registration point of container to rotate around proper hinge
+// 
 function setRegPt(hitbox){
+	// Get dragger container for hitbox
 	let dragger = hitbox.parent;
+	// Compute global (stage) XY locations of hinge nodes
 	let ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
 	let ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
+	// Compute local (container) XY locations of hinge nodes
 	let topLoc = dragger.globalToLocal(ptTop.x,ptTop.y)
 	let botLoc = dragger.globalToLocal(ptBot.x,ptBot.y)
-	console.log("dragX: " + dragger.x, "dragX: " + dragger.y)
-	console.log(ptTop.x,ptTop.y,ptBot.x,ptBot.y)
-	let rad = dragger.rotation / (180 / Math.PI);
-	let dist = Math.sqrt(Math.pow(ptTop.x-ptBot.x, 2)
-						+Math.pow(ptTop.y-ptBot.y, 2))
-	//console.log(dist)
-	
+
 	if (hitbox.id == "top"){
-		console.log("TOP")		
-		dragger.oldX = dragger.x;
-		dragger.oldY = dragger.y;
-		dragger.x += botLoc.x;
-		dragger.y += botLoc.y
+		// Transform offset to negate change in registration point
+		dragger.x += ptBot.x - dragger.x;
+		dragger.y += ptBot.y - dragger.y;
+		// Modify registration point to opposite hinge node
+		// This allows the object to be rotated around opposite node
 		dragger.regX = botLoc.x;
 		dragger.regY = botLoc.y;
-		console.log(dragger.regX,dragger.regY)
-
 	} else if  (hitbox.id == "bottom"){
-		console.log("BOTTOM")
-		dragger.oldX = dragger.x;
-		dragger.oldY = dragger.y;
-		dragger.x += topLoc.x;
-		dragger.y += topLoc.y
+		// Transform offset to negate change in registration point
+		dragger.x += ptTop.x - dragger.x;
+		dragger.y += ptTop.y - dragger.y;
+		// Modify registration point to opposite hinge node
+		// This allows the object to be rotated around opposite node
 		dragger.regX = topLoc.x;
 		dragger.regY = topLoc.y;
 	}
 }
 
+// Restore dragger pts
 function restoreDragger(hitbox){
+	// Get dragger container for hitbox
 	let dragger = hitbox.parent;
+	// Compute global (stage) XY locations of hinge nodes
+	/*
+	console.log(dragger.x,dragger.y)
+	let ptDrag = dragger.localToGlobal(dragger.x,dragger.y);
+	console.log(ptDrag.x,ptDrag.y)
+	*/
 	let ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
 	let ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
+	// Compute local (container) XY locations of hinge nodes
 	let topLoc = dragger.globalToLocal(ptTop.x,ptTop.y)
 	let botLoc = dragger.globalToLocal(ptBot.x,ptBot.y)
-	let rad = (dragger.rotation+90) / (180 / Math.PI);
-	//console.log("ROTATION: " + (dragger.rotation+90));
-	let dist = Math.sqrt(Math.pow(ptTop.x-ptBot.x, 2)
-						+Math.pow(ptTop.y-ptBot.y, 2))
-						
-	
-	if (hitbox.id == "top"){
-		//console.log("TOP")		
-		//dragger.x += -botLoc.x-(Math.cos(rad)*dist);
-		dragger.x += -botLoc.x;
-		dragger.y += -botLoc.y;
+
+	let rad = dragger.rotation / (180 / Math.PI);
+	let hypot = Math.sqrt(Math.pow(topLoc.x, 2)
+						+Math.pow(topLoc.y, 2))
+
+	//---------------------------------------------------------
+	//
+	// 		TODO: Find proper correction offset from ptTop
+	//		to fix minor adjustment after rotating object
+	//
+	//---------------------------------------------------------
+
+	if (hitbox.id == "top"){	
+		console.log(dragger.rotation)
+		dragger.x = ptTop.x-(Math.cos(rad+(Math.PI/4))*hypot);
+		dragger.y = ptTop.y-(Math.sin(rad+(Math.PI/4))*hypot);
 		dragger.regX = 0;
 		dragger.regY = 0;
+		hitbox.xGlbl = topLoc.x;
+		hitbox.yGlbl = topLoc.y;
 
 	} else if  (hitbox.id == "bottom"){
-		//console.log("BOTTOM")
-		dragger.x = dragger.oldX;
-		dragger.y = dragger.oldY
+		dragger.x = ptTop.x-(Math.cos(rad+(Math.PI/4))*hypot);
+		dragger.y = ptTop.y-(Math.sin(rad+(Math.PI/4))*hypot);
 		dragger.regX = 0;
 		dragger.regY = 0;
+		hitbox.xGlbl = botLoc.x;
+		hitbox.yGlbl = botLoc.y;
 	}
 }
 
@@ -257,7 +277,6 @@ function handleHingeHit(hitbox){
 	let pauseMousemove;
 
 	hitbox.addEventListener("mousedown", function() {
-		////console.log("mousedown top");
 
 		// pause event listener for moving object
 		pauseMousemove = dragger._listeners
@@ -272,32 +291,27 @@ function handleHingeHit(hitbox){
 	})
 
 	hitbox.on("pressmove",function(evt) {
-		////console.log("pressmove top");
-		// Returns the stage xy point of the bottom hinge
 
 		radAngle = Math.atan2(stage.mouseY - dragger.y,
 			stage.mouseX - dragger.x);
 		angle = radAngle * (180 / Math.PI) - offset;
 		dragger.rotation = angle;
-		////console.log(dragger.rotation+90)
-		
 		
 		stage.update();   
 	});
 
-	hitbox.on("pressup", function(evt) {
-		////console.log("pressup top");
+	hitbox.on("pressup", function(evt) {	
 		
-		dragger._listeners = pauseMousemove
-		dragger._listeners.pressup = null;
 		restoreDragger(hitbox)
 
-		////console.log(dragger.rotation)
-		///console.log(dragger.x, dragger.y)
-
-		//dragger.trackerObj.setRotation(angle);
-
-		//let resetMovePts = dragger.trackerObj.disableTopRotate();
+		/*
+		//hitbox.getObjectUnderPoint(hitbox.xGlbl, hitbox.yGlbl, 0)
+		console.log("Objects under")
+		console.log(hitbox.xGlbl, hitbox.yGlbl)
+		console.log(dragger.getObjectsUnderPoint(hitbox.xGlbl, hitbox.yGlbl, 0))
+		*/
+		dragger._listeners = pauseMousemove
+		dragger._listeners.pressup = null;
 
 	});
 }
@@ -387,315 +401,4 @@ function protHandler(prot) {
 	prot.ondragstart = function() {
 		return false;
 	};
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//--------------------------------------------------------------------------------------------------------------
-//
-//							OLD CODE
-//
-//--------------------------------------------------------------------------------------------------------------
-
-
-function handleImageLoad(event) {
-	
-
-	// Setup for importing resource PNG
-	var image = event.target;
-	var bitmap = new createjs.Bitmap(image);
-	let width = bitmap.getBounds().width * scale;
-	let height = bitmap.getBounds().height* scale;
-
-	// Creat/e hitbox circles
-	var topCircle = new createjs.Shape();
-	topCircle.graphics.beginFill("#000000")
-		.drawCircle((width*.5), (width*.5)-1, 10*scale);
-	
-	
-	/* DRAWS WHITE DOTS FOR REFERENCE POINT VISUAL AID
-	var aCircle = new createjs.Shape();
-		aCircle.graphics.beginFill("#ffffff")
-			.drawCircle((width*.5-.5), (width*.5)-1, 1);
-	var bCircle = new createjs.Shape();
-		bCircle.graphics.beginFill("#ff0000")
-			.drawCircle((width*.5+.5), (height-(width*.5)+1), 1);
-	*/
-	
-	
-	var bottomCircle = new createjs.Shape();
-	bottomCircle.graphics.beginFill("#000000")
-		.drawCircle((width*.5+1), (height-(width*.5)+1), 10*scale);
-	
-		
-
-	// Create container for PNG and hitboxes
-	var container = new createjs.Container();
-
-	// Add container to stage
-	container.addChild(bitmap, topCircle, bottomCircle);
-	handleLegContainer(container);
-	
-	bitmap.setTransform(0, 0, scale, scale);
-
-	// Handlers
-	/*
-	topCircle.globlX = legToBoard;
-	topCircle.globlY = legToBoard;
-	bottomCircle.globlX = legToBoard;
-	bottomCircle.globlY = legToBoard;
-	*/
-	handleTopHit(topCircle);
-	handleBottomHit(bottomCircle);
-	
-}
-
-
-function updateDraggerCoords(dragger, x, y, regX, regY) {
-	dragger.x = x;
-	dragger.y = y;
-	dragger.regX = regX;
-	dragger.regY = regY;
-}
-
-//---------------------------------------------------------------
-// This function enables dragger movement of leg objects
-//-----------------------------------------------------------------
-function handleLegContainer(leg){
-	let width = leg.children[0].getBounds().width * scale;
-	let height = leg.children[0].getBounds().height * scale;
-
-	var dragger = new createjs.Container();
-	dragger.addChild(leg);
-	stage.addChild(dragger);
-	dragger.x = dragger.y = legToBoard;
-
-	let topXAdj = width*.5-.5;
-	let topYAdj = (width*.5)-1;
-	let botXAdj = (width*.5+.5);
-	let botYAdj = (height-(width*.5)+1);
-	
-	let originX = legToBoard;
-	let originY = legToBoard;
-	let topX = legToBoard+topXAdj;
-	let topY = legToBoard+topYAdj;
-	let bottomX = legToBoard+botXAdj;
-	let bottomY = legToBoard+botYAdj;
-
-	let rotation = dragger.rotation;
-	let oldX, oldY;
-	let dragClone;
-
-	let legObj = new Leg(originX,originY,topX,topY,bottomX,bottomY,rotation);
-	legObj.setOffsets(topXAdj, topYAdj, botXAdj, botYAdj);
-	dragger.trackerObj = legObj;
-
-
-	dragger.on("mousedown", function(evt) {
-		dragger._listeners.pressup = dragger.pressupStore;
-
-		// reposition dragger to top
-		stage.removeChild(dragger);
-		stage.addChild(dragger);
-		
-		// calculate regX, regY and x,y
-		let movePts = dragger.trackerObj.enableMove();
-		updateDraggerCoords(dragger, movePts[0], movePts[1], movePts[2], movePts[3]);
-
-		// Store original location to calc xy dist traveled
-		oldX = dragger.x;
-		oldY = dragger.y;	
-	});
-	
-	dragger.on("pressmove",function(evt) {
-		console.log("dragger pressmove")
-
-				dragger.x = evt.stageX;
-				dragger.y = evt.stageY;
-				console.log(evt.stageX, evt.stageY)
-				
-				// redraw the stage to show the change:
-				stage.update();   
-	});
-
-	dragger.on("pressup", function(evt) {
-		console.log("dragger pressup");
-		
-		let adjX = dragger.x - oldX;
-		let adjY = dragger.y - oldY;
-
-		let resetMovePts = dragger.trackerObj.disableMove(adjX, adjY);
-		console.log("RESET")
-		console.log(resetMovePts)
-		updateDraggerCoords(dragger, resetMovePts[0], resetMovePts[1], resetMovePts[2], resetMovePts[3]);
-	});
-
-	
-
-	dragger.pressupStore = dragger._listeners.pressup;
-			
-}
-
-
-//-----------------------------------------------------------------
-// Hitbox for "top" node on legs
-//-----------------------------------------------------------------
-function handleTopHit(hitbox){
-	let radOffset, radAngle, offset;
-	let angle = 0;
-	let dragger = hitbox.parent.parent;
-	let pauseMousemove;
-	//console.log(hitbox.parent.parent)
-
-	hitbox.addEventListener("mousedown", function() {
-		console.log("mousedown top");
-
-		// pause event listener for moving object
-		pauseMousemove = dragger._listeners
-		dragger._listeners = null
-
-		console.log(dragger)
-		let rotRef = dragger.trackerObj.enableTopRotate();
-		dragger.x = rotRef[0];
-		dragger.y = rotRef[1];
-		dragger.regX = rotRef[2];
-		dragger.regY = rotRef[3];
-
-		
-		console.log(dragger)
-		// Determine initial offset, and take off shape rotation
-		radOffset = Math.atan2(stage.mouseY - dragger.y,
-			stage.mouseX - dragger.x);
-		offset = radOffset * (180 / Math.PI) - dragger.rotation;
-		
-
-	})
-
-	hitbox.on("pressmove",function(evt) {
-		console.log("pressmove top");
-
-		radAngle = Math.atan2(stage.mouseY - dragger.y,
-			stage.mouseX - dragger.x);
-
-  		angle = radAngle * (180 / Math.PI) - offset;
-		  dragger.rotation = angle;
-		
-		stage.update();   
-	});
-
-	hitbox.on("pressup", function(evt) {
-		console.log("pressup top");
-		
-		dragger._listeners = pauseMousemove
-		hitbox.parent.parent._listeners.pressup = null;
-
-		//(this.rotation-(this.rotation%5))
-
-		//dragger.rotation = dragger.trackerObj.setRotation(angle);
-		dragger.trackerObj.setRotation(angle);
-
-		let resetMovePts = dragger.trackerObj.disableTopRotate();
-
-	});
-}
-
-//-----------------------------------------------------------------
-// Hitbox for "bottom" node on legs
-//-----------------------------------------------------------------
-function handleBottomHit(hitbox){
-	let radOffset, radAngle, offset;
-	let angle = 0;
-	let dragger = hitbox.parent.parent;
-	let pauseMousemove;
-	//console.log(hitbox.parent.parent)
-
-	hitbox.addEventListener("mousedown", function() {
-		console.log("mousedown top");
-
-		// pause event listener for moving object
-		pauseMousemove = dragger._listeners
-		dragger._listeners = null
-
-		console.log(dragger)
-		let rotRef = dragger.trackerObj.enableBottomRotate();
-		dragger.x = rotRef[0];
-		dragger.y = rotRef[1];
-		dragger.regX = rotRef[2];
-		dragger.regY = rotRef[3];
-
-		
-		console.log(dragger)
-		// Determine initial offset, and take off shape rotation
-		radOffset = Math.atan2(stage.mouseY - dragger.y,
-			stage.mouseX - dragger.x);
-		offset = radOffset * (180 / Math.PI) - dragger.rotation;
-		
-
-	})
-
-	hitbox.on("pressmove",function(evt) {
-		console.log("pressmove top");
-
-		radAngle = Math.atan2(stage.mouseY - dragger.y,
-			stage.mouseX - dragger.x);
-
-  		angle = radAngle * (180 / Math.PI) - offset;
-		  dragger.rotation = angle;
-		
-		stage.update();   
-	});
-
-	hitbox.on("pressup", function(evt) {
-		console.log("pressup top");
-		
-		dragger._listeners = pauseMousemove
-		hitbox.parent.parent._listeners.pressup = null;
-
-		//(this.rotation-(this.rotation%5))
-
-		//dragger.rotation = dragger.trackerObj.setRotation(angle);
-		dragger.trackerObj.setRotation(angle);
-
-		let resetMovePts = dragger.trackerObj.disableBottomRotate();
-		
-
-		
-
-
-	});
 }
