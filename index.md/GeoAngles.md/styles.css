@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@1,700&display=swap');
+
+*{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+header { 
+	background: white;
+	padding: 20px;
+}
+
+header > h1 {
+	color: #25272E;
+	text-align: center;
+	font-family: 'Balsamiq Sans', cursive;
+}
