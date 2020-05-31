@@ -1,3 +1,4 @@
+
 const red_div = document.getElementById("red");
 const blue_div = document.getElementById("blue");
 const yellow_div = document.getElementById("yellow");
@@ -33,7 +34,7 @@ function main() {
         {src: "orange.png", id: "orange"}
     ];
 	loader = new createjs.LoadQueue(false);
-	loader.loadManifest(manifest, true, "../res/");
+	loader.loadManifest(manifest, true, "./res/");
 	
 	createjs.Touch.enable(stage);
 	
@@ -44,37 +45,37 @@ function main() {
 	
 	red_div.addEventListener('click', function() {
 		var image = new Image();
-		image.src = "../res/red.png";
+		image.src = "./res/red.png";
 		image.onload = handleImageLoad;		
 	})
 	blue_div.addEventListener('click', function() {
 		var image = new Image();
-		image.src = "../res/blue.png";
+		image.src = "./res/blue.png";
 		image.onload = handleImageLoad;
 	})
 	yellow_div.addEventListener('click', function() {
 		var image = new Image();
-		image.src = "../res/yellow.png";
+		image.src = "./res/yellow.png";
 		image.onload = handleImageLoad;
 	})
 	green_div.addEventListener('click', function() {
 		var image = new Image();
-		image.src = "../res/green.png";
+		image.src = "./res/green.png";
 		image.onload = handleImageLoad;
 	})
 	purple_div.addEventListener('click', function() {
 		var image = new Image();
-		image.src = "../res/purple.png";
+		image.src = "./res/purple.png";
 		image.onload = handleImageLoad;
 	})
 	orange_div.addEventListener('click', function() {
 		var image = new Image();
-		image.src = "../res/orange.png";
+		image.src = "./res/orange.png";
 		image.onload = handleImageLoad;
 	})
 
 	var image = new Image();
-	image.src = "../res/orange.png";
+	image.src = "./res/orange.png";
 	image.onload = handleTESTImageLoad;
 
 	protHandler(prot_img);
@@ -427,7 +428,7 @@ function protHandler(prot) {
 
 //--------------------------------------------------------------------------------------------------------------
 //
-//							OLD PROGRAM
+//							OLD CODE
 //
 //--------------------------------------------------------------------------------------------------------------
 
@@ -698,4 +699,3 @@ function handleBottomHit(hitbox){
 
 	});
 }
-
