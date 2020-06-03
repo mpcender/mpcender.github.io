@@ -106,7 +106,7 @@ function drawSelectorStage(){
 
 	// Protractor
 	let image = new Image();
-	image.src = "./res/protractWhiteMod.png"
+	image.src = "./res/protractWhiteMod2.png"
 	image.id = "prot";
 	let protBitmap = new createjs.Bitmap(image);
 	protBitmap.setTransform(width*.05, height*.55, scale*.85, scale*.85);
@@ -149,7 +149,7 @@ function handleSelectEvt(leg){
 	});
 
 	leg.on("pressup", function(evt) {
-		if (leg.x < dividerLocX) {
+		if (leg.x < dividerLocX*1.3) {
 			if (Math.abs(leg.x-leg.oldX) < 5 && Math.abs(leg.y-leg.oldY) < 5) {
 				xToStage = xTween = legToBoard*2;
 				yToStage = yTween = legToBoard;
@@ -161,6 +161,7 @@ function handleSelectEvt(leg){
 				leg.y = leg.oldY;
 			}
 		} else {
+			console.log(leg.x,dividerLocX)
 			xToStage = xTween = leg.x;
 			yToStage = yTween = leg.y;
 			leg.x = leg.oldX;
@@ -180,8 +181,8 @@ function generateTween(obj){
 	let tweenXScale, tweenYScale;
 	if (tweenObj.image.id == 'prot'){
 		if (!stageProtActive) {
-			yTween = xTween = window.innerHeight*.4
-			tweenXScale = tweenYScale = scale*1.5;
+
+			tweenXScale = tweenYScale = scale*1.7;
 			stageProtActive = true;
 		} else { 
 			return
@@ -206,6 +207,7 @@ function handleTweenComplete() {
 	tweenRunningCount--;
 	var image = new Image();
 	image.src = tweenObj.image.src;
+	// Check if new object is protractor
 	if (tweenObj.image.id == 'prot'){
 		image.onload = createStageProt;
 	} else {
@@ -214,7 +216,6 @@ function handleTweenComplete() {
 	xTween = 0;
     yTween = 0;
 	stage.removeChild(tweenObj);
-
 }
 
 function tick(event) {
@@ -233,16 +234,16 @@ function createStageProt(event) {
 	var image = event.target;
 	var bitmap = new createjs.Bitmap(image);
 	let width = bitmap.image.width*.5;
-	let height = bitmap.image.height*.4;
+	let height = bitmap.image.height*.5;
 
-	bitmap.setTransform(0,0, .5, .5);
+	bitmap.setTransform(0, 0, .5, .5);
 	
 	stage.addChild(bitmap);
 	stageProtActive = true;
 
 	var midCircle = new createjs.Shape();
 	midCircle.graphics.beginFill("#000000")
-		.drawCircle(width*.5-1, height*.62, 15*scale);
+		.drawCircle(width*.5-1, height*.5, 15*scale);
 
 	var bottomCircle = new createjs.Shape();
 	bottomCircle.graphics.beginFill("#FFFFFF")
