@@ -9,29 +9,47 @@ let xMainStage, yMainStage,
 	xProt, yProt, wProt, hProt;
 let windowSizeX, windowSizeY;
 let stage, selectorStage;
-let tweenObj;
 
+// stage bound vars
 let divider;
-let dividerLocX = window.innerWidth*.155;
-let scale = .3;
+let dividerLocX = 210;
+let scale = .4;
+let scaleSelect = .3;
 let legToBoard = 150;
 let stageProtActive = false;
 
+// Tween Vars
 let tweenRunningCount = 0;
+let tweenObj;
 let restoreLeg;
 var xTween, yTween;
 let xToStage, yToStage;
 let tweenCircle;
 
+// Node stage tracker (enables collision detection)
 let stageNodeTracker;
 let stageIdInc = 1000;
 let angleDispCont;
 
+// Allows changing angle of legs by increments
+let deg5Active = false;
+let deg2p5Active = false;
+
+// draw select box variables
+let drawingCanvas;
+let index =0;
+let stageSelectorBox;
+let objectEventActive = false;
+let selectedObjects;
 
 
 function main() {
 
 	stage = new createjs.Stage("canvas");
+	stage.addEventListener("stagemousedown", handleStageMouseDown);
+	stage.addEventListener("stagemouseup", handleStageMouseUp);
+	
+
 	createjs.Touch.enable(stage);
 
 	stageNodeTracker = new Array();
@@ -42,9 +60,13 @@ function main() {
 
 	drawSelectorStage();
 
-	createjs.Ticker.framerate = 20;
+	//Activate 5 degree selector
+	degSel5Cont.children[0].graphics._fill.style = "#0066AA"
+	deg5Active = true;
+	
+	createjs.Ticker.framerate = 30;
 	createjs.Ticker.addEventListener("tick", stage);
-
+	
 	let distxDOM = document.getElementById("distx")
 	let distyDOM = document.getElementById("disty")
 	distxDOM.style.color = distyDOM.style.color = "white";
@@ -55,6 +77,61 @@ function main() {
 		distxDOM.innerHTML = "Dist x: " + distX.toString();
 		distyDOM.innerHTML = "Dist y: " +distY.toString();
 	});
+}
+
+
+//----------------------------------------------------
+//
+//		Stage object selection box
+//
+//----------------------------------------------------
+function handleStageMouseDown(event) {
+	if (!event.primary) { return; }
+	stroke = 10;
+	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
+	stage.addEventListener("stagemousemove", handleStageMouseMove);
+}
+
+function handleStageMouseMove(event) {
+	if (!event.primary || oldPt.x < dividerLocX  || objectEventActive) { return; }
+	
+	// prevent select box being drawn on 
+	let stageMouseX = stage.mouseX;
+	if (stageMouseX < dividerLocX){
+		stageMouseX = dividerLocX;
+	}
+
+	stage.removeChild(stageSelectorBox)
+	let shape = new createjs.Shape();
+	shape.graphics.setStrokeDash([stroke * 2, stroke]).
+		beginStroke("#FFFFFF").rect(oldPt.x, oldPt.y,
+			stageMouseX - oldPt.x, stage.mouseY - oldPt.y);
+	
+	stageSelectorBox = shape;
+    stage.addChild(stageSelectorBox);
+
+	stage.update();
+}
+
+function handleStageMouseUp(event) {
+	if (!event.primary) { return; }
+	stage.removeChild(stageSelectorBox)
+	stage.removeEventListener("stagemousemove", handleStageMouseMove);
+
+	//console.log(oldPt)
+	//console.log(event)
+	for (i = 0; i < stageNodeTracker.length; i++){
+		hitTop = {x: stageNodeTracker[i].GlblTop.x, y: stageNodeTracker[i].GlblTop.y}
+		hitBot = {x: stageNodeTracker[i].GlblBot.x, y: stageNodeTracker[i].GlblBot.y}
+		//----------------------------------------------------
+		//
+		//		Do stuff to select objects
+		//
+		//----------------------------------------------------
+
+		//if (hitTop.x )
+
+	}
 }
 
 
@@ -84,17 +161,17 @@ function drawSelectorStage(){
 	let width = 200;
 	let height = 800;
 
-	let pt = {x: width*.07, y: height*.05}
+	let pt = {x: width*.07, y: height*.015}
 	let red = loadImgBitmap("./res/red.png", pt);
-	pt = {x: width*.23, y: height*.05}
+	pt = {x: width*.23, y: height*.015}
 	let blue = loadImgBitmap("./res/blue.png", pt);
-	pt = {x: width*.39, y: height*.05}
+	pt = {x: width*.39, y: height*.015}
 	let yellow = loadImgBitmap("./res/yellow.png", pt);
-	pt = {x: width*.55, y: height*.05}
+	pt = {x: width*.55, y: height*.015}
 	let green = loadImgBitmap("./res/green.png", pt);
-	pt = {x: width*.71, y: height*.05}
+	pt = {x: width*.71, y: height*.015}
 	let purple = loadImgBitmap("./res/purple.png", pt);
-	pt = {x: width*.87, y: height*.05}
+	pt = {x: width*.87, y: height*.015}
 	let orange = loadImgBitmap("./res/orange.png", pt);
 
 	handleSelectEvt(red);
@@ -109,7 +186,8 @@ function drawSelectorStage(){
 	image.src = "./res/protractWhiteMod2.png"
 	image.id = "prot";
 	let protBitmap = new createjs.Bitmap(image);
-	protBitmap.setTransform(width*.05, height*.55, scale*.85, scale*.85);
+	protBitmap.setTransform(width*.05, height*.45, 
+		scaleSelect*.85, scaleSelect*.85);
 
 	handleSelectEvt(protBitmap);
 
@@ -119,7 +197,7 @@ function drawSelectorStage(){
 	// divider
 	divider = new createjs.Shape();
 	divider.graphics.beginFill("#FFFFFF")
-		.drawRect(210,0,5,window.innerHeight)
+		.drawRect(dividerLocX,0,5,window.innerHeight)
 
 
 	stage.addChild(red, blue, yellow, green, purple, orange, protBitmap, divider);
@@ -128,31 +206,29 @@ function drawSelectorStage(){
 		let image = new Image();
 		image.src = imgSrc;
 		let bitmap = new createjs.Bitmap(image);
-		bitmap.setTransform(offset.x, offset.y, scale*1.3, scale*1.3);
+		bitmap.setTransform(offset.x, offset.y, scaleSelect*1.3, scaleSelect*1.3);
 		return bitmap;
 	}
 }
 
 function drawAngleDisplay() {
-	//let angDispCont = new createjs.Container();
-
+	// determine invisible hitbox
 	let background = new createjs.Shape();
 	background.graphics.beginStroke('#FFFFFF').setStrokeStyle(2);
-	background.graphics.beginFill("#000000").drawRect(50, window.innerHeight*.725,120,60);
-	
-	// determine invisible hitbox
+	background.graphics.beginFill("#000000").drawRect(10, window.innerHeight*.725,130,60);
 	angleDispCont = new createjs.Container();
 	let angleMaskDisp = background.clone();
 	let angleMaskHit = background.clone();
 	let angleRevealTxt = new createjs.Text("Reveal Angle", "18px Balsamiq Sans", "#FFFFFF");
-	angleRevealTxt.x = 110; 
-	angleRevealTxt.y = window.innerHeight*.745;
+	angleRevealTxt.setTransform(75, window.innerHeight*.75);
 	angleRevealTxt.textAlign ="center";
 	angleDispCont.hitArea = angleMaskHit;
 	angleDispCont.addChild(angleMaskDisp,angleRevealTxt);
+	angleDsp = new createjs.Text("0 \u00B0", "42px Balsamiq Sans", "#FFFFFF");
+	angleDsp.setTransform(70, window.innerHeight*.74);
+	angleDsp.textAlign ="center"
 
 	angleDispCont.on("click", function(evt) {
-		//console.log(angleMaskDisp)
 		if (angleDispCont.alpha) {
 			angleDispCont.alpha = 0;
 		} else {
@@ -160,12 +236,58 @@ function drawAngleDisplay() {
 		}
 	});
 
-	angleDsp = new createjs.Text("0 \u00B0", "42px Balsamiq Sans", "#FFFFFF");
-	angleDsp.x = 110
-	angleDsp.y = window.innerHeight * .74
-	angleDsp.textAlign ="center"
+	degSel5Cont = new createjs.Container();
+	let degSel5 = new createjs.Shape();
+	degSel5.graphics.beginStroke('#FFFFFF').setStrokeStyle(2);
+	degSel5.graphics.beginFill("#000000").drawRect(150, window.innerHeight*.725,50,28);
+	//let angleMaskDisp = degSel5.clone();
+	let degSel5Txt = new createjs.Text("5 \u00B0", "18px Balsamiq Sans", "#FFFFFF");
+	degSel5Txt.setTransform(175, window.innerHeight*.7325);
+	degSel5Txt.textAlign ="center";
+	degSel5Cont.addChild(degSel5, degSel5Txt);
 
-	stage.addChild(background,angleDsp, angleDispCont);
+	degSel5Cont.on("click", function(evt) {
+		if (degSel5Cont.children[0].graphics._fill.style == "#000000") {
+			//Activate 5 degree selector
+			degSel5Cont.children[0].graphics._fill.style = "#0066AA"
+			deg5Active = true;
+			//Deactivate 2.5 degree selector
+			degSel2p5Cont.children[0].graphics._fill.style = "#000000"
+			deg2p5Active = false;
+		} else {
+			degSel5Cont.children[0].graphics._fill.style = "#000000"
+			deg5Active = false;
+		}
+	});
+
+	degSel2p5Cont = new createjs.Container();
+	let degSel2p5 = new createjs.Shape();
+	degSel2p5.graphics.beginStroke('#FFFFFF').setStrokeStyle(2);
+	degSel2p5.graphics.beginFill("#000000").drawRect(150, window.innerHeight*.76,50,28);
+	//let angleMaskDisp = degSel5.clone();
+	let degSel2p5Txt = new createjs.Text("2.5 \u00B0", "18px Balsamiq Sans", "#FFFFFF");
+	degSel2p5Txt.setTransform(175, window.innerHeight*.768);
+	degSel2p5Txt.textAlign ="center";
+	degSel2p5Cont.addChild(degSel2p5, degSel2p5Txt);
+
+	degSel2p5Cont.on("click", function(evt) {
+		if (degSel2p5Cont.children[0].graphics._fill.style == "#000000") {
+			//Activate 2.5 degree selector
+			degSel2p5Cont.children[0].graphics._fill.style = "#0066AA"
+			deg2p5Active = true;
+			//Deactivate 5 degree selector
+			degSel5Cont.children[0].graphics._fill.style = "#000000"
+			deg5Active = false;
+		} else {
+			degSel2p5Cont.children[0].graphics._fill.style = "#000000"
+			deg2p5Active = false;
+		}
+	});
+	
+
+	stage.addChild(background,angleDsp,angleDispCont);
+	stage.addChild(degSel5Cont);
+	stage.addChild(degSel2p5Cont);
 }
 
 
@@ -184,7 +306,7 @@ function generateTween(obj){
 	let tweenXScale, tweenYScale;
 	if (tweenObj.image.id == 'prot'){
 		if (!stageProtActive) {
-			tweenXScale = tweenYScale = scale*1.7;
+			tweenXScale = tweenYScale = scale*1.25;
 			stageProtActive = true;
 		} else { 
 			return
@@ -201,7 +323,7 @@ function generateTween(obj){
     tweenRunningCount++;
     createjs.Tween.get(tweenObj, { loop: false }, null, false)
 	.to({ x: xTween, y: yTween, scaleX: tweenXScale, scaleY: tweenYScale}, 
-		1000, createjs.Ease.get(1))
+		1000, createjs.Ease.get(2))
 	.call(handleTweenComplete);
 }
 
@@ -289,21 +411,21 @@ function handleImageLoad(event) {
 	// Create hitbox circles
 	var topCircle = new createjs.Shape();
 	topCircle.graphics.beginFill("#000000")
-		.drawCircle((width*.5), (width*.5)-1, 10*scale);
+		.drawCircle((width*.5), (width*.5), 10*scale);
 	topCircle.id = "top";
 	var topHit = new createjs.Shape();
 		topHit.graphics.beginFill("#000000")
-			.drawCircle((width*.5), (width*.5)-1, 40*scale);
+			.drawCircle((width*.5), (width*.5), 40*scale);
 	topCircle.hitArea = topHit;
 	
 	
 	var bottomCircle = new createjs.Shape();
 	bottomCircle.graphics.beginFill("#000000")
-		.drawCircle((width*.5+1), (height-(width*.5)+1), 10*scale);
+		.drawCircle((width*.5), (height-(width*.5)), 10*scale);
 	bottomCircle.id = "bottom";
 	var botHit = new createjs.Shape();
 		botHit.graphics.beginFill("#000000")
-			.drawCircle((width*.5+1), (height-(width*.5)+1), 40*scale);
+			.drawCircle((width*.5), (height-(width*.5)), 40*scale);
 	bottomCircle.hitArea = botHit;
 	
 	// Create container for PNG and hitboxes
@@ -391,8 +513,10 @@ function handleLegContainer(dragger){
 	dragger.id = stageIdInc++;
 
 	dragger.on("mousedown", function(evt) {
+		// wont draw selector box if moving object on stage
+		objectEventActive = true;
+		// pause listener
 		dragger._listeners.pressup = dragger.pressupStore;
-
 		// reposition dragger to top
 		stage.removeChild(dragger);
 		stage.addChild(dragger);
@@ -401,15 +525,23 @@ function handleLegContainer(dragger){
 	});
 	
 	dragger.on("pressmove",function(evt) {
+		// partial border detection, keep legs of selector stage
+		if (evt.stageX < dividerLocX) {return}
+		// pause listeners
+		stage._listeners.handleStageMouseDown= null
+		stage._listeners.handleStageMouseMove = null;
 		// update dragger position on stage
-		dragger.x = evt.stageX + dragger.offset.x;
-		dragger.y = evt.stageY + dragger.offset.y;
-
+		if (Math.abs(evt.stageX + dragger.offset.x) > 5 
+		&& Math.abs(evt.stageY + dragger.offset.y) > 5){
+			dragger.x = evt.stageX + dragger.offset.x;
+			dragger.y = evt.stageY + dragger.offset.y;
+		}
 		// redraw the stage to show the change:
 		stage.update();   
 	});
 
 	dragger.on("pressup", function(evt) {
+		objectEventActive = false;
 		// Update node trackers
 		ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
 		ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
@@ -418,7 +550,8 @@ function handleLegContainer(dragger){
 		// Check stage objects and snap to node in range
 		snapCollisionTest(dragger);
 	});
-	dragger.pressupStore = dragger._listeners.pressup;			
+	dragger.pressupStore = dragger._listeners.pressup;	
+	//stage._listeners = stage.pauseListener;
 }
 
 //---------------------------------------------------------------------------------
@@ -428,17 +561,20 @@ function handleLegContainer(dragger){
 //
 //---------------------------------------------------------------------------------
 function snapCollisionTest(dragger) {
+	
 	let DrgTop = {x: dragger.GlblTop.x, y: dragger.GlblTop.y}
 	let DrgBot = {x: dragger.GlblBot.x, y: dragger.GlblBot.y}
 	let hitTop, hitBot;
+	// Disables multiple update dragger calls
+	let alreadyMoved;
+	// Range of snap
+	let rng = 35 * scale;
 	// Determine which nodes collide
 	let topToTop, topToBot, botToTop, botToBot;
-	let adjustTo;
 	// Check if current node on protractor, Necessary?
 	let protNode = false;
 
 	for (i = 0; i < stageNodeTracker.length; i++){
-		adjustTo = stageNodeTracker[i];
 		if (stageNodeTracker[i].id != dragger.id){
 			hitTop = {x: stageNodeTracker[i].GlblTop.x, y: stageNodeTracker[i].GlblTop.y}
 			hitBot = {x: stageNodeTracker[i].GlblBot.x, y: stageNodeTracker[i].GlblBot.y}
@@ -453,34 +589,40 @@ function snapCollisionTest(dragger) {
 			}
 			// if two nodes connect within 10 px
 			// snap to location of node found, evaluat angle, and exit loop
-			if (Math.abs(topToTop.x) < 10 && Math.abs(topToTop.y)< 10){
+			if (Math.abs(topToTop.x) < rng && Math.abs(topToTop.y)< rng){
 				//console.log("top-top collision")
 				updateDragger(topToTop);
 				evaluateAngle(hitTop, DrgBot, hitBot);
-				i = stageNodeTracker.length;
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
 			}
-			else if (Math.abs(topToBot.x) < 10 && Math.abs(topToBot.y) < 10){
-				console.log("top-bot collision")
+			else if (Math.abs(topToBot.x) < rng && Math.abs(topToBot.y) < rng){
+				//console.log("top-bot collision")
 				updateDragger(topToBot);
-				evaluateAngle(hitBot, hitTop, DrgBot);
-				i = stageNodeTracker.length;
+				evaluateAngle(hitBot, DrgBot, hitTop);
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
 			}
-			else if (Math.abs(botToTop.x) < 10 && Math.abs(botToTop.y)< 10){
+			else if (Math.abs(botToTop.x) < rng && Math.abs(botToTop.y)< rng){
 				//console.log("bot-top collision")
 				updateDragger(botToTop);
 				evaluateAngle(hitTop, DrgTop, hitBot);
-				i = stageNodeTracker.length;
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
 			}
-			else if (Math.abs(botToBot.x) < 10 && Math.abs(botToBot.y)< 10){
+			else if (Math.abs(botToBot.x) < rng && Math.abs(botToBot.y)< rng){
 				//console.log("bot-bot collision")
 				updateDragger(botToBot);
 				evaluateAngle(hitBot, DrgTop, hitTop);
-				i = stageNodeTracker.length;
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
 			}
 		}
 	}
 	// reposition selected dragger to location of node found
 	function updateDragger(pt){
+		// Disables multiple update dragger calls
+		if (alreadyMoved) {return;}
 		// update acutal dragger location on screen by offset
 		dragger.x += -pt.x;
 		dragger.y += -pt.y;
@@ -488,7 +630,7 @@ function snapCollisionTest(dragger) {
 		dragger.GlblTop.x += -pt.x;
 		dragger.GlblTop.y += -pt.y;
 		dragger.GlblBot.x += -pt.x;
-		dragger.GlblBot.x += -pt.y;
+		dragger.GlblBot.y += -pt.y;
 		// update parentFunction var for use in evaluateAngle
 		DrgTop = {x: dragger.GlblTop.x, y: dragger.GlblTop.y}
 		DrgBot = {x: dragger.GlblBot.x, y: dragger.GlblBot.y}
@@ -498,13 +640,6 @@ function snapCollisionTest(dragger) {
 	// p1 = shared node, p2 dragger node, p3 adjustTo node
 	function evaluateAngle(p1, p2, p3){
 		pingPoint(p1);
-		// round all coordinates to normalize angle output
-		p1.x = Math.round(p1.x);
-		p1.y = Math.round(p1.y);
-		p2.x = Math.round(p2.x);
-		p2.y = Math.round(p2.y);
-		p3.x = Math.round(p3.x);
-		p3.y = Math.round(p3.y);
 
 		if (stageNodeTracker[i].type == "protractor" ||
 			dragger.type == "protractor"){
@@ -520,25 +655,27 @@ function snapCollisionTest(dragger) {
 			if (degree > 180){
 				degree = 360 - degree;
 			}
-			// Updates angle readout
-			//console.log("angle: " + degree)
-			angleDsp.text = Math.floor(degree) + " \u00B0";
+			// Updates angle readout (constrain to .5 increments)
+			angleDsp.text = Math.round(degree / .5) * .5+ " \u00B0";
+			//angleDsp.text = Math.round(degree) + " \u00B0";
 		}
 	}
 
 	function pingPoint(p1) {
+		// disable protractor ping due to offset problem
+		if (stageNodeTracker[i].type == "protractor") { return }
 		
 		tweenCircle = new createjs.Shape();
 		tweenCircle.graphics.beginFill("#FFFFFF")
 		.drawCircle(p1.x, p1.y, 10*scale);
-		tweenCircle.alpha = .5;
+		tweenCircle.alpha = 1;
 		stage.addChild(tweenCircle);
 
-		console.log(tweenCircle)
+		//console.log(tweenCircle)
 
 		tweenRunningCount++;
     	createjs.Tween.get(tweenCircle, { loop: false }, null, false)
-		.to({x: -p1.x*3, y: -p1.y*3, scaleX: 4, scaleY: 4}, 1000, createjs.Ease.get(1))
+		.to({x: -p1.x*2, y: -p1.y*2, scaleX: 3, scaleY: 3}, 750, createjs.Ease.get(1))
 		.call(handleTweenBubbleComp);
 		tweenRunningCount++;
     	createjs.Tween.get(tweenCircle, { loop: false }, null, false)
@@ -568,6 +705,8 @@ function handleHingeHit(hitbox){
 	let pauseMousemove;
 
 	hitbox.addEventListener("mousedown", function() {
+		// wont draw selector box if moving object on stage
+		objectEventActive = true;
 
 		// pause event listener for moving object
 		pauseMousemove = dragger._listeners
@@ -582,20 +721,30 @@ function handleHingeHit(hitbox){
 	})
 
 	hitbox.on("pressmove",function(evt) {
+		// prevent rotation onto selector stage
+		if (stage.mouseX < dividerLocX + 15){return}
 
 		radAngle = Math.atan2(stage.mouseY - dragger.y,
 			stage.mouseX - dragger.x);
 		angle = radAngle * (180 / Math.PI) - offset;
-		dragger.rotation = angle;
-		
+
+		if (deg5Active){
+			dragger.rotation = Math.round(angle / 5) * 5
+		} else if (deg2p5Active){
+			dragger.rotation = Math.round(angle / 2.5) * 2.5
+		} else {
+			dragger.rotation = Number(angle).toFixed(1);
+		}
+	
+
 		stage.update();   
 	});
 
 	hitbox.on("pressup", function(evt) {	
+		objectEventActive = false;
 		// restore registration and xy coords
 		restoreDragger(hitbox);
 		// Update node trackers
-		
 		ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
 		ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
 		dragger.GlblTop = ptTop;
