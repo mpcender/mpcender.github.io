@@ -1,6 +1,6 @@
 # mpcender.github.io
 
-View GeoAngles Program at
+##View GeoAngles Program at
 
 Updated 6/5/20
 
@@ -8,7 +8,7 @@ https://mpcender.github.io/mpcender.github.io/index.md/GeoAngles.md
 
 ======
 
-View Virtual Manipulative Program at
+##View Virtual Manipulative Program at
 
 Updated 11/26/19 8:31PM - Add Venn Labels
 
@@ -21,7 +21,7 @@ https://youtu.be/tULozDfaOyM
 
 ======
 
-View Ten Frame Program at
+##View Ten Frame Program at
 
 Updated 1/11/19 2:33PM - Initial Program
 
