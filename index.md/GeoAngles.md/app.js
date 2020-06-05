@@ -8,14 +8,27 @@ let xMainStage, yMainStage,
 	xSltStage, ySltStge,
 	xProt, yProt, wProt, hProt;
 let windowSizeX, windowSizeY;
-let stage, selectorStage;
+let stage;
+// Container stores plus/minus buttons (updated in resizeUpdate)
+let magnifyContainer;
+// Container stores angle readout and modifier buttons
+let angleResizeGroup;
 
 // stage bound vars
 let divider;
 let dividerLocX = 210;
+
+// main scalar
 let scale = .4;
+// Magnification scale offset (offset init 1 so no change)
+let newScale = 1;
+let scaleMax = 1.3; // max scale setter (.1 increments)
+let scaleMin = .8;  // min scale setter (.1 increments)
+// Selector stage scalar
 let scaleSelect = .3;
-let legToBoard = 150;
+// Default tween-to location (x & y)
+let legToBoard = 200;
+// variable to track protractor on stage (only allows 1)
 let stageProtActive = false;
 
 // Tween Vars
@@ -40,8 +53,15 @@ let drawingCanvas;
 let index =0;
 let stageSelectorBox;
 let objectEventActive = false;
-let selectedObjects;
+let selectedObjects = [];
 
+//------------------------------------------------------
+//
+//		TODO:	- add delete button
+//					delete removes all object in stageNodeTracker
+//				- Move all selected objects as one
+//				- fix rotation overcorrect on scaled legs?? remove function??
+//
 
 function main() {
 
@@ -87,19 +107,21 @@ function main() {
 //----------------------------------------------------
 function handleStageMouseDown(event) {
 	if (!event.primary) { return; }
-	stroke = 10;
+	// Store current stage mouse location
 	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
+	// if on selector stage, distable stage events
+	if (oldPt.x < dividerLocX ) { return; }
 	stage.addEventListener("stagemousemove", handleStageMouseMove);
 }
 
 function handleStageMouseMove(event) {
 	if (!event.primary || oldPt.x < dividerLocX  || objectEventActive) { return; }
-	
-	// prevent select box being drawn on 
+	let stroke = 10;
+
+	// Enable boundary on drawing selector box on selector stage
 	let stageMouseX = stage.mouseX;
 	if (stageMouseX < dividerLocX){
-		stageMouseX = dividerLocX;
-	}
+		stageMouseX = dividerLocX; }
 
 	stage.removeChild(stageSelectorBox)
 	let shape = new createjs.Shape();
@@ -118,22 +140,64 @@ function handleStageMouseUp(event) {
 	stage.removeChild(stageSelectorBox)
 	stage.removeEventListener("stagemousemove", handleStageMouseMove);
 
-	//console.log(oldPt)
-	//console.log(event)
+	
+	if (objectEventActive || oldPt.x < dividerLocX || tweenRunningCount) { return; }
 	for (i = 0; i < stageNodeTracker.length; i++){
 		hitTop = {x: stageNodeTracker[i].GlblTop.x, y: stageNodeTracker[i].GlblTop.y}
 		hitBot = {x: stageNodeTracker[i].GlblBot.x, y: stageNodeTracker[i].GlblBot.y}
-		//----------------------------------------------------
-		//
-		//		Do stuff to select objects
-		//
-		//----------------------------------------------------
+		
+		if (stageNodeTracker[i].type == "protractor") { continue }
 
-		//if (hitTop.x )
-
+		// Find lower and upper bounds
+		let boundX, boundY;
+		if (stage.mouseX<oldPt.x){
+			boundX = {lower: stage.mouseX, upper: oldPt.x};
+		} else {
+			boundX = {lower: oldPt.x, upper: stage.mouseX};
+		}
+		if (stage.mouseY<oldPt.y){
+			boundY = {lower: stage.mouseY, upper: oldPt.y};
+		} else {
+			boundY = {lower: oldPt.y, upper: stage.mouseY};
+		}
+		
+		// Check if either node is within bounds of selector box
+		if (hitTop.x > boundX.lower && hitTop.x < boundX.upper 
+			&& hitTop.y > boundY.lower && hitTop.y < boundY.upper ||
+			hitBot.x > boundX.lower && hitBot.x < boundX.upper 
+			&& hitBot.y > boundY.lower && hitBot.y < boundY.upper) {
+			
+			updateSelectedObjects(stageNodeTracker[i]);
+		}
 	}
 }
 
+function updateSelectedObjects(dragger) {
+	// init case if storage array is empty, add to array
+	if (selectedObjects == 0) {
+		dragger.shadow = new createjs.Shadow("#4287f5", 0, 0, 30);
+		selectedObjects.push(dragger);
+	} 
+	// Add to selected array if not already in array
+	else {
+		if (!selectedObjects.includes(dragger)){
+			dragger.shadow = new createjs.Shadow("#4287f5", 0, 0, 30);
+			selectedObjects.push(dragger)
+		} else {
+			dragger.shadow = null;
+			let index;
+			for (j = 0; j < selectedObjects.length; j++){
+				if (selectedObjects[j] == dragger){
+					index = j;
+					break;
+				} 
+			}
+			// Remove duplicate selections from the array
+			selectedObjects.splice(index, 1);
+		}
+	}
+	console.log(selectedObjects.length)
+}
 
 
 
@@ -199,8 +263,11 @@ function drawSelectorStage(){
 	divider.graphics.beginFill("#FFFFFF")
 		.drawRect(dividerLocX,0,5,window.innerHeight)
 
-
-	stage.addChild(red, blue, yellow, green, purple, orange, protBitmap, divider);
+	// plus minus
+	drawMagnifyer();
+	
+	stage.addChild(red, blue, yellow, green, purple, 
+		orange, protBitmap, divider);
 
 	function loadImgBitmap(imgSrc, offset){
 		let image = new Image();
@@ -211,21 +278,67 @@ function drawSelectorStage(){
 	}
 }
 
+//----------------------------------------------------------------------------
+//
+// 			Magnifier method and event to enlarge legs on stage
+//	Bugs:	(legs show slight drift on move after magnification)
+//			(protractor rotation large drift on rotation)	
+//----------------------------------------------------------------------------
+function drawMagnifyer() {
+	magnifyContainer = new createjs.Container();
+	
+	let plus = new createjs.Shape();
+	plus.graphics.beginFill("#FFFFFF").drawRect(15,0,6,36).drawRect(0,15,36,6)
+	let hitAreaPlus = new createjs.Shape();
+	hitAreaPlus.graphics.beginFill("#FFFFFF").drawRect(0,0,36,36)
+
+	let minus =  new createjs.Shape();
+	minus.graphics.beginFill("#FFFFFF").drawRect(0,60,36,6)
+	let hitAreaMinus = new createjs.Shape();
+	hitAreaMinus.graphics.beginFill("#FFFFFF").drawRect(0,45,36,36)
+	plus.hitArea = hitAreaPlus;
+	minus.hitArea = hitAreaMinus;
+
+	plus.on("click", function(evt) {
+		newScale = stageNodeTracker[0].scaleX+.1;
+		if (newScale > scaleMax) { return }
+		
+		for (i = 0; i <stageNodeTracker.length; i++) {
+			stageNodeTracker[i].scaleX = newScale;
+			stageNodeTracker[i].scaleY = newScale;
+		}
+	});
+	minus.on("click", function(evt) {
+		newScale = stageNodeTracker[0].scaleX-.1;
+		if (newScale < scaleMin) { return }
+
+		for (i = 0; i <stageNodeTracker.length; i++) {
+			stageNodeTracker[i].scaleX = newScale
+			stageNodeTracker[i].scaleY = newScale
+		}
+	});
+
+	magnifyContainer.setTransform(canvas.width*.95, canvas.height *.87)
+	magnifyContainer.addChild(plus, minus);
+	
+	stage.addChild(magnifyContainer);
+}
+
 function drawAngleDisplay() {
 	// determine invisible hitbox
 	let background = new createjs.Shape();
 	background.graphics.beginStroke('#FFFFFF').setStrokeStyle(2);
-	background.graphics.beginFill("#000000").drawRect(10, window.innerHeight*.725,130,60);
+	background.graphics.beginFill("#000000").drawRect(10, 5,130,54);
 	angleDispCont = new createjs.Container();
 	let angleMaskDisp = background.clone();
 	let angleMaskHit = background.clone();
 	let angleRevealTxt = new createjs.Text("Reveal Angle", "18px Balsamiq Sans", "#FFFFFF");
-	angleRevealTxt.setTransform(75, window.innerHeight*.75);
+	angleRevealTxt.setTransform(75, 23);
 	angleRevealTxt.textAlign ="center";
 	angleDispCont.hitArea = angleMaskHit;
 	angleDispCont.addChild(angleMaskDisp,angleRevealTxt);
 	angleDsp = new createjs.Text("0 \u00B0", "42px Balsamiq Sans", "#FFFFFF");
-	angleDsp.setTransform(70, window.innerHeight*.74);
+	angleDsp.setTransform(74, 15);
 	angleDsp.textAlign ="center"
 
 	angleDispCont.on("click", function(evt) {
@@ -239,10 +352,10 @@ function drawAngleDisplay() {
 	degSel5Cont = new createjs.Container();
 	let degSel5 = new createjs.Shape();
 	degSel5.graphics.beginStroke('#FFFFFF').setStrokeStyle(2);
-	degSel5.graphics.beginFill("#000000").drawRect(150, window.innerHeight*.725,50,28);
+	degSel5.graphics.beginFill("#000000").drawRect(150, 5,50,25);
 	//let angleMaskDisp = degSel5.clone();
 	let degSel5Txt = new createjs.Text("5 \u00B0", "18px Balsamiq Sans", "#FFFFFF");
-	degSel5Txt.setTransform(175, window.innerHeight*.7325);
+	degSel5Txt.setTransform(175, 10);
 	degSel5Txt.textAlign ="center";
 	degSel5Cont.addChild(degSel5, degSel5Txt);
 
@@ -263,10 +376,10 @@ function drawAngleDisplay() {
 	degSel2p5Cont = new createjs.Container();
 	let degSel2p5 = new createjs.Shape();
 	degSel2p5.graphics.beginStroke('#FFFFFF').setStrokeStyle(2);
-	degSel2p5.graphics.beginFill("#000000").drawRect(150, window.innerHeight*.76,50,28);
+	degSel2p5.graphics.beginFill("#000000").drawRect(150, 34,50,25);
 	//let angleMaskDisp = degSel5.clone();
 	let degSel2p5Txt = new createjs.Text("2.5 \u00B0", "18px Balsamiq Sans", "#FFFFFF");
-	degSel2p5Txt.setTransform(175, window.innerHeight*.768);
+	degSel2p5Txt.setTransform(175, 39.5);
 	degSel2p5Txt.textAlign ="center";
 	degSel2p5Cont.addChild(degSel2p5, degSel2p5Txt);
 
@@ -283,11 +396,13 @@ function drawAngleDisplay() {
 			deg2p5Active = false;
 		}
 	});
-	
 
-	stage.addChild(background,angleDsp,angleDispCont);
-	stage.addChild(degSel5Cont);
-	stage.addChild(degSel2p5Cont);
+
+	angleResizeGroup = new createjs.Container()
+	angleResizeGroup.setTransform(0, windowSizeY*.7)
+
+	angleResizeGroup.addChild(background,angleDsp,angleDispCont, degSel5Cont, degSel2p5Cont)
+	stage.addChild(angleResizeGroup);
 }
 
 
@@ -295,7 +410,7 @@ function drawAngleDisplay() {
 //---------------------------------------------------------------------
 //
 // TWEEN TO STAGE
-//
+// handles all selector stage tweens to stage (protractor and legs)
 //---------------------------------------------------------------------
 function generateTween(obj){
 	if (tweenRunningCount) {
@@ -306,13 +421,13 @@ function generateTween(obj){
 	let tweenXScale, tweenYScale;
 	if (tweenObj.image.id == 'prot'){
 		if (!stageProtActive) {
-			tweenXScale = tweenYScale = scale*1.25;
+			tweenXScale = tweenYScale = scale*1.25*newScale;
 			stageProtActive = true;
 		} else { 
 			return
 		}
 	} else {
-		tweenXScale = tweenYScale = scale;
+		tweenXScale = tweenYScale = scale*newScale;
 	}
 
 	stage.addChild(tweenObj)
@@ -354,7 +469,7 @@ function tick(event) {
 //---------------------------------------------------------------------
 //
 // CREATE PROTRACTOR
-//
+// Create stage version of protractor with nodes
 //---------------------------------------------------------------------
 function createStageProt(event) {
 	var image = event.target;
@@ -369,15 +484,15 @@ function createStageProt(event) {
 
 	var midCircle = new createjs.Shape();
 	midCircle.graphics.beginFill("#000000")
-		.drawCircle(width*.5-1, height*.5, 15*scale);
+		.drawCircle(width*.5-1, height*.5, 15*scale*newScale);
 
 	var bottomCircle = new createjs.Shape();
 	bottomCircle.graphics.beginFill("#FFFFFF")
-		.drawCircle(width, (width*.5)+12, 15*scale);
+		.drawCircle(width, (width*.5)+12, 15*scale*newScale);
 	bottomCircle.id = "bottom";
 	var botHit = new createjs.Shape();
 		botHit.graphics.beginFill("#000000")
-			.drawCircle(width, (width*.5), 70*scale);
+			.drawCircle(width, (width*.5), 70*scale*newScale);
 	bottomCircle.hitArea = botHit;
 
 	// Create container for PNG and hitboxes
@@ -439,7 +554,9 @@ function handleImageLoad(event) {
 	container.addChild(bitmap, topCircle, bottomCircle);
 	handleLegContainer(container);
 	
+	container.setTransform(container.x,container.y,newScale,newScale);
 	bitmap.setTransform(0, 0, scale, scale);
+	
 
 	handleHingeHit(topCircle);
 	handleHingeHit(bottomCircle);
@@ -512,16 +629,43 @@ function handleLegContainer(dragger){
 	stageNodeTracker.push(dragger);
 	dragger.id = stageIdInc++;
 
+	// Click select or deselects leg object
+	dragger.on("click", function(evt) {
+		if (Math.abs(dragger.oldX-evt.stageX) < 1 && 
+			Math.abs(dragger.oldY-evt.stageY) < 1 && 
+			dragger.type != "protractor") {
+				updateSelectedObjects(dragger);
+			}
+	});
+
 	dragger.on("mousedown", function(evt) {
 		// wont draw selector box if moving object on stage
 		objectEventActive = true;
 		// pause listener
 		dragger._listeners.pressup = dragger.pressupStore;
-		// reposition dragger to top
+		// reposition dragger to top z axis on stage
 		stage.removeChild(dragger);
 		stage.addChild(dragger);
-		// Store original location to calc xy dist traveled
+		// Store origin xy to determine if click or drag
+		dragger.oldX = evt.stageX;
+		dragger.oldY = evt.stageY;
+		// Store offset of origin, move object from point selected
 		dragger.offset = { x: dragger.x - evt.stageX, y: dragger.y - evt.stageY };
+
+
+		// determine if selected
+		console.log(selectedObjects.includes(dragger))
+
+
+
+		
+		// IF TRUE move all object selected as one
+		// update all variables
+		// Seperate method?
+
+
+
+
 	});
 	
 	dragger.on("pressmove",function(evt) {
@@ -531,11 +675,9 @@ function handleLegContainer(dragger){
 		stage._listeners.handleStageMouseDown= null
 		stage._listeners.handleStageMouseMove = null;
 		// update dragger position on stage
-		if (Math.abs(evt.stageX + dragger.offset.x) > 5 
-		&& Math.abs(evt.stageY + dragger.offset.y) > 5){
-			dragger.x = evt.stageX + dragger.offset.x;
-			dragger.y = evt.stageY + dragger.offset.y;
-		}
+		dragger.x = evt.stageX + dragger.offset.x;
+		dragger.y = evt.stageY + dragger.offset.y;
+
 		// redraw the stage to show the change:
 		stage.update();   
 	});
@@ -549,6 +691,7 @@ function handleLegContainer(dragger){
 		dragger.GlblBot = ptBot;
 		// Check stage objects and snap to node in range
 		snapCollisionTest(dragger);
+
 	});
 	dragger.pressupStore = dragger._listeners.pressup;	
 	//stage._listeners = stage.pauseListener;
@@ -843,11 +986,25 @@ function resizeUpdate(){
 	xMainStage = mainStageElem.parentNode.offsetLeft + mainStageElem.offsetLeft;
 	yMainStage = mainStageElem.parentNode.offsetTop + mainStageElem.offsetTop;
 
-	canvas.width = windowSizeX*.895;
-	canvas.height = windowSizeY*.795;
-
-	// adjust divider height on resize
-	if (divider != null){
-		divider.graphics.command.h = canvas.height;
+	// modify x vars
+	if (windowSizeX > 850 ) {
+		canvas.width = windowSizeX*.895;
+		
+		if (magnifyContainer != null){
+			magnifyContainer.x = canvas.width*.95; }
 	}
+	if (windowSizeY > 700) {
+		canvas.height = windowSizeY*.795;
+		
+		if (magnifyContainer != null){
+			magnifyContainer.y = canvas.height *.87 }
+
+		if (angleResizeGroup != null){
+			angleResizeGroup.y = windowSizeY*.7; }
+
+		// adjust divider height on resize
+		if (divider != null){
+			divider.graphics.command.h = canvas.height;}
+	}
+	
 }
