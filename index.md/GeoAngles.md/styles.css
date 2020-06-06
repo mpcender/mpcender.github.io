@@ -23,12 +23,15 @@ header > h1 {
 
 .container {
 	position: relative;
-	margin: 2% 0px;
+	margin-top: 20px;
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-bottom: 20px;
+
 }
 
 .mainStage {
 	position: relative;
-	margin: 0 5%;
 	min-width: 775px;
 	min-height: 550px;
 

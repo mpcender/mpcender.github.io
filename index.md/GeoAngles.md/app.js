@@ -11,6 +11,7 @@ let windowSizeX, windowSizeY;
 let stage;
 // Container stores plus/minus buttons (updated in resizeUpdate)
 let magnifyContainer;
+let deleteButtonContainer;
 // Container stores angle readout and modifier buttons
 let angleResizeGroup;
 
@@ -22,7 +23,7 @@ let dividerLocX = 210;
 let scale = .4;
 // Magnification scale offset (offset init 1 so no change)
 let newScale = 1;
-let scaleMax = 1.3; // max scale setter (.1 increments)
+let scaleMax = 1.5; // max scale setter (.1 increments)
 let scaleMin = .8;  // min scale setter (.1 increments)
 // Selector stage scalar
 let scaleSelect = .3;
@@ -30,6 +31,7 @@ let scaleSelect = .3;
 let legToBoard = 200;
 // variable to track protractor on stage (only allows 1)
 let stageProtActive = false;
+let protStorage;
 
 // Tween Vars
 let tweenRunningCount = 0;
@@ -57,10 +59,17 @@ let selectedObjects = [];
 
 //------------------------------------------------------
 //
-//		TODO:	- add delete button
-//					delete removes all object in stageNodeTracker
-//				- Move all selected objects as one
-//				- fix rotation overcorrect on scaled legs?? remove function??
+//		TODO:	
+//				- work on getting zoom offset working (Very Complicated!!)
+//				- one set of numbers, inverted prot
+//
+//		Complete
+//				- add delete button delete removes all object in stageNodeTracker
+//				- drag onto board - remove tween
+//				- Move all selected objects as one 
+//				- Modify selector to select all, add new only deselect 
+//					if no new is found? (slight bugs) (lag on mouseUp)
+//				- protractor always top of board
 //
 
 function main() {
@@ -69,24 +78,27 @@ function main() {
 	stage.addEventListener("stagemousedown", handleStageMouseDown);
 	stage.addEventListener("stagemouseup", handleStageMouseUp);
 	
-
+	// Enable touch input
 	createjs.Touch.enable(stage);
 
+	// initialize - used for selecting, group-move, and delete
 	stageNodeTracker = new Array();
 
 	// get and update container sizes & locations
 	window.addEventListener("resize", resizeUpdate);
 	resizeUpdate();
 
+	// Draw all stage elements
 	drawSelectorStage();
 
-	//Activate 5 degree selector
+	// Activate 5 degree selector
 	degSel5Cont.children[0].graphics._fill.style = "#0066AA"
 	deg5Active = true;
 	
 	createjs.Ticker.framerate = 30;
 	createjs.Ticker.addEventListener("tick", stage);
 	
+	// displays mouse location on stage, Development use only
 	let distxDOM = document.getElementById("distx")
 	let distyDOM = document.getElementById("disty")
 	distxDOM.style.color = distyDOM.style.color = "white";
@@ -98,107 +110,6 @@ function main() {
 		distyDOM.innerHTML = "Dist y: " +distY.toString();
 	});
 }
-
-
-//----------------------------------------------------
-//
-//		Stage object selection box
-//
-//----------------------------------------------------
-function handleStageMouseDown(event) {
-	if (!event.primary) { return; }
-	// Store current stage mouse location
-	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
-	// if on selector stage, distable stage events
-	if (oldPt.x < dividerLocX ) { return; }
-	stage.addEventListener("stagemousemove", handleStageMouseMove);
-}
-
-function handleStageMouseMove(event) {
-	if (!event.primary || oldPt.x < dividerLocX  || objectEventActive) { return; }
-	let stroke = 10;
-
-	// Enable boundary on drawing selector box on selector stage
-	let stageMouseX = stage.mouseX;
-	if (stageMouseX < dividerLocX){
-		stageMouseX = dividerLocX; }
-
-	stage.removeChild(stageSelectorBox)
-	let shape = new createjs.Shape();
-	shape.graphics.setStrokeDash([stroke * 2, stroke]).
-		beginStroke("#FFFFFF").rect(oldPt.x, oldPt.y,
-			stageMouseX - oldPt.x, stage.mouseY - oldPt.y);
-	
-	stageSelectorBox = shape;
-    stage.addChild(stageSelectorBox);
-
-	stage.update();
-}
-
-function handleStageMouseUp(event) {
-	if (!event.primary) { return; }
-	stage.removeChild(stageSelectorBox)
-	stage.removeEventListener("stagemousemove", handleStageMouseMove);
-
-	
-	if (objectEventActive || oldPt.x < dividerLocX || tweenRunningCount) { return; }
-	for (i = 0; i < stageNodeTracker.length; i++){
-		hitTop = {x: stageNodeTracker[i].GlblTop.x, y: stageNodeTracker[i].GlblTop.y}
-		hitBot = {x: stageNodeTracker[i].GlblBot.x, y: stageNodeTracker[i].GlblBot.y}
-		
-		if (stageNodeTracker[i].type == "protractor") { continue }
-
-		// Find lower and upper bounds
-		let boundX, boundY;
-		if (stage.mouseX<oldPt.x){
-			boundX = {lower: stage.mouseX, upper: oldPt.x};
-		} else {
-			boundX = {lower: oldPt.x, upper: stage.mouseX};
-		}
-		if (stage.mouseY<oldPt.y){
-			boundY = {lower: stage.mouseY, upper: oldPt.y};
-		} else {
-			boundY = {lower: oldPt.y, upper: stage.mouseY};
-		}
-		
-		// Check if either node is within bounds of selector box
-		if (hitTop.x > boundX.lower && hitTop.x < boundX.upper 
-			&& hitTop.y > boundY.lower && hitTop.y < boundY.upper ||
-			hitBot.x > boundX.lower && hitBot.x < boundX.upper 
-			&& hitBot.y > boundY.lower && hitBot.y < boundY.upper) {
-			
-			updateSelectedObjects(stageNodeTracker[i]);
-		}
-	}
-}
-
-function updateSelectedObjects(dragger) {
-	// init case if storage array is empty, add to array
-	if (selectedObjects == 0) {
-		dragger.shadow = new createjs.Shadow("#4287f5", 0, 0, 30);
-		selectedObjects.push(dragger);
-	} 
-	// Add to selected array if not already in array
-	else {
-		if (!selectedObjects.includes(dragger)){
-			dragger.shadow = new createjs.Shadow("#4287f5", 0, 0, 30);
-			selectedObjects.push(dragger)
-		} else {
-			dragger.shadow = null;
-			let index;
-			for (j = 0; j < selectedObjects.length; j++){
-				if (selectedObjects[j] == dragger){
-					index = j;
-					break;
-				} 
-			}
-			// Remove duplicate selections from the array
-			selectedObjects.splice(index, 1);
-		}
-	}
-	console.log(selectedObjects.length)
-}
-
 
 
 //--------------------------------------------------------------------------------------
@@ -213,6 +124,59 @@ function updateSelectedObjects(dragger) {
 // - handleTweenComplete() 	- Reset tween vars, call generate stage obj
 // - handleImageLoad() 		- Generates stage object with nodes
 // - handleLegContainer() 	- Evt handler for let object container
+
+
+//-----------------------------------------------------------------
+// 
+// Window Resize variable updates
+//
+//-----------------------------------------------------------------
+function resizeUpdate(){
+	windowSizeX = window.innerWidth;
+	windowSizeY = window.innerHeight;
+	
+	xMainStage = mainStageElem.parentNode.offsetLeft + mainStageElem.offsetLeft;
+	yMainStage = mainStageElem.parentNode.offsetTop + mainStageElem.offsetTop;
+
+	// Stop updating if window width less than 850
+	if (windowSizeX > 800) {
+		canvas.width = windowSizeX-40;
+		
+		if (magnifyContainer != null){
+			magnifyContainer.x = canvas.width-60; }
+
+		if (deleteButtonContainer != null){
+			deleteButtonContainer.x = canvas.width-80; }
+			
+	} else {
+		canvas.width = 800;
+	}
+	// Stop updating if window height less than 700
+	if (windowSizeY > 700) {
+		canvas.height = windowSizeY*.795;
+		
+		if (magnifyContainer != null){
+			magnifyContainer.y = canvas.height *.87 }
+
+		if (angleResizeGroup != null){
+			angleResizeGroup.y = windowSizeY*.7; }
+
+		// adjust divider height on resize
+		if (divider != null){
+			divider.graphics.command.h = canvas.height;}
+	} else {
+		canvas.height = 620
+	}
+	
+}
+
+//---------------------------------------------------------------------
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+// 				DRAW BUTTONS AND STATIC STAGE ELEMENTS
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//---------------------------------------------------------------------
 
 
 //---------------------------------------------------------------------
@@ -247,16 +211,19 @@ function drawSelectorStage(){
 
 	// Protractor
 	let image = new Image();
-	image.src = "./res/protractWhiteMod2.png"
+	image.src = "./res/protractWhiteBigNum.png"
 	image.id = "prot";
 	let protBitmap = new createjs.Bitmap(image);
 	protBitmap.setTransform(width*.05, height*.45, 
 		scaleSelect*.85, scaleSelect*.85);
+	//drawProtFlipButton();
 
 	handleSelectEvt(protBitmap);
 
 	// Display the current legs angle
 	drawAngleDisplay();
+
+	drawDeleteButton();
 
 	// divider
 	divider = new createjs.Shape();
@@ -277,6 +244,146 @@ function drawSelectorStage(){
 		return bitmap;
 	}
 }
+
+//---------------------------------------------------------------------
+//
+// Draw clear screen and clear selected buttons
+//
+//---------------------------------------------------------------------
+/*
+function drawProtFlipButton(){
+	let flipCont = new createjs.Container();
+	let flipImg = new Image();
+	flipImg.src = "./res/flip.png"
+	let flipBmp = new createjs.Bitmap(flipImg);
+	flipBmp.setTransform(-1, -2, scaleSelect*.35, scaleSelect*.35)
+	var flipCircle = new createjs.Shape();
+	flipCircle.graphics.beginFill("#000000").drawCircle(12, 12, 22);
+	flipCircle.shadow = new createjs.Shadow("#4287f5", 0, 0,5);
+	var flipHit = new createjs.Shape();
+	flipHit.graphics.beginFill("#000000").drawCircle(12, 12, 22);
+	flipCircle.hitArea = flipHit;
+	flipCont.addChild(flipCircle, flipBmp);
+	flipCont.setTransform(93, 475);
+
+	stage.addChild(flipCont);
+	handleFlipHit(flipCircle);
+}
+*/
+
+function drawDeleteButton(){
+	deleteButtonContainer = new createjs.Container();
+
+
+	// Trash container (Holds all objects and moves on stage)
+	let refreshCont = new createjs.Container();
+	// Circle button for trash png
+	let refreshCircle = new createjs.Shape();
+	refreshCircle.graphics.beginFill("#000000").drawCircle(21,22,33);
+	refreshCircle.shadow = new createjs.Shadow("#4287f5", 0, 0,5);
+	// load hit surface
+	let refreshHit = new createjs.Shape();
+	refreshHit.graphics.beginFill("#000000").drawCircle(21,22,33);
+	refreshCircle.hitArea = refreshHit ;
+	// load png resource
+	let refreshImg = new Image();
+	refreshImg.src = "./res/refresh.png"
+	let refreshBmp = new createjs.Bitmap(refreshImg);
+	refreshBmp.setTransform(-2, -1, scaleSelect*.3, scaleSelect*.3)
+
+	// Add all to container and move to stage position
+	refreshCont.addChild(refreshCircle, refreshBmp)
+	refreshCont.setTransform(0, 22);
+
+	// Trash container (Holds all objects and moves on stage)
+	let trashCont = new createjs.Container();
+	// Circle button for trash png
+	let trashCircle = new createjs.Shape();
+	trashCircle.graphics.beginFill("#000000").drawCircle(21,22,33);
+	trashCircle.shadow = new createjs.Shadow("#4287f5", 0, 0,5);
+	// load hit surface
+	let trashHit = new createjs.Shape();
+	trashHit.graphics.beginFill("#000000").drawCircle(21,22,33);
+	trashCircle.hitArea = trashHit ;
+	// load png resource
+	let trashImg = new Image();
+	trashImg.src = "./res/trash.png"
+	let trashBmp = new createjs.Bitmap(trashImg);
+	trashBmp.setTransform(0, 0, scaleSelect*.3, scaleSelect*.3);
+
+	// Add all to container and move to stage position
+	trashCont.addChild(trashCircle, trashBmp)
+	trashCont.setTransform(0,95);
+
+	refreshCircle.on("mousedown", function(evt) {
+		// Bubble button on press
+		refreshCont.scaleX = refreshCont.scaleY = .95;
+		refreshCont.x += 1.5;
+		refreshCont.y += 1.5;
+	});
+	refreshCircle.on("pressup", function(evt) {
+		// Restore original button size
+		refreshCont.scaleX = refreshCont.scaleY = 1;
+		refreshCont.x += -1.5;
+		refreshCont.y += -1.5;
+
+		if (confirm("Clear Stage?")) {
+			// Clear stage
+			for (i = stageNodeTracker.length-1; i >= 0; i--) {
+				stage.removeChild(stageNodeTracker[i])
+				stageNodeTracker.pop();
+				stageProtActive = false;
+				protStorage = null;
+				newScale = 1;
+			}
+		}
+	});
+
+	trashCircle.on("mousedown", function(evt) {
+		// Bubble button on press
+		trashCont.scaleX = trashCont.scaleY = .95;
+		trashCont.x += 1.5;
+		trashCont.y += 1.5;
+	});
+	trashCircle.on("pressup", function(evt) {
+		// Restore original button size
+		trashCont.scaleX = trashCont.scaleY = 1;
+		trashCont.x += -1.5;
+		trashCont.y += -1.5;
+		
+		// ALERT dialog (neccesary?)
+		//if (confirm("Delete selected?")) { } 
+
+		// Clear selected
+		for (i = selectedObjects.length-1; i >= 0; i--) {
+		// Find current selected object in stageNodeTracker
+		let index;
+		for (j = 0; j < stageNodeTracker.length; j++){
+			if (stageNodeTracker[j] == selectedObjects[i]){
+				index = j;
+				break;
+			} 
+		}
+		// Remove from stage node tracker array
+		stageNodeTracker.splice(index, 1);
+		// Remove from stage
+		stage.removeChild(selectedObjects[i])
+		// remove from selected
+		selectedObjects.pop();
+		}
+		// clear Protractor state variables
+		if (stageProtActive) {
+			stageProtActive = false;
+			protStorage = null;
+		}
+		
+	});
+
+	deleteButtonContainer.setTransform(canvas.width-80, 0)
+	deleteButtonContainer.addChild(trashCont, refreshCont)
+	stage.addChild(deleteButtonContainer);
+}
+
 
 //----------------------------------------------------------------------------
 //
@@ -300,13 +407,43 @@ function drawMagnifyer() {
 	minus.hitArea = hitAreaMinus;
 
 	plus.on("click", function(evt) {
+		// get the current scale of object on stage
+		if ( stageNodeTracker[0] == null) { return; }
+
 		newScale = stageNodeTracker[0].scaleX+.1;
+		// Return if scale is at set max scale 
 		if (newScale > scaleMax) { return }
-		
-		for (i = 0; i <stageNodeTracker.length; i++) {
+		for (i = 0; i < stageNodeTracker.length; i++) {
 			stageNodeTracker[i].scaleX = newScale;
 			stageNodeTracker[i].scaleY = newScale;
 		}
+		
+
+		/*
+
+		 Maybe loop through all nodes, update global node trackers
+		and try to snap all nearby nodes to nearest??? 
+
+		let oldXdif, oldYdif, newGlblBotX, newGlblBotY
+
+		for (i = 0; i < stageNodeTracker.length; i++) {
+			stageNodeTracker[i].scaleX = newScale;
+			stageNodeTracker[i].scaleY = newScale;
+
+			oldXdif = Math.abs(stageNodeTracker[i].GlblBot.x-stageNodeTracker[i].GlblTop.x)
+			oldYdif = Math.abs(stageNodeTracker[i].GlblBot.y-stageNodeTracker[i].GlblTop.y)
+			newGlblBotX = stageNodeTracker[i].GlblBot.x
+			stageNodeTracker[i].GlblBot = {x}
+					stageNodeTracker[i]
+			console.log(stageNodeTracker[i])
+
+			//snapOnResize(stageNodeTracker[i]);
+
+			
+		}
+
+		*/
+		
 	});
 	minus.on("click", function(evt) {
 		newScale = stageNodeTracker[0].scaleX-.1;
@@ -318,11 +455,85 @@ function drawMagnifyer() {
 		}
 	});
 
-	magnifyContainer.setTransform(canvas.width*.95, canvas.height *.87)
+	magnifyContainer.setTransform(canvas.width-60, canvas.height *.87)
 	magnifyContainer.addChild(plus, minus);
 	
 	stage.addChild(magnifyContainer);
 }
+
+/* THIS WILL ONLY BE USED IF RESIZE FUNCTION IS FIGURED OUT
+function snapOnResize(dragger) {
+	
+	let DrgTop = {x: dragger.GlblTop.x, y: dragger.GlblTop.y}
+	let DrgBot = {x: dragger.GlblBot.x, y: dragger.GlblBot.y}
+	let hitTop, hitBot;
+	// Disables multiple update dragger calls
+	let alreadyMoved;
+	// Range of snap
+	let rng = 50 * scale;
+	// Determine which nodes collide
+	let topToTop, topToBot, botToTop, botToBot;
+
+	for (i = 0; i < stageNodeTracker.length; i++){
+		if (stageNodeTracker[i].id != dragger.id){
+			hitTop = {x: stageNodeTracker[i].GlblTop.x, y: stageNodeTracker[i].GlblTop.y}
+			hitBot = {x: stageNodeTracker[i].GlblBot.x, y: stageNodeTracker[i].GlblBot.y}
+			topToTop = {x: DrgTop.x-hitTop.x, y: DrgTop.y-hitTop.y};
+			topToBot = {x: DrgTop.x-hitBot.x, y: DrgTop.y-hitBot.y};
+			botToTop = {x: DrgBot.x-hitTop.x, y: DrgBot.y-hitTop.y};
+			botToBot = {x: DrgBot.x-hitBot.x, y: DrgBot.y-hitBot.y};
+
+			// eleminate top node on protracor for evaluation
+			if (stageNodeTracker[i].type == "protractor"){
+				hitTop.x = hitTop.y = 100;
+			}
+			// if two nodes connect within 10 px
+			// snap to location of node found, evaluat angle, and exit loop
+			if (Math.abs(topToTop.x) < rng && Math.abs(topToTop.y)< rng){
+				//console.log("top-top collision")
+				updateDragger(topToTop);
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
+			}
+			else if (Math.abs(topToBot.x) < rng && Math.abs(topToBot.y) < rng){
+				//console.log("top-bot collision")
+				updateDragger(topToBot);
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
+			}
+			else if (Math.abs(botToTop.x) < rng && Math.abs(botToTop.y)< rng){
+				//console.log("bot-top collision")
+				updateDragger(botToTop);
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
+			}
+			else if (Math.abs(botToBot.x) < rng && Math.abs(botToBot.y)< rng){
+				//console.log("bot-bot collision")
+				updateDragger(botToBot);
+				alreadyMoved = true;
+				//i = stageNodeTracker.length;
+			}
+		}
+	}
+	// reposition selected dragger to location of node found
+	function updateDragger(pt){
+		// Disables multiple update dragger calls
+		if (alreadyMoved) {return;}
+		// update acutal dragger location on screen by offset
+		dragger.x += -pt.x;
+		dragger.y += -pt.y;
+		// update global node tracker variables
+		dragger.GlblTop.x += -pt.x;
+		dragger.GlblTop.y += -pt.y;
+		dragger.GlblBot.x += -pt.x;
+		dragger.GlblBot.y += -pt.y;
+		// update parentFunction var for use in evaluateAngle
+		DrgTop = {x: dragger.GlblTop.x, y: dragger.GlblTop.y}
+		DrgBot = {x: dragger.GlblBot.x, y: dragger.GlblBot.y}
+	}
+
+}
+*/
 
 function drawAngleDisplay() {
 	// determine invisible hitbox
@@ -405,66 +616,13 @@ function drawAngleDisplay() {
 	stage.addChild(angleResizeGroup);
 }
 
-
-
 //---------------------------------------------------------------------
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-// TWEEN TO STAGE
-// handles all selector stage tweens to stage (protractor and legs)
+// 					 	DRAW STAGE OBJECTS
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //---------------------------------------------------------------------
-function generateTween(obj){
-	if (tweenRunningCount) {
-		return;
-	}
-	tweenObj = obj.clone();
-
-	let tweenXScale, tweenYScale;
-	if (tweenObj.image.id == 'prot'){
-		if (!stageProtActive) {
-			tweenXScale = tweenYScale = scale*1.25*newScale;
-			stageProtActive = true;
-		} else { 
-			return
-		}
-	} else {
-		tweenXScale = tweenYScale = scale*newScale;
-	}
-
-	stage.addChild(tweenObj)
-	stage.update();
-
-    createjs.Ticker.timingMode = createjs.Ticker.RAF;
-    createjs.Ticker.addEventListener("tick", stage);
-    tweenRunningCount++;
-    createjs.Tween.get(tweenObj, { loop: false }, null, false)
-	.to({ x: xTween, y: yTween, scaleX: tweenXScale, scaleY: tweenYScale}, 
-		1000, createjs.Ease.get(2))
-	.call(handleTweenComplete);
-}
-
-function handleTweenComplete() {
-	tweenRunningCount--;
-	var image = new Image();
-	image.src = tweenObj.image.src;
-	// Check if new object is protractor
-	if (tweenObj.image.id == 'prot'){
-		image.onload = createStageProt;
-	} else {
-		image.onload = handleImageLoad;
-	}
-	xTween = 0;
-    yTween = 0;
-	stage.removeChild(tweenObj);
-}
-
-function tick(event) {
-	// this set makes it so the stage only re-renders when 
-	// an event handler indicates a change has happened.
-    if (update || tweenRunningCount > 0) {
-        update = false; // only update once
-        tweenStage.update(event);
-    }
-}
 
 //---------------------------------------------------------------------
 //
@@ -480,7 +638,6 @@ function createStageProt(event) {
 	bitmap.setTransform(0, 0, .5, .5);
 	
 	stage.addChild(bitmap);
-	stageProtActive = true;
 
 	var midCircle = new createjs.Shape();
 	midCircle.graphics.beginFill("#000000")
@@ -505,9 +662,13 @@ function createStageProt(event) {
 	// Add container to stage
 	container.addChild(bitmap, bottomCircle, midCircle);
 	container.type = "protractor";
+	protStorage = container;
 	handleLegContainer(container);
 
+	stageProtActive = true;
+
 	handleHingeHit(bottomCircle);
+	
 }
 
 //---------------------------------------------------------------------
@@ -563,139 +724,16 @@ function handleImageLoad(event) {
 	
 }
 
-//---------------------------------------------------------------
-// 
-//	Event handlers for left stage selector buttons
+
+
+
+//---------------------------------------------------------------------
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//-----------------------------------------------------------------
-function handleSelectEvt(leg){
-	leg.on("mousedown", function(evt) {
-		
-		leg.oldX = leg.x;
-		leg.oldY = leg.y;
-		// Store original location to calc xy dist traveled
-		leg.offset = { x: leg.x - evt.stageX, y: leg.y - evt.stageY };
-	});
-	
-	leg.on("pressmove",function(evt) {
-		leg.x = evt.stageX + leg.offset.x;
-		leg.y = evt.stageY + leg.offset.y;
-
-		// redraw the stage to show the change:
-		stage.update();   
-	});
-
-	leg.on("pressup", function(evt) {
-		if (leg.x < dividerLocX*1.3) {
-			if (Math.abs(leg.x-leg.oldX) < 5 && Math.abs(leg.y-leg.oldY) < 5) {
-				xToStage = xTween = legToBoard*2;
-				yToStage = yTween = legToBoard;
-				generateTween(leg)
-				leg.x = leg.oldX;
-				leg.y = leg.oldY;
-			} else {
-				leg.x = leg.oldX;
-				leg.y = leg.oldY;
-			}
-		} else {
-			xToStage = xTween = leg.x;
-			yToStage = yTween = leg.y;
-			leg.x = leg.oldX;
-			leg.y = leg.oldY;
-			generateTween(leg)
-		}
-		
-	});
-}
-
-//----------------------------------------------------------------
+// 				   STAGE INTERACTIVITY FEATURES
 //
-// This function enables dragger movement of leg objects
-//
-//-----------------------------------------------------------------
-function handleLegContainer(dragger){
-
-	stage.addChild(dragger);
-	dragger.x = xToStage;
-	dragger.y = yToStage;
-
-	// Store node locations to container
-	// updates on rotate complete - restoreDragger()
-	let ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
-	let ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
-	dragger.GlblTop = ptTop;
-	dragger.GlblBot = ptBot;
-	// Save object to array
-	stageNodeTracker.push(dragger);
-	dragger.id = stageIdInc++;
-
-	// Click select or deselects leg object
-	dragger.on("click", function(evt) {
-		if (Math.abs(dragger.oldX-evt.stageX) < 1 && 
-			Math.abs(dragger.oldY-evt.stageY) < 1 && 
-			dragger.type != "protractor") {
-				updateSelectedObjects(dragger);
-			}
-	});
-
-	dragger.on("mousedown", function(evt) {
-		// wont draw selector box if moving object on stage
-		objectEventActive = true;
-		// pause listener
-		dragger._listeners.pressup = dragger.pressupStore;
-		// reposition dragger to top z axis on stage
-		stage.removeChild(dragger);
-		stage.addChild(dragger);
-		// Store origin xy to determine if click or drag
-		dragger.oldX = evt.stageX;
-		dragger.oldY = evt.stageY;
-		// Store offset of origin, move object from point selected
-		dragger.offset = { x: dragger.x - evt.stageX, y: dragger.y - evt.stageY };
-
-
-		// determine if selected
-		console.log(selectedObjects.includes(dragger))
-
-
-
-		
-		// IF TRUE move all object selected as one
-		// update all variables
-		// Seperate method?
-
-
-
-
-	});
-	
-	dragger.on("pressmove",function(evt) {
-		// partial border detection, keep legs of selector stage
-		if (evt.stageX < dividerLocX) {return}
-		// pause listeners
-		stage._listeners.handleStageMouseDown= null
-		stage._listeners.handleStageMouseMove = null;
-		// update dragger position on stage
-		dragger.x = evt.stageX + dragger.offset.x;
-		dragger.y = evt.stageY + dragger.offset.y;
-
-		// redraw the stage to show the change:
-		stage.update();   
-	});
-
-	dragger.on("pressup", function(evt) {
-		objectEventActive = false;
-		// Update node trackers
-		ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
-		ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
-		dragger.GlblTop = ptTop;
-		dragger.GlblBot = ptBot;
-		// Check stage objects and snap to node in range
-		snapCollisionTest(dragger);
-
-	});
-	dragger.pressupStore = dragger._listeners.pressup;	
-	//stage._listeners = stage.pauseListener;
-}
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//---------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------
 //
@@ -726,7 +764,7 @@ function snapCollisionTest(dragger) {
 			botToTop = {x: DrgBot.x-hitTop.x, y: DrgBot.y-hitTop.y};
 			botToBot = {x: DrgBot.x-hitBot.x, y: DrgBot.y-hitBot.y};
 
-			// eleminate top node on protracor for evaluation
+			// eleminate top node on protracor for evaluation (hacky fix)
 			if (stageNodeTracker[i].type == "protractor"){
 				hitTop.x = hitTop.y = 100;
 			}
@@ -833,6 +871,434 @@ function snapCollisionTest(dragger) {
 	}
 }
 
+//---------------------------------------------------------------------
+//
+// TWEEN TO STAGE
+// handles all selector stage tweens to stage (protractor and legs)
+//---------------------------------------------------------------------
+function generateTween(obj){
+	if (tweenRunningCount) {
+		return;
+	}
+	tweenObj = obj.clone();
+
+	let tweenXScale, tweenYScale;
+	if (tweenObj.image.id == 'prot'){
+		if (!stageProtActive) {
+			tweenXScale = tweenYScale = scale*1.25*newScale;
+			stageProtActive = true;
+		} else { 
+			return
+		}
+	} else {
+		tweenXScale = tweenYScale = scale*newScale;
+	}
+
+	stage.addChild(tweenObj)
+	stage.update();
+
+    createjs.Ticker.timingMode = createjs.Ticker.RAF;
+    createjs.Ticker.addEventListener("tick", stage);
+    tweenRunningCount++;
+    createjs.Tween.get(tweenObj, { loop: false }, null, false)
+	.to({ x: xTween, y: yTween, scaleX: tweenXScale, scaleY: tweenYScale}, 
+		1000, createjs.Ease.get(2))
+	.call(handleTweenComplete);
+}
+
+function handleTweenComplete() {
+	tweenRunningCount--;
+	var image = new Image();
+	image.src = tweenObj.image.src;
+	// Check if new object is protractor
+	if (tweenObj.image.id == 'prot'){
+		image.onload = createStageProt;
+	} else {
+		image.onload = handleImageLoad;
+	}
+	xTween = 0;
+    yTween = 0;
+	stage.removeChild(tweenObj);
+}
+
+function tick(event) {
+	// this set makes it so the stage only re-renders when 
+	// an event handler indicates a change has happened.
+    if (update || tweenRunningCount > 0) {
+        update = false; // only update once
+        tweenStage.update(event);
+    }
+}
+
+//----------------------------------------------------
+//
+//		Stage object selection box event hadlers
+//
+//----------------------------------------------------
+function handleStageMouseDown(event) {
+	if (!event.primary) { return; }
+	// Store current stage mouse location
+	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
+	// if on selector stage, distable stage events
+	if (oldPt.x < dividerLocX ) { return; }
+	stage.addEventListener("stagemousemove", handleStageMouseMove);
+}
+
+function handleStageMouseMove(event) {
+	// if dragger active or mouse out of bounds return
+	if (!event.primary || oldPt.x < dividerLocX  || objectEventActive) { return; }
+	let stroke = 10;
+
+	// Enable boundary on drawing selector box on selector stage
+	let stageMouseX = stage.mouseX;
+	if (stageMouseX < dividerLocX){
+		stageMouseX = dividerLocX; }
+
+	stage.removeChild(stageSelectorBox)
+	let shape = new createjs.Shape();
+	shape.graphics.setStrokeDash([stroke * 2, stroke]).
+		beginStroke("#FFFFFF").rect(oldPt.x, oldPt.y,
+			stageMouseX - oldPt.x, stage.mouseY - oldPt.y);
+	
+	stageSelectorBox = shape;
+    stage.addChild(stageSelectorBox);
+
+	stage.update();
+}
+
+function handleStageMouseUp(event) {
+	if (!event.primary) { return; }
+	stage.removeChild(stageSelectorBox)
+	stage.removeEventListener("stagemousemove", handleStageMouseMove);
+	
+	// if dragger active or mouse out of bounds return
+	if (objectEventActive || oldPt.x < dividerLocX) { return; }
+	let deselectAll = [];
+	
+	for (i = 0; i < stageNodeTracker.length; i++){
+		hitTop = {x: stageNodeTracker[i].GlblTop.x, y: stageNodeTracker[i].GlblTop.y}
+		hitBot = {x: stageNodeTracker[i].GlblBot.x, y: stageNodeTracker[i].GlblBot.y}
+		
+		//if (stageNodeTracker[i].type == "protractor") { continue }
+
+		// Find lower and upper bounds
+		let boundX, boundY;
+		if (stage.mouseX<oldPt.x){
+			boundX = {lower: stage.mouseX, upper: oldPt.x};
+		} else {
+			boundX = {lower: oldPt.x, upper: stage.mouseX};
+		}
+		if (stage.mouseY<oldPt.y){
+			boundY = {lower: stage.mouseY, upper: oldPt.y};
+		} else {
+			boundY = {lower: oldPt.y, upper: stage.mouseY};
+		}
+		
+		// Check if either node is within bounds of selector box
+		if (hitTop.x > boundX.lower && hitTop.x < boundX.upper 
+			&& hitTop.y > boundY.lower && hitTop.y < boundY.upper ||
+			hitBot.x > boundX.lower && hitBot.x < boundX.upper 
+			&& hitBot.y > boundY.lower && hitBot.y < boundY.upper) {
+			
+				// 1 indicates this is a multi-select event
+			stageNodeTracker[i].selectType = 1
+			// deselect stores if item need to be removed
+			// update adds item to array or stages for deselect
+			deselectAll.push(updateSelectedObjects(stageNodeTracker[i]));
+		}
+	}
+	// if all objects selected are staged for deselection
+	if (deselectAll.includes(true) && !deselectAll.includes(false)){
+		// if ALL selected objects are included in current selection
+		if (deselectAll.length == selectedObjects.length) {
+			for (j = selectedObjects.length-1; j >= 0; j--){
+				selectedObjects[j].shadow = null;
+				selectedObjects.pop();
+			} 
+		} 
+		// if partial deselect of currently selected
+		else {
+			for (j = 0; j < selectedObjects.length; j++){
+				// deselect staged objects
+				if (selectedObjects[j].stageForDeselect){
+					selectedObjects[j].shadow = null;
+					selectedObjects.splice(j, 1);
+					j--;
+				} 
+			}
+		}
+	}
+}
+
+function updateSelectedObjects(dragger) {
+	// init case if storage array is empty, add to array
+	if (selectedObjects == 0) {
+		dragger.shadow = new createjs.Shadow("#4287f5", 0, 0, 30);
+		selectedObjects.push(dragger);
+		dragger.stageForDeselect = false;
+		return false;
+	} 
+	// Add to selected array if not already in array
+	else {
+
+		// if current dragger not in the array, set selected
+		if (!selectedObjects.includes(dragger)){
+			dragger.shadow = new createjs.Shadow("#4287f5", 0, 0, 30);
+			selectedObjects.push(dragger)
+			dragger.stageForDeselect = false;
+			return false;
+		} else {
+			// If click select (not multi-select), remove item clicked
+			if (dragger.selectType != 1){
+				dragger.shadow = null;
+				let index;
+				for (j = 0; j < selectedObjects.length; j++){
+					if (selectedObjects[j] == dragger){
+						index = j;
+						break;
+					} 
+				}
+				// Remove duplicate selections from the array
+				selectedObjects.splice(index, 1);
+			} 
+			// if multi-select stage for deselect
+			else {
+				dragger.stageForDeselect = true;
+			}
+			return true;
+		}
+	}
+	//console.log(selectedObjects.length)
+}
+
+//---------------------------------------------------------------------
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+// 				   		SEPERATE EVENT HANDLERS
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//---------------------------------------------------------------------
+
+//---------------------------------------------------------------
+// 
+//	Event handlers for left stage selector buttons
+//
+//-----------------------------------------------------------------
+function handleSelectEvt(leg){
+	leg.on("mousedown", function(evt) {
+		
+		leg.oldX = leg.x;
+		leg.oldY = leg.y;
+		// Store original location to calc xy dist traveled
+		leg.offset = { x: leg.x - evt.stageX, y: leg.y - evt.stageY };
+	});
+	
+	leg.on("pressmove",function(evt) {
+		leg.x = evt.stageX + leg.offset.x;
+		leg.y = evt.stageY + leg.offset.y;
+
+		// redraw the stage to show the change:
+		stage.update();   
+	});
+
+	leg.on("pressup", function(evt) {
+	
+		// If leg is still on selector stage
+		if (leg.x < dividerLocX*1.3) {
+			// If the leg has not moved, register as click and tween to legToBoard
+			if (Math.abs(leg.x-leg.oldX) < 1 && Math.abs(leg.y-leg.oldY) < 1) {
+				xToStage = xTween = legToBoard*2;
+				yToStage = yTween = legToBoard;
+				generateTween(leg)
+				leg.x = leg.oldX;
+				leg.y = leg.oldY;
+			} 
+			// if moved, but still on selector stage, do nothing & restore button loc
+			else {
+				leg.x = leg.oldX;
+				leg.y = leg.oldY;
+			}
+		} 
+		// If leg is not on selector stage, create dragger to drop loc
+		else {
+			// Store location to generate new dragger
+			xToStage = leg.x;
+			yToStage = leg.y;
+			// Return button to its original position
+			leg.x = leg.oldX;
+			leg.y = leg.oldY;
+			
+			// Immediate load to position on the board
+			var image = new Image();
+			image.src = leg.image.src;
+			// Check if new object is protractor
+			if (leg.image.id == 'prot'){
+				image.onload = createStageProt;
+				
+			} else {
+				image.onload = handleImageLoad;
+			}
+			
+			/* Tween stuff 
+			xToStage = xTween = leg.x;
+			yToStage = yTween = leg.y;
+			generateTween(leg)
+			*/
+		}
+		// REMOVE protractor from the stage
+		
+		if (leg.image.id == 'prot' && stageProtActive){
+			stage.removeChild(protStorage);
+			for (i = 0; i < stageNodeTracker.length; i++){
+				if (stageNodeTracker[i].type == "protractor"){
+					stageNodeTracker.splice(i, 1);
+					break;
+				} 
+			}
+			stageProtActive = false;
+			protStorage = null;
+		}
+		
+		
+	});
+}
+
+//----------------------------------------------------------------
+//
+// This function enables dragger movement of leg objects
+//
+//-----------------------------------------------------------------
+function handleLegContainer(dragger){
+
+	stage.addChild(dragger);
+	dragger.x = xToStage;
+	dragger.y = yToStage;
+
+	// Store node locations to container
+	// updates on rotate complete - restoreDragger()
+	let ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
+	let ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
+	dragger.GlblTop = ptTop;
+	dragger.GlblBot = ptBot;
+	// Save object to array
+	stageNodeTracker.push(dragger);
+	dragger.id = stageIdInc++;
+
+	dragger.on("mousedown", function(evt) {
+		
+		// wont draw selector box if moving object on stage
+		objectEventActive = true;
+		// pause listener
+		dragger._listeners.pressup = dragger.pressupStore;
+		
+		// reposition dragger to top z axis on stage
+		stage.removeChild(dragger);
+		stage.addChild(dragger);
+
+		// determine if selected
+		if (selectedObjects.includes(dragger)) {
+			dragger.multiDrag = true;
+			
+			for (i = 0; i < selectedObjects.length; i++) {
+
+				// Store offset of origin, move object from point selected
+				selectedObjects[i].offset = { x: selectedObjects[i].x - evt.stageX, 
+					y: selectedObjects[i].y - evt.stageY };
+
+				// Store origin xy to determine test if click (check toggle selected)
+				selectedObjects[i].oldX = evt.stageX + (dragger.x-selectedObjects[i].x);
+				selectedObjects[i].oldY = evt.stageY + (dragger.y-selectedObjects[i].y);
+			}
+			
+		} 
+		// normal single drag
+		else {
+			dragger.multiDrag = false;
+
+			// Store origin xy to determine test if click (check toggle selected)
+			dragger.oldX = evt.stageX;
+			dragger.oldY = evt.stageY;
+			// Store offset of origin, move object from point selected
+			dragger.offset = { x: dragger.x - evt.stageX, y: dragger.y - evt.stageY };
+		}
+
+	});
+	
+	dragger.on("pressmove",function(evt) {
+		// partial border detection, keep legs of selector stage
+		if (evt.stageX < dividerLocX) {return}
+		// pause listeners
+		stage._listeners.handleStageMouseDown= null
+		stage._listeners.handleStageMouseMove = null;
+		
+		// If moving multiple stage items
+		if (dragger.multiDrag) {
+			for (i = 0; i < selectedObjects.length; i++) {
+				selectedObjects[i].x = evt.stageX + selectedObjects[i].offset.x;
+				selectedObjects[i].y = evt.stageY + selectedObjects[i].offset.y;
+			}
+		} 
+		// Normal single drag
+		else {
+			// update dragger position on stage
+			dragger.x = evt.stageX + dragger.offset.x;
+			dragger.y = evt.stageY + dragger.offset.y;
+		}
+
+		// redraw the stage to show the change:
+		stage.update();   
+	});
+
+	dragger.on("pressup", function(evt) {
+		objectEventActive = false;
+
+		// If moving multiple stage items
+		if (dragger.multiDrag) {
+			for (i = 0; i < selectedObjects.length; i++) {
+				// Update node trackers
+				ptTop = selectedObjects[i].localToGlobal(
+					selectedObjects[i].topInsetX,selectedObjects[i].topInsetY);
+				ptBot = selectedObjects[i].localToGlobal(
+					selectedObjects[i].bottomInsetX,selectedObjects[i].bottomInsetY);
+				selectedObjects[i].GlblTop = ptTop;
+				selectedObjects[i].GlblBot = ptBot;
+				// Check stage objects and snap to node in range
+				// No snap collision on multi - to resource intensive
+				snapCollisionTest(selectedObjects[i]);
+			}
+		} else {
+			// Update node trackers
+			ptTop = dragger.localToGlobal(dragger.topInsetX,dragger.topInsetY);
+			ptBot = dragger.localToGlobal(dragger.bottomInsetX,dragger.bottomInsetY);
+			dragger.GlblTop = ptTop;
+			dragger.GlblBot = ptBot;
+			// Check stage objects and snap to node in range
+			snapCollisionTest(dragger);
+		}
+		
+		// Toggle SINGLE selected object
+		// ADd to remove prot selection - && dragger.type != "protractor"
+		if (Math.abs(dragger.oldX-evt.stageX) < 1 && 
+			Math.abs(dragger.oldY-evt.stageY) < 1 ) {
+				dragger.selectType = 0;
+				updateSelectedObjects(dragger);
+				dragger.selectType = 1;
+		}
+		
+		// Ensures protractor is always top level on stage
+		if (stageProtActive) {
+			stage.removeChild(protStorage);
+			stage.addChild(protStorage);
+		}
+		
+
+	});
+	dragger.pressupStore = dragger._listeners.pressup;	
+	//stage._listeners = stage.pauseListener;
+}
+
+
+
 //-----------------------------------------------------------------
 //
 // Hitbox for "top" node on legs
@@ -899,6 +1365,51 @@ function handleHingeHit(hitbox){
 
 	});
 }
+
+//---------------------------------------------------------------------------
+//
+// FLIP PROTRACTOR FUNCTION
+// TODO: Mirror image has numbers inverted. Requires new protractor
+// 
+//--------------------------------------------------------------------------
+/*
+function handleFlipHit(flipCircle) {
+	let flipCont = flipCircle.parent
+
+	flipCircle.addEventListener("mousedown", function() {
+		// Bubble button on press
+		flipCont.scaleX = flipCont.scaleY = .90;
+		flipCont.x += 1.5;
+		flipCont.y += 1.5;
+	})
+
+	flipCircle.on("pressup", function(evt) {	
+		// Bubble button on press
+		flipCont.scaleX = flipCont.scaleY = 1;
+		flipCont.x += -1.5;
+		flipCont.y += -1.5;
+
+		if (!stageProtActive) {
+			alert("No protractor to flip!");
+			return;
+		}
+		console.log(protStorage)
+		
+		// Flip button for fun
+		if (flipCont.skewY) {
+			flipCont.skewY =0;
+			flipCont.x += -23;
+		} else {
+			flipCont.skewY = 180
+			flipCont.x += +23;
+		}
+		//flipCont.skewX = 0
+		
+		
+
+	});
+}
+*/
 
 //---------------------------------------------------------------------------
 //
@@ -974,37 +1485,3 @@ function restoreDragger(hitbox){
 }
 
 
-
-
-//-----------------------------------------------------------------
-// Manages resize variables on window size change
-//-----------------------------------------------------------------
-function resizeUpdate(){
-	windowSizeX = window.innerWidth;
-	windowSizeY = window.innerHeight;
-	
-	xMainStage = mainStageElem.parentNode.offsetLeft + mainStageElem.offsetLeft;
-	yMainStage = mainStageElem.parentNode.offsetTop + mainStageElem.offsetTop;
-
-	// modify x vars
-	if (windowSizeX > 850 ) {
-		canvas.width = windowSizeX*.895;
-		
-		if (magnifyContainer != null){
-			magnifyContainer.x = canvas.width*.95; }
-	}
-	if (windowSizeY > 700) {
-		canvas.height = windowSizeY*.795;
-		
-		if (magnifyContainer != null){
-			magnifyContainer.y = canvas.height *.87 }
-
-		if (angleResizeGroup != null){
-			angleResizeGroup.y = windowSizeY*.7; }
-
-		// adjust divider height on resize
-		if (divider != null){
-			divider.graphics.command.h = canvas.height;}
-	}
-	
-}
