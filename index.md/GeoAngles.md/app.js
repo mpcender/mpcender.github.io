@@ -49,6 +49,7 @@ let angleDispCont;
 // Allows changing angle of legs by increments
 let deg5Active = false;
 let deg2p5Active = false;
+let degFreeActive =  false;
 
 // draw select box variables
 let drawingCanvas;
@@ -576,7 +577,7 @@ function drawAngleDisplay() {
 			deg2p5Active = false;
 			//Deactivate Free degree selector
 			degFreeCont.children[0].graphics._fill.style = "#000000"
-			degFreeCont = false;
+			degFreeActive = false;
 		} else {
 			degSel5Cont.children[0].graphics._fill.style = "#000000"
 			deg5Active = false;
@@ -603,7 +604,7 @@ function drawAngleDisplay() {
 			deg5Active = false;
 			//Deactivate Free degree selector
 			degFreeCont.children[0].graphics._fill.style = "#000000"
-			degFreeCont = false;
+			degFreeActive = false;
 		} else {
 			degSel2p5Cont.children[0].graphics._fill.style = "#000000"
 			deg2p5Active = false;
@@ -640,7 +641,7 @@ function drawAngleDisplay() {
 	angleResizeGroup = new createjs.Container()
 	angleResizeGroup.setTransform(0, windowSizeY*.67);
 
-	angleResizeGroup.addChild(background,angleDispCont, 
+	angleResizeGroup.addChild(background, angleDispCont, 
 		degSel5Cont, degSel2p5Cont, degFreeCont, angleRevealTxt)
 	stage.addChild(angleResizeGroup);
 }
