@@ -1198,8 +1198,8 @@ function handleSelectEvt(leg){
 			*/
 		}
 		// REMOVE protractor from the stage
-		
-		if (leg.image.id == 'prot' && stageProtActive){
+		console.log(evt)
+		if (leg.image.id == 'prot' && stageProtActive && evt.stageX > dividerLocX){
 			stage.removeChild(protStorage);
 			for (i = 0; i < stageNodeTracker.length; i++){
 				if (stageNodeTracker[i].type == "protractor"){
