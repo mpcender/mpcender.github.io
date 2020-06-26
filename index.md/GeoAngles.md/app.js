@@ -811,6 +811,10 @@ function snapCollisionTest(dragger) {
 				updateDragger(topToTop);
 				evaluateAngle(hitTop, DrgBot, hitBot);
 				alreadyMoved = true;
+
+				if (Math.abs(topToTop.x) < (rng*.1) && Math.abs(topToTop.y)< (rng*.1) ){
+					pingPoint(hitTop);
+				}
 				//i = stageNodeTracker.length;
 			}
 			else if (Math.abs(topToBot.x) < rng && Math.abs(topToBot.y) < rng){
@@ -818,6 +822,10 @@ function snapCollisionTest(dragger) {
 				updateDragger(topToBot);
 				evaluateAngle(hitBot, DrgBot, hitTop);
 				alreadyMoved = true;
+
+				if (Math.abs(topToBot.x) < (rng*.1) && Math.abs(topToBot.y)< (rng*.1) ){
+					pingPoint(hitBot);
+				}
 				//i = stageNodeTracker.length;
 			}
 			else if (Math.abs(botToTop.x) < rng && Math.abs(botToTop.y)< rng){
@@ -825,6 +833,10 @@ function snapCollisionTest(dragger) {
 				updateDragger(botToTop);
 				evaluateAngle(hitTop, DrgTop, hitBot);
 				alreadyMoved = true;
+
+				if (Math.abs(botToTop.x) < (rng*.1) && Math.abs(botToTop.y)< (rng*.1) ){
+					pingPoint(hitTop);
+				}
 				//i = stageNodeTracker.length;
 			}
 			else if (Math.abs(botToBot.x) < rng && Math.abs(botToBot.y)< rng){
@@ -832,6 +844,10 @@ function snapCollisionTest(dragger) {
 				updateDragger(botToBot);
 				evaluateAngle(hitBot, DrgTop, hitTop);
 				alreadyMoved = true;
+
+				if (Math.abs(botToBot.x) < (rng*.1) && Math.abs(botToBot.y)< (rng*.1) ){
+					pingPoint(hitBot);
+				}
 				//i = stageNodeTracker.length;
 			}
 		}
@@ -856,7 +872,7 @@ function snapCollisionTest(dragger) {
 	// determine the angle between the two legs
 	// p1 = shared node, p2 dragger node, p3 adjustTo node
 	function evaluateAngle(p1, p2, p3){
-		pingPoint(p1);
+		//pingPoint(p1);
 
 		if (stageNodeTracker[i].type == "protractor" ||
 			dragger.type == "protractor"){
