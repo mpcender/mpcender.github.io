@@ -954,7 +954,7 @@ function generateTween(obj){
     tweenRunningCount++;
     createjs.Tween.get(tweenObj, { loop: false }, null, false)
 	.to({ x: xTween, y: yTween, scaleX: tweenXScale, scaleY: tweenYScale}, 
-		1000, createjs.Ease.get(2))
+		500, createjs.Ease.get(2))
 	.call(handleTweenComplete);
 }
 
