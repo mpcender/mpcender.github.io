@@ -58,6 +58,10 @@ let stageSelectorBox;
 let objectEventActive = false;
 let selectedObjects = [];
 
+// Leg numbering
+let legNumbers = [];
+let numVisible = false;
+
 //------------------------------------------------------
 //
 //		TODO:	
@@ -200,17 +204,17 @@ function drawSelectorStage(){
 	let height = 800;
 
 	let pt = {x: width*.07, y: height*.015}
-	let red = loadImgBitmap("./res/red.png", pt);
+	let red = loadImgBitmap("./res/legs/redAdj.png", pt);
 	pt = {x: width*.23, y: height*.015}
-	let blue = loadImgBitmap("./res/blue.png", pt);
+	let blue = loadImgBitmap("./res/legs/blueAdj.png", pt);
 	pt = {x: width*.39, y: height*.015}
-	let yellow = loadImgBitmap("./res/yellow.png", pt);
+	let yellow = loadImgBitmap("./res/legs/yellowAdj.png", pt);
 	pt = {x: width*.55, y: height*.015}
-	let green = loadImgBitmap("./res/green.png", pt);
+	let green = loadImgBitmap("./res/legs/greenAdj.png", pt);
 	pt = {x: width*.71, y: height*.015}
-	let purple = loadImgBitmap("./res/purple.png", pt);
+	let purple = loadImgBitmap("./res/legs/purpleAdj.png", pt);
 	pt = {x: width*.87, y: height*.015}
-	let orange = loadImgBitmap("./res/orange.png", pt);
+	let orange = loadImgBitmap("./res/legs/orangeAdj.png", pt);
 
 	handleSelectEvt(red);
 	handleSelectEvt(blue);
@@ -221,7 +225,7 @@ function drawSelectorStage(){
 
 	// Protractor
 	let image = new Image();
-	image.src = "./res/protractWhiteBigNum.png"
+	image.src = "./res/protractor/WhiteBigNum.png"
 	image.id = "prot";
 	let protBitmap = new createjs.Bitmap(image);
 	protBitmap.setTransform(width*.05, height*.45, 
@@ -284,46 +288,20 @@ function drawProtFlipButton(){
 function drawDeleteButton(){
 	deleteButtonContainer = new createjs.Container();
 
-
 	// Refresh container (Holds all objects and moves on stage)
-	let refreshCont = new createjs.Container();
-	// Circle button for trash png
 	let refreshCircle = new createjs.Shape();
-	refreshCircle.graphics.beginFill("#000000").drawCircle(21,22,33);
-	refreshCircle.shadow = new createjs.Shadow("#4287f5", 0, 0,5);
-	// load hit surface
-	let refreshHit = new createjs.Shape();
-	refreshHit.graphics.beginFill("#000000").drawCircle(21,22,33);
-	refreshCircle.hitArea = refreshHit ;
-	// load png resource
-	let refreshImg = new Image();
-	refreshImg.src = "./res/refresh.png"
-	let refreshBmp = new createjs.Bitmap(refreshImg);
-	refreshBmp.setTransform(-2, -1, scaleSelect*.3, scaleSelect*.3)
-
-	// Add all to container and move to stage position
-	refreshCont.addChild(refreshCircle, refreshBmp)
-	refreshCont.setTransform(0, 22);
+	let refreshCont = getContainer("./res/button/refresh.png", refreshCircle, -2, -1, 22);
 
 	// Trash container (Holds all objects and moves on stage)
-	let trashCont = new createjs.Container();
-	// Circle button for trash png
 	let trashCircle = new createjs.Shape();
-	trashCircle.graphics.beginFill("#000000").drawCircle(21,22,33);
-	trashCircle.shadow = new createjs.Shadow("#4287f5", 0, 0,5);
-	// load hit surface
-	let trashHit = new createjs.Shape();
-	trashHit.graphics.beginFill("#000000").drawCircle(21,22,33);
-	trashCircle.hitArea = trashHit ;
-	// load png resource
-	let trashImg = new Image();
-	trashImg.src = "./res/trash.png"
-	let trashBmp = new createjs.Bitmap(trashImg);
-	trashBmp.setTransform(0, 0, scaleSelect*.3, scaleSelect*.3);
+	let trashCont = getContainer("./res/button/trash.png", trashCircle, 0, 0, 95);
 
-	// Add all to container and move to stage position
-	trashCont.addChild(trashCircle, trashBmp)
-	trashCont.setTransform(0,95);
+	// num container (Holds all objects and moves on stage)
+	let numCircle = new createjs.Shape();
+	let numCont = getContainer("./res/button/num.png", numCircle, 0, 0, 168);
+
+
+	//-------------------------------------------------------------------------
 
 	refreshCircle.on("mousedown", function(evt) {
 		// Bubble button on press
@@ -345,9 +323,12 @@ function drawDeleteButton(){
 				stageProtActive = false;
 				protStorage = null;
 				newScale = 1;
+				legNumbers = [];
 			}
 		}
 	});
+
+	//-------------------------------------------------------------------------
 
 	trashCircle.on("mousedown", function(evt) {
 		// Bubble button on press
@@ -375,16 +356,25 @@ function drawDeleteButton(){
 					break;
 				} 
 			}
-
-			console.log(stageNodeTracker[index].type)
+			//console.log(stageNodeTracker[index].type)
 		// Check if protractor is included in deletion
 		if (stageNodeTracker[index].type == "protractor"){
 			removedProt = true;
 		}
 		// Remove from stage node tracker array
 		stageNodeTracker.splice(index, 1);
+		
 		// Remove from stage
 		stage.removeChild(selectedObjects[i])
+
+		// Update leg numbers
+		if (legNumbers.splice(index, 1) != null) { 
+			for (j = 0; j < legNumbers.length; j++){
+				legNumbers[j].text = j;
+			}
+			stage.update();
+		}
+
 		// remove from selected
 		selectedObjects.pop();
 		}
@@ -397,9 +387,61 @@ function drawDeleteButton(){
 		
 	});
 
+	//-------------------------------------------------------------------------
+	
+	numCircle.on("mousedown", function(evt) {
+		// Bubble button on press
+		numCont.scaleX = numCont.scaleY = .95;
+		numCont.x += 1.5;
+		numCont.y += 1.5;
+	});
+	numCircle.on("pressup", function(evt) {
+		// Restore original button size
+		numCont.scaleX = numCont.scaleY = 1;
+		numCont.x += -1.5;
+		numCont.y += -1.5;
+		
+		if (numVisible) { 
+			for (j = 0; j < legNumbers.length; j++){
+				legNumbers[j].alpha = 0; 
+			}
+			numVisible = false;
+		} else { 
+			for (j = 0; j < legNumbers.length; j++){
+				legNumbers[j].alpha = 1; 
+			}
+			numVisible = true; 
+		}
+		
+		stage.update();
+		
+	});
+
 	deleteButtonContainer.setTransform(canvas.width-80, 0)
-	deleteButtonContainer.addChild(trashCont, refreshCont)
+	deleteButtonContainer.addChild(trashCont, refreshCont, numCont)
 	stage.addChild(deleteButtonContainer);
+}
+
+function getContainer(imgSrc, shape, modX, modY, stageY) {
+	let buttonCont = new createjs.Container();
+	// Circle button for trash png
+	let buttonCircle = shape;
+	buttonCircle.graphics.beginFill("#000000").drawCircle(21,22,33);
+	buttonCircle.shadow = new createjs.Shadow("#4287f5", 0, 0,5);
+	// load hit surface
+	let buttonHit = new createjs.Shape();
+	buttonHit.graphics.beginFill("#000000").drawCircle(21,22,33);
+	buttonCircle.hitArea = buttonHit ;
+	// load png resource
+	let buttonImg = new Image();
+	buttonImg.src = imgSrc
+	let buttonBmp = new createjs.Bitmap(buttonImg);
+	buttonBmp.setTransform(modX, modY, scaleSelect*.3, scaleSelect*.3)
+
+	// Add all to container and move to stage position
+	buttonCont.addChild(buttonCircle, buttonBmp)
+	buttonCont.setTransform(0, stageY);
+	return buttonCont;
 }
 
 
@@ -723,7 +765,29 @@ function handleImageLoad(event) {
 		topHit.graphics.beginFill("#000000")
 			.drawCircle((width*.5), (width*.5), 40*scale);
 	topCircle.hitArea = topHit;
+
+
+	// Number tracking for legs
+	var midText = new createjs.Text(legNumbers.length, "20px Arial", "#FFFFFF");
+	midText.shadow = new createjs.Shadow('#000', 0, 0, 5);
+	midText.rotation = -90;
+	midText.x = (width*.1);
+	midText.y = (height/2)+(width*.26);
 	
+	/*
+	midText.rotation = 0;
+	midText.x = (width*.25);
+	midText.y = (height/2)-(width*.5);
+	*/
+	if (!numVisible) { midText.alpha = 0; }
+	legNumbers.push(midText);
+	
+	/*
+	midCircle.graphics.beginFill("#ffffff").drawCircle((width*.5), ((height/2)), 10*scale);
+	var midCircle = new createjs.Shape();
+	midCircle.graphics.beginFill("#ffffff")
+		.drawCircle((width*.5), ((height/2)), 10*scale);
+	*/
 	
 	var bottomCircle = new createjs.Shape();
 	bottomCircle.graphics.beginFill("#000000")
@@ -740,9 +804,11 @@ function handleImageLoad(event) {
 	container.topInsetY = (width*.5);
 	container.bottomInsetX = (width*.5);
 	container.bottomInsetY = (height-(width*.5));
+	//container.numInsetX = (width*.5);
+	//container.numInsetY = ((height-(width*.5))+(height*.5));
 
 	// Add container to stage
-	container.addChild(bitmap, topCircle, bottomCircle);
+	container.addChild(bitmap, topCircle, bottomCircle, midText);
 	handleLegContainer(container);
 	
 	container.setTransform(container.x,container.y,newScale,newScale);
@@ -754,7 +820,7 @@ function handleImageLoad(event) {
 
 	
 	if (protStorage != undefined){
-		console.log(protStorage)
+		//console.log(protStorage)
 		stage.addChild(protStorage);
 	}
 	
@@ -1183,6 +1249,7 @@ function handleSelectEvt(leg){
 			// Immediate load to position on the board
 			var image = new Image();
 			image.src = leg.image.src;
+
 			// Check if new object is protractor
 			if (leg.image.id == 'prot'){
 				image.onload = createStageProt;
@@ -1198,7 +1265,7 @@ function handleSelectEvt(leg){
 			*/
 		}
 		// REMOVE protractor from the stage
-		console.log(evt)
+		//console.log(evt)
 		if (leg.image.id == 'prot' && stageProtActive && evt.stageX > dividerLocX){
 			stage.removeChild(protStorage);
 			for (i = 0; i < stageNodeTracker.length; i++){
