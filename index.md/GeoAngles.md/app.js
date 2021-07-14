@@ -368,12 +368,14 @@ function drawDeleteButton(){
 		stage.removeChild(selectedObjects[i])
 
 		// Update leg numbers
+		/*
 		if (legNumbers.splice(index, 1) != null) { 
 			for (j = 0; j < legNumbers.length; j++){
 				legNumbers[j].text = j;
 			}
 			stage.update();
 		}
+		*/
 
 		// remove from selected
 		selectedObjects.pop();
@@ -768,11 +770,17 @@ function handleImageLoad(event) {
 
 
 	// Number tracking for legs
-	var midText = new createjs.Text(legNumbers.length, "20px Arial", "#FFFFFF");
+	// Pixel whole number 
+	//var number = Math.round((height - (width))/.4);
+	var number = ((height)/34.57);
+	number = number.toFixed(1);
+	console.log(height);
+	console.log(event)
+	var midText = new createjs.Text(number + " cm", "18px Arial", "#FFFFFF");
 	midText.shadow = new createjs.Shadow('#000', 0, 0, 5);
 	midText.rotation = -90;
 	midText.x = (width*.1);
-	midText.y = (height/2)+(width*.26);
+	midText.y = (height/2)+(width*1.5);
 	
 	/*
 	midText.rotation = 0;

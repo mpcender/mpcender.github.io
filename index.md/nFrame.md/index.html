@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>nFrame</title>
+	<link rel="stylesheet" href="styles.css">
+	<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({tex2jax: {inlineMath: [['\\(','\\)']]}});
+	  </script>
+	  <script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	  </script>
+</head>
+
+
+<body onload="main();">
+	<header>
+		<h1>nFrame</h1>
+	</header>
+
+	<div class="mouseHUD">
+		<label id="distx"></label>
+		<label id="disty"></label>
+	</div>
+	
+	<div class="container" id="cavasDiv">
+		<div class="mainStage" >
+			<canvas id="canvas">
+				
+			</canvas>
+			
+		</div>
+		
+		
+	</div>
+
+	
+
+	<script src="app.js" charset="uft-8"></script>
+	<script src="https://code.createjs.com/easeljs-0.8.1.min.js"></script>
+	<script src="https://code.createjs.com/1.0.0/tweenjs.min.js"></script>
+	<script src="./lib/tweenjs-NEXT.combined.js"></script>
+	<script src="./lib/preloadjs-NEXT.min.js"></script>
+	<script src="https://code.jquery.com/jquery-1.12.4.js"
+	integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU="
+	crossorigin="anonymous"></script>
+
+	<footer class="footer">
+		<table class="buttonTable">
+			<tr>
+			   	<td>
+				   	<div id="Button1" >
+					<button class="button" id="button_1">
+						<img class="buttonImage" src="res/flip.png">
+					</button>
+			   	</td>
+				<td>
+					<div id="Button2">
+					<button class="button" id="button_2">Wll thats a sticky wicket</button>
+				</td>
+				<td>
+					<div id="Button3">
+					<button class="button" id="button_3">Cat2</button>
+				</td>
+				<td>
+					<div id="Button4">
+					<button class="button" id="button_4">Cat2</button>
+				</td>
+				<td>
+					<div id="Button5">
+					<button class="button" id="button_5">Cat2</button>
+				</td>
+		   </tr>
+		</table>
+	</footer>
+</body>
+
+</html>

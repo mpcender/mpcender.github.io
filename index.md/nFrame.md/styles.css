@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@1,700&display=swap');
+
+*{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+html, body, #fullheight {
+    min-height: 100% !important;
+    height: 100%;
+}
+
+body {
+	background-color: #24272E;
+}
+
+header { 
+	background: white;
+	height: 10%;
+	min-height: 60px;
+	min-width: 900px;
+	display: flex;
+	align-items: center;
+}
+
+header > h1 {
+	color: #25272E;
+	text-align: center;
+	font-family: 'Balsamiq Sans', cursive;
+	margin-left:auto; 
+    margin-right:auto;
+}
+
+.container {
+	position: relative;
+	height: 80%;
+	min-height: 450px;
+	min-width: 900px;
+	border: 4px solid white;
+}
+
+.mainStage {
+	position: relative;
+	height: 0%;
+}
+
+.mouseHUD {
+	position: absolute;
+	margin: -20px 10%;
+	
+}
+
+footer { 
+	background: white;
+	height: 10%;
+	min-height: 60px;
+	min-width: 900px;
+	display: flex;
+	align-items: center;
+}
+
+footer > h1 {
+	color: #25272E;
+	text-align: center;
+	font-family: 'Balsamiq Sans', cursive;
+}
+
+.buttonTable {
+	margin-left:auto; 
+    margin-right:auto;
+	position: relative;
+}
+
+.button {
+	background-color: #005586;
+	border: none;
+	color: white;
+	/* padding: 10px 15px; */
+	height:60px;
+	width: 120px;
+	border: 2px solid white;
+	border-radius: 8px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	transition-duration: 0.2s;
+}
+
+.button:hover {
+	background-color: #005586; 
+	border: 2px solid #25272E;
+	color: white; 
+}
+
+.button:active {
+	background-color: #005586;
+	border: 2px solid #25272E;
+	box-shadow: 0 5px #666;
+	transform: translateY(4px);
+}
+
+.buttonImage {
+	height: 30px;
+	width: 30px;
+}
