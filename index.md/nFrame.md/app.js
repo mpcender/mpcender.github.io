@@ -7,7 +7,12 @@ let stage;
 
 // stage bound vars
 let dividers = [];
-let divContainers = 5;
+let divContainers = 1;
+let minDiv = 1;
+let maxDiv = 5;
+let divBounds;
+let circleBumpers = [];
+
 // Banner Variables
 let banners = [];
 let nVal = 3;
@@ -22,8 +27,14 @@ let stageSelectorBox;
 let objectEventActive = false;
 let selectedObjects = [];
 
+let pressTimer;
 
 let bottomLeftCircle;
+var regInt = new RegExp('^[0-9]$');
+
+let buttonMinus;
+let buttonPlus;
+
 
 //------------------------------------------------------
 //
@@ -87,10 +98,33 @@ function main() {
 	
 }
 
-function enableButtons() {
-	let button1DOM = document.getElementById("button_1");
-	button1DOM.onclick = function(){
-		prompt('Hello world');
+
+class DivSection {
+	constructor(trackers) {
+		let size = trackers.length-1;
+		this.sup0 = size >= 0 ? trackers[size--] : null;
+		this.sup1 = size >= 0 ? trackers[size--] : null;
+		this.sup2 = size >= 0 ? trackers[size--] : null;
+		this.sup3 = size >= 0 ? trackers[size--] : null;
+		this.sup4 = size >= 0 ? trackers[size--] : null;
+		this.array = [this.sup0, this.sup1, this.sup2, this.sup3, this.sup4];
+	}
+
+	size() {
+		let count = 0;
+		for(let i = 0; i < this.array.length; i++) {
+			count = this.array[i] != null ? (count+1) : count;
+		}
+		return count;
+	}
+}
+
+class DivTracker {
+	constructor(topX, topY, botX, botY) {
+		this.topX = topX;
+		this.topY = topY;
+		this.botX = botX;
+		this.botY = botY;
 	}
 }
 
@@ -122,18 +156,58 @@ function resizeUpdate(){
 		bottomLeftCircle.graphics.command.y = mainStageElem.clientHeight;
 	}
 
+	// DEMO
+	removeDivBumpers();
+
 	if (dividers[0] != null) {
 		let space = mainStageElem.clientWidth/divContainers
+		let divTrack = [];
 		for (let i = 1; i <= divContainers; i++) {
 			// Adjust Dividers
 			dividers[i-1].graphics.command.x = (space*i);
 			dividers[i-1].graphics.command.h = mainStageElem.clientHeight;
+			
+			// Rebuild Banners
+			stage.removeChild(banners[i-1]);
+			banners[i-1] = buildBanner(i);
 			banners[i-1].setTransform(i==1 ? (space*(i-1)) : (space*(i-1)+5), 0);
-			banners[i-1].children[0].graphics.command.w =i==1 ? space : space-5;
-			banners[i-1].children[1].x = (space)/2;
+			stage.addChild(banners[i-1]);
+
+			let bound = new DivTracker(
+				(i==1 ? (space*(i-1)) : (space*(i-1)+5)),0,
+				(space*(i)),mainStageElem.clientHeight);
+			divTrack[i-1] = bound;
+			
+			// DEMO
+			divBumpers(bound, i);
 		}
-		stage.update();
+		divBounds = new DivSection(divTrack);
+		//stage.update();
 	}
+}
+
+function removeDivBumpers(){
+	/*
+	while (circleBumpers.length >1){
+		stage.removeChild(circleBumpers.pop());
+	}
+	*/
+}
+
+function divBumpers(bound, i) {
+	/*
+	console.log("loop " + i + "\n")
+	console.log("topLeft : " + bound.topX + "," + bound.topY + "\n");
+	console.log("botRight: " + bound.botX + "," + bound.botY + "\n");
+
+	circle1 = new createjs.Shape();
+	circle1.graphics.beginFill("#FFF000").drawCircle(bound.topX, bound.topY, 10);
+	circle2 = new createjs.Shape();
+	circle2.graphics.beginFill("#FFF000").drawCircle(bound.botX, bound.botY, 10);
+	stage.addChild(circle1,circle2);
+	circleBumpers.push(circle1,circle2);
+	circleBumpers.push(circle1);
+	*/
 }
 
 //---------------------------------------------------------------------
@@ -144,6 +218,171 @@ function resizeUpdate(){
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //---------------------------------------------------------------------
 
+function enableButtons() {
+	let buttonCombine = document.getElementById("button_combine");
+	let buttonSeperate = document.getElementById("button_seperate");
+	let buttonAddSingle = document.getElementById("button_add_single");
+	let buttonAddMany = document.getElementById("button_add_many");
+	let buttonColumn = document.getElementById("button_column");
+	buttonPlus = document.getElementById("button_plus");
+	buttonMinus = document.getElementById("button_minus");
+
+	handleCombine(buttonCombine);
+	handleSeperate(buttonSeperate);
+	handleAddSingle(buttonAddSingle);
+	handleAddMany(buttonAddMany);
+	handleColumn(buttonColumn);
+	handlePlus(buttonPlus);
+	handleMinus(buttonMinus);
+	disableMinus();
+
+}
+
+function handleCombine() {
+
+}
+
+function handleSeperate() {
+
+}
+
+function handleAddSingle() {
+
+}
+
+function handleAddMany(buttonAddMany) {
+	buttonAddMany.onclick = function(){
+		let cat = prompt('Hello world');
+		console.log(cat)
+	}
+}
+
+function handleColumn(buttonColumn) {
+	buttonColumn.onclick = function(){
+		let hi = divContainers;
+		//console.log(hi)
+		let updateToOpenStage = divContainers != 1;
+		if (updateToOpenStage) {
+			divContainers = 1;
+			removeDiv(1,hi);
+		}
+		else { 
+			let frame = prompt('How many frames?');
+			
+			console.log(regInt.test(frame))
+			if (regInt.test(frame) &&
+				frame != divContainers && 
+				frame <= maxDiv &&
+				frame >= minDiv) {
+				divContainers = frame;
+				console.log(divContainers)
+				removeDiv(0,5);
+			}
+		}
+		drawStage();
+		manageContainerButtonState();
+	}
+}
+
+function handlePlus(buttonPlus) {
+	buttonPlus.innerHTML = getPlus();
+	buttonPlus.onclick = function(){
+		let update = (divContainers < maxDiv);
+		divContainers = update ? ++divContainers : divContainers;
+		
+		disablePlus()
+		if (update) { 
+			removeDiv(0, divContainers)
+			drawStage() 
+		}
+		enableMinus();
+	}
+	buttonPlus.addEventListener
+	
+	/* longpress implementation
+	buttonPlus.onmousedown = function(){
+		pressTimer = window.setTimeout(function() { 
+			let frame = prompt('How many frames?'); 
+			console.log(frame + " " + divContainers)
+			console.log(frame != divContainers)
+			if (frame != divContainers) {
+				divContainers = frame;
+				console.log(divContainers)
+				removeDiv(0,5);
+				drawStage();
+			}
+		},500);		
+	}
+	buttonPlus.onmouseup = function(){
+		clearTimeout(pressTimer);
+	}
+	*/
+}
+
+function handleMinus(buttonMinus) {
+	buttonMinus.innerHTML = getMinus();
+	buttonMinus.onclick = function(){
+		let update = divContainers > minDiv ;
+		divContainers = update ? --divContainers : divContainers;
+		disableMinus();
+		if (update) { 
+			removeDiv(0, divContainers+1);
+			drawStage();
+		}
+		enablePlus();
+	}
+}
+
+function getPlus() {
+	let plus =  new createjs.Shape();
+	plus.graphics.beginFill("#FFFFFF").drawRect(15,0,6,36).drawRect(0,15,36,6)
+	plus.cache(0, 0, 36, 36);
+	var url = plus.getCacheDataURL();
+	return "<img class=\"buttonImage\" src=" + url + ">";
+}
+
+function disablePlus() {
+	if (divContainers == maxDiv) {buttonPlus.disabled = true;}
+}
+
+function enablePlus() {
+	if (buttonPlus.disabled && divContainers < maxDiv) {
+		buttonPlus.disabled = false;
+	}
+}
+
+function getMinus() {
+	let minus =  new createjs.Shape();
+	minus.graphics.beginFill("#FFFFFF").drawRect(0,15,36,6);
+	minus.cache(0, 0, 36, 36);
+	var url = minus.getCacheDataURL();
+	return "<img class=\"buttonImage\" src=" + url + ">";
+}
+
+function disableMinus() {
+	if (divContainers == minDiv) {buttonMinus.disabled = true;}
+}
+
+function enableMinus() {
+	if (buttonMinus.disabled && divContainers > minDiv) {
+		buttonMinus.disabled = false;
+	}
+}
+
+function manageContainerButtonState() {
+	if (divContainers >= maxDiv) { disablePlus(); }
+	else { enablePlus(); }
+	if (divContainers <= minDiv) { disableMinus(); }
+	else {enableMinus(); }
+}
+
+function removeDiv(lo, hi){
+	for (let i = lo; i <= hi; i++) {
+		stage.removeChild(dividers[i-1]);
+	}
+}
+
+
 
 //---------------------------------------------------------------------
 //
@@ -151,7 +390,12 @@ function resizeUpdate(){
 //
 //---------------------------------------------------------------------
 function drawStage(){
+	// DEMO
+	removeDivBumpers();
+
+	
 	let space = mainStageElem.clientWidth/divContainers;
+	let divTrack = [];
 	// divider
 	for (let i = 1; i <= divContainers; i++) {
 		dividers[i-1] = new createjs.Shape();
@@ -160,17 +404,19 @@ function drawStage(){
 		
 		banners[i-1] = buildBanner(i);
 		banners[i-1].setTransform(i==1 ? (space*(i-1)) : (space*(i-1)+5), 0);
-		
-		stage.addChild(dividers[i-1], banners[i-1]);
-	}
 
-	var topLeftCircle = new createjs.Shape();
-	topLeftCircle.graphics.beginFill("#FFF000")
-		.drawCircle(0, 0, 10);
-	bottomLeftCircle = new createjs.Shape();
-	bottomLeftCircle.graphics.beginFill("#FFF000")
-		.drawCircle(0, mainStageElem.clientHeight, 10);
-	stage.addChild(topLeftCircle, bottomLeftCircle);
+		// Track boundaries for each stage division
+		let bound = new DivTracker(
+			(i==1 ? (space*(i-1)) : (space*(i-1)+5)),0,
+			(space*(i)),mainStageElem.clientHeight);
+		divTrack[i-1] = bound;
+
+		stage.addChild(dividers[i-1], banners[i-1]);
+		
+		// DEMO
+		divBumpers(bound, i);
+	}
+	divBounds = new DivSection(divTrack);
 }
 
 function buildBanner(i){
@@ -236,13 +482,15 @@ function handleStageMouseMove(event) {
 	let stroke = 10;
 
 	// Enable boundary on drawing selector box on selector stage
-	let stageMouseX = stage.mouseX;
+	let stageMouseY = stage.mouseY;
+	if (stageMouseY < (bannerHeight+2)){
+		stageMouseY = bannerHeight+2; }
 
 	stage.removeChild(stageSelectorBox)
 	let shape = new createjs.Shape();
 	shape.graphics.setStrokeDash([stroke * 2, stroke]).
 		beginStroke("#FFFFFF").rect(oldPt.x, oldPt.y,
-			stageMouseX - oldPt.x, stage.mouseY - oldPt.y);
+			stage.mouseX - oldPt.x, stageMouseY - oldPt.y);
 	
 	stageSelectorBox = shape;
     stage.addChild(stageSelectorBox);

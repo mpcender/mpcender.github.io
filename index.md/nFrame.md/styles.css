@@ -26,10 +26,8 @@ header {
 
 header > h1 {
 	color: #25272E;
-	text-align: center;
 	font-family: 'Balsamiq Sans', cursive;
-	margin-left:auto; 
-    margin-right:auto;
+	margin-left:47%; 
 }
 
 .container {
@@ -43,6 +41,7 @@ header > h1 {
 .mainStage {
 	position: relative;
 	height: 0%;
+	cursor:crosshair;
 }
 
 .mouseHUD {
@@ -67,41 +66,74 @@ footer > h1 {
 }
 
 .buttonTable {
-	margin-left:auto; 
+	margin-left:auto;
     margin-right:auto;
 	position: relative;
 }
 
-.button {
-	background-color: #005586;
-	border: none;
-	color: white;
-	/* padding: 10px 15px; */
-	height:60px;
-	width: 120px;
-	border: 2px solid white;
-	border-radius: 8px;
-	text-align: center;
-	text-decoration: none;
-	display: inline-block;
-	font-size: 16px;
-	transition-duration: 0.2s;
+.buttonTableHead {
+    margin-left:auto;
+	position: relative;
 }
 
-.button:hover {
+.buttonHead {
+	background-color: #5a5a5a;
+	height:60px;
+	width: 60px;
+	border-radius: 20px;
+	transition-duration: 0.6s;
+}
+
+.headSpacer{
+	padding: 5px;
+}
+
+.buttonHead:hover {
 	background-color: #005586; 
-	border: 2px solid #25272E;
+	border: 2px solid #005586;
+	transform: translateY(-4px);
 	color: white; 
 }
 
-.button:active {
+.buttonHead:active {
 	background-color: #005586;
-	border: 2px solid #25272E;
 	box-shadow: 0 5px #666;
-	transform: translateY(4px);
+	transition-duration: 0.2s;
+	transform: translateY(0px);
+}
+
+.button {
+	background-color: #005586;
+	height:60px;
+	min-width: 80px;
+	width: 7vw;
+	border-radius: 14px;
+	transition-duration: 0.2s;
+}
+.button:hover:not([disabled]) {
+	background-color: #005586; 
+	border: 2px solid #005586;
+	transform: translateY(-5px);
+	color: white;  
+}
+
+.button:active:not([disabled]) {
+	background-color: #005586;
+	box-shadow: 0 5px #666;
+	transition-duration: 0.2s;
+	transform: translateY(0px);
+}
+
+.button:disabled {
+	opacity: 0.6;
+	cursor:not-allowed;
 }
 
 .buttonImage {
-	height: 30px;
-	width: 30px;
+	height: 36px;
+	width: 36px;
+}
+
+.spacer{
+	padding: 15px;
 }
