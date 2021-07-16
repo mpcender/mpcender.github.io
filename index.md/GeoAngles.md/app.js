@@ -204,17 +204,17 @@ function drawSelectorStage(){
 	let height = 800;
 
 	let pt = {x: width*.07, y: height*.015}
-	let red = loadImgBitmap("./res/legs/redAdj.png", pt);
+	let red = loadImgBitmap("./res/legs/1_red.png", pt);
 	pt = {x: width*.23, y: height*.015}
-	let blue = loadImgBitmap("./res/legs/blueAdj.png", pt);
+	let blue = loadImgBitmap("./res/legs/2_blue.png", pt);
 	pt = {x: width*.39, y: height*.015}
-	let yellow = loadImgBitmap("./res/legs/yellowAdj.png", pt);
+	let yellow = loadImgBitmap("./res/legs/3_yellow.png", pt);
 	pt = {x: width*.55, y: height*.015}
-	let green = loadImgBitmap("./res/legs/greenAdj.png", pt);
+	let green = loadImgBitmap("./res/legs/4_green.png", pt);
 	pt = {x: width*.71, y: height*.015}
-	let purple = loadImgBitmap("./res/legs/purpleAdj.png", pt);
+	let purple = loadImgBitmap("./res/legs/5_purple.png", pt);
 	pt = {x: width*.87, y: height*.015}
-	let orange = loadImgBitmap("./res/legs/orangeAdj.png", pt);
+	let orange = loadImgBitmap("./res/legs/6_orange.png", pt);
 
 	handleSelectEvt(red);
 	handleSelectEvt(blue);
@@ -772,11 +772,10 @@ function handleImageLoad(event) {
 	// Number tracking for legs
 	// Pixel whole number 
 	//var number = Math.round((height - (width))/.4);
-	var number = ((height)/34.57);
-	number = number.toFixed(1);
-	console.log(height);
-	console.log(event)
-	var midText = new createjs.Text(number + " cm", "18px Arial", "#FFFFFF");
+	let lengths = [5,7.07,8.66,10,12.24,14.14];
+	var index = Math.round((height-152)/48,0);
+	
+	var midText = new createjs.Text(lengths[index] + " cm", "18px Arial", "#FFFFFF");
 	midText.shadow = new createjs.Shadow('#000', 0, 0, 5);
 	midText.rotation = -90;
 	midText.x = (width*.1);
