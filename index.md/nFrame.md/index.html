@@ -17,7 +17,8 @@
 
 <body onload="main();">
 	<header>
-		<h1>nFrame</h1>
+
+		<h1>Base Frame</h1>
 		<table class="buttonTableHead">
 			<tr>
 			   	<td>
@@ -68,50 +69,81 @@
 	<footer class="footer">
 		<table class="buttonTable">
 			<tr>
-			   	<td>
-				   	<div>
-					<button class="button" id="button_combine">
-						<img class="buttonImage" src="res/combine.png">
-					</button>
-			   	</td>
 				<td>
-					<div>
-				 	<button class="button" id="button_seperate">
-					 	<img class="buttonImage" src="res/seperate.png">
-				 	</button>
+					<div class="dropup">
+						<button class="button" id="button_n">
+							<h1>base</h1>
+						</button>
+						<div class="dropup-content">
+							<button class="buttonDropup" id="button_base_1">1</button>
+						  	<button class="buttonDropup" id="button_base_2">2</button>
+						  	<button class="buttonDropup" id="button_base_3">3</button>
+						  	<button class="buttonDropup" id="button_base_4">4</button>
+						  	<button class="buttonDropup" id="button_base_5">5</button>
+						  	<button class="buttonDropup" id="button_base_6">6</button>
+						  	<button class="buttonDropup" id="button_base_7">7</button>
+						  	<button class="buttonDropup" id="button_base_8">8</button>
+						  	<button class="buttonDropup" id="button_base_9">9</button>
+						  	<button class="buttonDropup" id="button_base_10">10</button>
+						</div>
+					  </div>
 				</td>
+				<td>
+					 <div class="dropup">
+						<button class="button" id="button_add">
+							<img class="buttonImage">
+						</button>
+						<div class="dropup-content">
+						  	<button class="buttonDropup" id="button_add_0">0</button>
+						  	<button class="buttonDropup" id="button_add_1">1</button>
+						  	<button class="buttonDropup" id="button_add_2">2</button>
+						  	<button class="buttonDropup" id="button_add_3">3</button>
+						  	<button class="buttonDropup" id="button_add_4">4</button>
+						</div>
+					  </div>
+				</td>
+			   	
 
 				<td class="spacer"></td>
 
 				<td>
 					<div>
-					<button class="button" id="button_add_single">
-						<img class="buttonImage" src="res/flip.png">
-					</button>
+				 		<button class="button" id="button_combine">
+					 		<img class="buttonImage" src="res/combine.png">
+				 		</button>
 				</td>
-				<td>
+			 	<td>
 					<div>
-				 	<button class="button" id="button_add_many">
-					 	<img class="buttonImage" src="res/flip.png">
-				 	</button>
-				</td>
+				  		<button class="button" id="button_seperate">
+					  		<img class="buttonImage" src="res/seperate.png">
+				  		</button>
+			 	</td>
+				 <td>
+					<div>
+				  		<button class="button" id="button_paint">
+					  		<img class="buttonImage" src="res/paint.png">
+				  		</button>
+			 	</td>
 
 				<td class="spacer"></td>
 
 				<td>
 					<div>
-					<button class="button" id="button_column">
-						<img class="buttonImage" src="res/column36.png">
-					</button>
+						<button class="button" id="button_column">
+							<img class="buttonImage" src="res/column36.png">
+						</button>
 				</td>
 				<td>
 					<div>
-					<button class="button" id="button_plus"></button>
+						<button class="button" id="button_add_col">
+							<img class="buttonImage" src="res/columnAdd.png">
+						</button>
 				</td>
 				<td>
 					<div>
-					<button class="button" id="button_minus">
-					</button>
+						<button class="button" id="button_remove_col">
+							<img class="buttonImage" src="res/columnMinus.png">
+						</button>
 				</td>
 		   </tr>
 		</table>

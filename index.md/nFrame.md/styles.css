@@ -27,7 +27,7 @@ header {
 header > h1 {
 	color: #25272E;
 	font-family: 'Balsamiq Sans', cursive;
-	margin-left:47%; 
+	margin-left:44%; 
 }
 
 .container {
@@ -104,6 +104,8 @@ footer > h1 {
 
 .button {
 	background-color: #005586;
+	font-family: 'Balsamiq Sans', cursive;
+	color: white;
 	height:60px;
 	min-width: 80px;
 	width: 7vw;
@@ -131,9 +133,57 @@ footer > h1 {
 
 .buttonImage {
 	height: 36px;
-	width: 36px;
 }
 
 .spacer{
 	padding: 15px;
 }
+
+  .dropup {
+	position: relative;
+  }
+
+ 
+  .dropup-content {
+	display: none;
+	position: absolute;
+	background: transparent;
+	bottom: 63px;
+	z-index: 1;
+  }
+  
+  .dropup-content a {
+	color: black;
+	padding: 12px 16px;
+	text-decoration: none;
+	display: block;
+  }
+  
+  .dropup:hover .dropup-content {
+	display: block;
+  }
+
+
+  .buttonDropup {
+  	background-color: #5a5a5a;
+  	height:60px;
+  	width: 60px;
+  	border-radius: 20px;
+  	transition-duration: 0.6s;
+  }
+  
+  .buttonDropup:hover {
+  	background-color: #005586; 
+  	border: 2px solid #005586;
+  	transform: translateY(-4px);
+  	color: white; 
+  }
+  
+  .buttonDropup:active {
+  	background-color: #005586;
+  	box-shadow: 0 5px #666;
+  	transition-duration: 0.2s;
+  	transform: translateY(0px);
+  }
+
+

@@ -1143,7 +1143,8 @@ function handleStageMouseUp(event) {
 		} 
 		// if partial deselect of currently selected
 		else {
-			for (j = 0; j < selectedObjects.length; j++){
+			let len = selectedObjects.length;
+			for (j = 0; j < len; j++){
 				// deselect staged objects
 				if (selectedObjects[j].stageForDeselect){
 					selectedObjects[j].shadow = null;
