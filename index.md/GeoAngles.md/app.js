@@ -1353,7 +1353,7 @@ function handleLegContainer(dragger){
 	
 	dragger.on("pressmove",function(evt) {
 		// partial border detection, keep legs of selector stage
-		if (evt.stageX < dividerLocX) {return}
+		if (evt.stageX < dividerLocX) { return; }
 		// pause listeners
 		//stage._listeners.handleStageMouseDown = null
 		//stage._listeners.handleStageMouseMove = null;

@@ -12,6 +12,7 @@ const minDiv = 1;
 const maxDiv = 5;
 let activeMaxDiv = 5;
 let divBounds;
+let prevDivBounds;
 let circleBumpers = [];
 
 // Banner Variables
@@ -34,10 +35,10 @@ const maxNodeGroup = 256;
 let stageSelectorBox;
 let objectEventActive = false;
 let selectedObjects = [];
+let seperateToOnes = true;
 
 let resizeTimer = null;
 const resizeWait = 1000;
-
 
 let bottomLeftCircle;
 const regInt = new RegExp('^[0-9]$');
@@ -219,6 +220,7 @@ function resizeUpdate(){
 			// DEMO
 			divBumpers(bound, i);
 		}
+		prevDivBounds = divBounds;
 		divBounds = new DivSection(divTrack);
 		//stage.update();
 	}
@@ -306,6 +308,7 @@ function drawStage(){
 		// DEMO
 		//divBumpers(bound, i);
 	}
+	prevDivBounds = divBounds
 	divBounds = new DivSection(divTrack);
 	manageExponentButtonState();
 	updateNodePositions();
@@ -404,12 +407,13 @@ function buildSubNode(col, row){
 function getDimension(i){
 	//console.log(divBounds)
 	// if base^0 return 1
-	if (i==0) {return [1,1] }
+	if (i==0 || baseVal == 1) {return [1,1] }
 	let width;
 	// if openStage allow dimensions not constrained
 	if (divContainers==1) { 
 		width = divBounds.array[0].botX-divBounds.array[0].topX; 
 	}
+	
 	else { width = divBounds.array[i].botX-divBounds.array[i].topX; }
 	let nodeFitWidth = Math.floor(width/nodeSize);
 
@@ -419,7 +423,6 @@ function getDimension(i){
 	        factors.push(j);
 	    }
 	}
-	//console.log(factors)
 	let multipliers = [];
 	for(let j = 0; j < factors.length; j++) {
 	    for(let k = j; k < factors.length; k++) {
@@ -428,8 +431,6 @@ function getDimension(i){
 			}
 		}
 	}
-	//console.log(multipliers)
-	//console.log(multipliers[multipliers.length-1][1] + " - " + nodeFitWidth)
 	let num = 0;
 	for (let j = multipliers.length-1; j >= 0; j--) {
 		if (multipliers[j][0] < nodeFitWidth) {
@@ -437,8 +438,6 @@ function getDimension(i){
 			break;
 		}
 	}
-	//console.log(num)
-	
 	return num;
 }
 
@@ -467,16 +466,54 @@ function getContainerPlacement(container, exponent, mod) {
 
 function getContainerUpdate(container, exponent, mod) {
 	let minX, maxX;
-	if (divContainers == 1) {
+	if (divContainers == 1 || baseVal == 1) {
 		minX = 0;
 		maxX = divBounds.array[0].botX-(nodeSize*(mod[0]+1));
 	} else {
 		minX = divBounds.array[exponent].topX;
 		maxX = divBounds.array[exponent].botX-(nodeSize*(mod[0]+1));
 	}
-	let xTween = Math.floor(Math.random() * (maxX - minX + 1) + minX);
+
+	let exp = exponent;
+	if (container.prevExp != undefined) {
+		exp = container.prevExp;
+		container.prevExp = exponent;
+		if (exp == exponent){ 
+			container.prevExp = undefined; 
+			exp = exponent;
+		}
+		if (exp == divContainers){
+			exp--;
+		}
+	}
+
+	let xTween = 0;
+	let x = container.x;
+	if (prevDivBounds.array[exponent] != null) {
+
+		if (prevDivBounds.array[exp] == null) {
+			exp = exponent;
+		}
+		if (prevDivBounds.array[exp] != null && 
+			container.prevExp != undefined &&
+			(container.x <= prevDivBounds.array[exp].topX ||
+			container.x >= prevDivBounds.array[exp].botX) ) {
+				let oldMod = getDimension(exp)
+				let mx = prevDivBounds.array[exp].botX-(nodeSize*(oldMod[0]+1));
+				let mn  = prevDivBounds.array[exp].topX;
+				x = Math.floor(Math.random() * (mx - mn + 1) + mn);
+				container.prevExp = undefined;
+		} 
+		
+		let len = prevDivBounds.array[exp].botX - prevDivBounds.array[exp].topX
+		let dist = x - prevDivBounds.array[exp].topX
+		let ratio = dist/len
+		let distNew = divBounds.array[exponent].botX-divBounds.array[exponent].topX
+		xTween = minX + distNew*ratio
+	} 
 	tweenScoot(container, xTween, container.y)
 }
+
 
 
 
@@ -516,6 +553,7 @@ function updateNodePositions() {
 				remove.push(element);
 			} else {
 				evaluatePostion(element, exponent);
+				
 			}
 
 		});
@@ -770,9 +808,9 @@ function handleStageMouseUp(event) {
 // 				   		NODE EVENT HANDLERS
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-function applyNodeHandlers(button) {
+function applyNodeHandlers(node) {
 
-    button.on("mousedown", function (evt) {
+    node.on("mousedown", function (evt) {
         // if tween is running disable
         if (tweenRunningCount > 0) { return }
 
@@ -780,35 +818,72 @@ function applyNodeHandlers(button) {
         // Stop selector box from displaying when moving object
         //stageObjectDragging = true;
 
-        // Store original location of object
-        this.oldX = this.x;
-        this.oldY = this.y;
-        this.parent.addChild(this);
-        this.offset = { x: this.x - evt.stageX, y: this.y - evt.stageY }
+		if (selectedObjects.includes(node)) {
+			node.multiDrag = true;
+			
+			for (i = 0; i < selectedObjects.length; i++) {
+				// Store offset of origin, move object from point selected
+				selectedObjects[i].offset = { x: selectedObjects[i].x - evt.stageX, 
+					y: selectedObjects[i].y - evt.stageY };
+				// Store origin xy to determine test if click (check toggle selected)
+				selectedObjects[i].oldX = this.x + (node.x-selectedObjects[i].x);
+				selectedObjects[i].oldY = this.y + (node.y-selectedObjects[i].y);
+			}
+		} 
+		// normal single drag
+		else {
+			node.multiDrag = false;
+			// Store original location of object
+			this.oldX = this.x;
+			this.oldY = this.y;
+			// Store offset of origin, move object from point selected
+			this.offset = { x: this.x - evt.stageX, y: this.y - evt.stageY }
+			this.parent.addChild(this);
+		}
+        
     });
 
-    button.on("pressmove", function (evt) {
+    node.on("pressmove", function (evt) {
         // if tween is running or on grid disable
         if (tweenRunningCount > 0 ) { return }
 
-        // On the move check for
-        button.onTheMove = true;
+		// On the move check for
+        node.onTheMove = true;
 
-        // Move chip to location where pointer is located
-        this.x = evt.stageX + this.offset.x;
-        this.y = evt.stageY + this.offset.y;
+		// If moving multiple stage items
+		if (node.multiDrag) {
+			for (i = 0; i < selectedObjects.length; i++) {
+				selectedObjects[i].x = evt.stageX + selectedObjects[i].offset.x;
+				selectedObjects[i].y = evt.stageY + selectedObjects[i].offset.y;
+			}
+		} 
+		// Normal single drag
+		else {
+			// Move chip to location where pointer is located
+			this.x = evt.stageX + this.offset.x;
+			this.y = evt.stageY + this.offset.y;
+		}
     });
 
-    button.on("pressup", function (evt) {
+    node.on("pressup", function (evt) {
 
         // if tween is running disable
         if (tweenRunningCount > 0 ) { return }
 
-		updateNodeTracking(button, button.x, button.y, 
-			button.x+button.col+nodeSize, 
-			button.y+button.row+nodeSize);
-
-        button.onTheMove = false;
+		if (node.multiDrag) {
+			for (i = 0; i < selectedObjects.length; i++) {
+				updateNodeTracking(selectedObjects[i], 
+					selectedObjects[i].x, selectedObjects[i].y, 
+					selectedObjects[i].x+selectedObjects[i].col+nodeSize, 
+					selectedObjects[i].y+selectedObjects[i].row+nodeSize);
+				selectedObjects[i].onTheMove = false;
+			}
+		} else {
+			updateNodeTracking(node, node.x, node.y, 
+				node.x+node.col+nodeSize, 
+				node.y+node.row+nodeSize);
+			node.onTheMove = false;
+		}
 		objectEventActive = false;
     });
 }
@@ -931,8 +1006,8 @@ function deleteSelected() {
 			
 			//clearStoredObject(removed, i);
 		}
-		clear(dividers);
-		drawStage();
+		//clear(dividers);
+		//drawStage();
 	}
 
 	function clearSelectedObject(removed, i) {
@@ -974,14 +1049,222 @@ function clear(iterable) {
 }
 
 
-
-
 function handleCombine(buttonCombine) {
 	buttonCombine.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
+		let exponent;
+		let combine = [[],[],[],[],[]]
+		// determine if objects can combine
+		for (let i = 0; i < selectedObjects.length; i++) {
+			let node = selectedObjects[i]
+			exponent  = Math.round(Math.log(node.children.length, baseVal));
+			if (exponent < activeMaxDiv) {
+				if(divContainers == 1) {
+					combine[exponent].push(node)
+				} else if (exponent < divContainers-1){
+					combine[exponent].push(node)
+				}	
+			}
+		}
+		
+		let newObject = [];
+		let tweenNodes = [];
+		let index = 0;
+		for(let i = 0; i < combine.length; i++) {
+			// Check if selected nodes can be combined (correct number of nodes)
+			if(combine[i].length != 0 && combine[i].length%baseVal == 0) {
+				for(let j = 0; j < combine[i].length; j++) {
+					
+				}
+				
+				// build single tween nodes
+				for(let j = 0; j < combine[i].length; j++) {
+					tweenHidden.push(combine[i][j]);
+					combine[i][j].alpha = 0;
+					for(let k = 0; k < combine[i][j].children.length; k++) {
+						let child = combine[i][j].children[k];
+						//console.log(child)
+						let ptTop = child.localToGlobal(child.regX,child.regY);
+						ptTop.x = ptTop.x+child.col;
+						ptTop.y = ptTop.y+child.row;
+						let tweenNode = makeSingleRect(ptTop.x, ptTop.y)
+						updateColor(tweenNode, combine[i][j].color);
+						updateSelectedObjects(tweenNode);
+						tweenNodes.push(tweenNode)
+					}
+				}
+				// build new node
+				let toMake = combine[i].length/baseVal;
+				for(let j = 0; j < toMake; j++) {
+					newObject[index] = buildNew(combine[i][0], i+1);
+					index++;
+				}
+				for(let j = 0; j < newObject.length; j++) {
+					for(let k = 0; k < newObject[j].children.length; k++) {
+						let child = newObject[j].children[k];
+						let ptTop = child.localToGlobal(child.regX,child.regY);
+						ptTop.x = ptTop.x+child.col;
+						ptTop.y = ptTop.y+child.row;
+						let tween = tweenNodes.splice(0,1);
 
+						tweenScoot(tween[0],ptTop.x,ptTop.y);
+					}
+					//console.log(newObject[j])
+				}
+			}
+		}
+	}
+
+	function buildTween(prevNode) {
+		// build base ^ n single nodes for TWEEN EFFECT
+		
+	}
+
+	//let tweenHidden = [];
+	function buildNew(node, exp) {
+		// Build new object
+		let object = makeRect(exp);
+		// Hide during tween
+		tweenHidden.push(object);
+		object.alpha = 0;
+		// Update color to previous node color
+		object.color = node.color;
+		updateColor(object, object.color);
+		object.prevExp = exp-1;
+		return object;
+		
+		/*
+		if (newLoc.length == size) {
+			object.x = newLoc[j].x;
+			object.y = newLoc[j].y;	
+			updateNodeTracking(object, newLoc[j].x, newLoc[j].y, 
+				newLoc[j].x+nodeSize, newLoc[j].y+nodeSize);
+		}
+		
+		// Tween tweenNodes to location of new object
+		for(let k = 0; k < object.children.length; k++) {
+			
+		}
+		*/
 	}
 }
+function disableCombine() {
+	if (true) { buttonCombine.disabled = true; }
+}
+
+function enableCombine() {
+	if (buttonCombine.disabled  && true) {
+		buttonCombine.disabled = false;
+	}
+}
+
+function handleSeperate(buttonSeperate) {
+	buttonSeperate.onclick = function(){
+		if (tweenRunningCount > 0 ) { return; }
+
+		//seperateToOnes = false;
+		let toSeperate = []
+		let singles = []
+		// Only seperate nodes larger than one
+		for (let i = 0; i < selectedObjects.length; i++) {
+			if (selectedObjects[i].children.length > 1) {
+				toSeperate.push(selectedObjects[i])
+			} else {
+				singles.push(selectedObjects[i]);
+			}
+		}
+		// deselect single nodes
+		for (let i = 0; i < singles.length; i++) {
+			let j = selectedObjects.indexOf(singles[i])
+			deselectNode(selectedObjects[j]);
+			selectedObjects.splice(j,1);
+		}
+
+		for (let i = 0; i < toSeperate.length; i++) {
+			let node = toSeperate[i];
+			node.alpha = 0;
+			let exponent = Math.round(Math.log(node.children.length, baseVal));
+			
+			// Seperate to ones or to next lower size
+			let exp = 0;
+			let size = node.children.length;
+			
+			if (!seperateToOnes) { 
+				exp = exponent-1<0 ? 0 : exponent-1; 
+				size = baseVal;
+			} 
+
+			let modX = nodeSize
+			let modY = 0
+			let prevX = 0;
+
+			// build base ^ n single nodes for TWEEN EFFECT
+			let tweenNodes = []
+			let newLoc = [];
+			for(let j = 0; j < node.children.length; j++) {
+				let child = node.children[j];
+				//console.log(child)
+				let ptTop = child.localToGlobal(child.regX,child.regY);
+				ptTop.x = ptTop.x+child.col;
+				ptTop.y = ptTop.y+child.row;
+				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y)
+				updateColor(tweenNodes[j], toSeperate[i].color);
+				updateSelectedObjects(tweenNodes[j]);
+
+				// Structured Decompose for Singles
+				if (size == node.children.length) {
+					modY = modY+nodeSize*.5;
+					if(ptTop.x != prevX) { 
+						modX = modX+nodeSize*.5;
+						modY = 0;
+					}
+					newLoc.push({x: ptTop.x+(modX),y: ptTop.y+(modY)});
+					prevX = ptTop.x;
+				}else if (j%size == 0) {
+					// If breaking down to block
+				}
+				
+			}
+			
+			// build new objects for seperation
+			let newObjects = [];
+			for(let j = 0; j < size; j++) {
+				// Build new object
+				newObjects[j] = makeRect(exp);
+				// Hide during tween
+				tweenHidden.push(newObjects[j]);
+				newObjects[j].alpha = 0;
+				// Update color to previous node color
+				newObjects[j].color = toSeperate[i].color;
+				updateColor(newObjects[j], newObjects[j].color);
+
+				newObjects[j].prevExp = exponent;
+	
+				if (newLoc.length == size) {
+					newObjects[j].x = newLoc[j].x;
+					newObjects[j].y = newLoc[j].y;	
+					updateNodeTracking(newObjects[j], newLoc[j].x, newLoc[j].y, 
+						newLoc[j].x+nodeSize, newLoc[j].y+nodeSize);
+				}
+				
+				// Tween tweenNodes to location of new object
+				for(let k = 0; k < newObjects[j].children.length; k++) {
+					let child = newObjects[j].children[k];
+					let ptTop = child.localToGlobal(child.regX,child.regY);
+					ptTop.x = ptTop.x+child.col;
+					ptTop.y = ptTop.y+child.row;
+					let tween = tweenNodes.splice(0,1);
+					
+					tweenScoot(tween[0],ptTop.x,ptTop.y);
+				}
+				
+			} 
+
+		}
+	}
+
+}
+
 function handlePaint(buttonPaint) {
 	buttonPaint.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
@@ -1000,80 +1283,19 @@ function updateColor(node, color){
 	for(let j = 0; j < node.children.length; j++) {
 		node.children[j].graphics._fill.style = colors[color]
 	}
-	
 }
-
-function handleSeperate(buttonSeperate) {
-	buttonSeperate.onclick = function(){
-		if (tweenRunningCount > 0 ) { return; }
-
-		let toSeperate = []
-		for (let i = 0; i < selectedObjects.length; i++) {
-			toSeperate.push(selectedObjects[i])
-		}
-
-		for (let i = 0; i < toSeperate.length; i++) {
-			let node = toSeperate[i];
-			node.alpha = 0;
-			let exponent = Math.round(Math.log(node.children.length, baseVal));
-
-			// build base ^ n single nodes for TWEEN EFFECT
-			let tweenNodes = []
-			for(let j = 0; j < node.children.length; j++) {
-				let child = node.children[j];
-				//console.log(child)
-				let ptTop = child.localToGlobal(child.regX,child.regY);
-				ptTop.x = ptTop.x+child.col;
-				ptTop.y = ptTop.y+child.row;
-				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y)
-				updateColor(tweenNodes[j], toSeperate[i].color);
-				updateSelectedObjects(tweenNodes[j]);
-			}
-
-
-			let newObjects = [];
-			for(let j = 0; j < baseVal; j++) {
-				let exp = exponent-1<0 ? 0 : exponent-1;
-				
-				newObjects[j] = makeRect(exp);
-				tweenHidden.push(newObjects[j]);
-				newObjects[j].alpha = 0;
-				newObjects[j].color = toSeperate[i].color;
-				updateColor(newObjects[j], newObjects[j].color);
-				
-				
-				for(let k = 0; k < newObjects[j].children.length; k++) {
-					let child = newObjects[j].children[k];
-					let ptTop = child.localToGlobal(child.regX,child.regY);
-					ptTop.x = ptTop.x+child.col;
-					ptTop.y = ptTop.y+child.row;
-					let tween = tweenNodes.splice(0,1);
-					
-					tweenScoot(tween[0],ptTop.x,ptTop.y);
-				}
-				
-			} 
-
-		}
-		// Delete Current node
-		//deleteSelected();
-	}
-}
-
-
 
 function handleColumn(buttonColumn) {
 	buttonColumn.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
 
 		let hi = divContainers;
-		//console.log(hi)
 		let updateToOpenStage = divContainers != 1;
 		if (updateToOpenStage) {
 			divContainers = 1;
 			removeDiv(1,hi);
-			//manageExponentButtonState(activeMaxDiv, getMaxDiv());
 		}
+		/*
 		else { 
 			let frame = prompt('How many frames?');
 
@@ -1089,6 +1311,7 @@ function handleColumn(buttonColumn) {
 			}
 			//manageExponentButtonState(hi, divContainers);
 		}
+		*/
 		drawStage();
 		manageContainerButtonState();
 	}
@@ -1096,14 +1319,12 @@ function handleColumn(buttonColumn) {
 
 function openStage() {
 	let hi = divContainers;
-	//console.log(hi)
 	let updateToOpenStage = divContainers != 1;
 	if (updateToOpenStage) {
 		divContainers = 1;
 		removeDiv(1,hi);
-		//manageExponentButtonState(activeMaxDiv, getMaxDiv());
 	}
-	drawStage();
+	//drawStage();
 	manageContainerButtonState();
 }
 
