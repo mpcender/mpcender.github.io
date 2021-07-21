@@ -108,21 +108,34 @@
 
 				<td>
 					<div>
-				 		<button class="button" id="button_combine">
-					 		<img class="buttonImage" src="res/combine.png">
-				 		</button>
+						<button class="button" id="button_combine">
+							<img class="buttonImage" src="res/combine.png">
+						</button>
+					
 				</td>
 			 	<td>
-					<div>
-				  		<button class="button" id="button_seperate">
-					  		<img class="buttonImage" src="res/seperate.png">
-				  		</button>
+					<div class="dropup">
+						<div>
+				 		<button class="button" id="button_seperate">
+					 		<img class="buttonImage" src="res/seperate.png">
+				 		</button>
+						<div class="dropup-content">
+						  	<button class="buttonDropupFull" id="button_toggle_single">Single</button>
+							  <button class="buttonDropupFull" id="button_toggle_group">Group</button>
+						</div>
+					</div>
 			 	</td>
 				 <td>
-					<div>
-				  		<button class="button" id="button_paint">
-					  		<img class="buttonImage" src="res/paint.png">
-				  		</button>
+					<div class="dropup">
+						<div>
+							<button class="button" id="button_paint">
+								<img class="buttonImage" src="res/paint.png">
+							</button>
+						<div class="dropup-content">
+						  	<button class="buttonDropupFull" id="button_toggle_assist">Assist</button>
+							  <button class="buttonDropupFull" id="button_toggle_plain">Plain</button>
+						</div>
+					</div>
 			 	</td>
 
 				<td class="spacer"></td>

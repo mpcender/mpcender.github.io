@@ -148,7 +148,7 @@ footer > h1 {
 	display: none;
 	position: absolute;
 	background: transparent;
-	bottom: 63px;
+	bottom: 65px;
 	z-index: 1;
   }
   
@@ -166,8 +166,11 @@ footer > h1 {
 
   .buttonDropup {
   	background-color: #5a5a5a;
-  	height:60px;
-  	width: 60px;
+	font-family: 'Balsamiq Sans', cursive;
+	font-size: large;
+	color:aliceblue;
+  	height:40px;
+  	width: 50px;
   	border-radius: 20px;
   	transition-duration: 0.6s;
   }
@@ -186,4 +189,34 @@ footer > h1 {
   	transform: translateY(0px);
   }
 
+.buttonDropupFull {
+	background-color: #5a5a5a;
+  	font-family: 'Balsamiq Sans', cursive;
+  	font-size: large;
+  	color:aliceblue;
+	height:40px;
+	width: 7vw;
+	border-radius: 20px;
+	transition-duration: 0.6s;
+}
 
+.buttonDropupFull:hover {
+	background-color: #005586; 
+	border: 2px solid #005586;
+	transform: translateY(-4px);
+	color: white; 
+}
+
+.buttonDropupFull:active {
+	background-color: #005586;
+	box-shadow: 0 5px #666;
+	transition-duration: 0.2s;
+	transform: translateY(0px);
+}
+  
+.buttonDropupFull:disabled {
+	
+	background-color:#9e9e9e;
+	cursor:not-allowed;
+	color:#dbdbdb;
+}

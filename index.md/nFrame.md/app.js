@@ -1,35 +1,55 @@
-//const containter = 
+//const containter 
 const mainStageElem = document.getElementById("cavasDiv");
 const canvas = document.getElementById("canvas");
 const stageQuery = document.querySelector("#cavasDiv");
 
 let stage;
+// Base value
+let baseVal = 3;
+// Maximum base of program
+const maxBase = 10;
 
-// stage bound vars
+
+// stage bound objects
 let dividers = [];
+// number of current stage containers (also used for current exponent tracking)
 let divContainers = 1;
+// Min and max divisions on the board
 const minDiv = 1;
 const maxDiv = 5;
+// Current Max div (depends on current base value)
 let activeMaxDiv = 5;
+// Stores Boundary objects which track top left and bottom right points of divs
 let divBounds;
 let prevDivBounds;
-let circleBumpers = [];
+
 
 // Banner Variables
 let banners = [];
-let baseVal = 3;
-const maxBase = 10;
+// height of stage division banners
 const bannerHeight = 25;
+// exponent character codes for 0,1,2,3,4
 const superscript = ["\u2074","\u00B3","\u00B2","\u00B9","\u2070"];
-const colorSet = {blue: "#005586", red: "#d02237", yellow: "#d6ad4c", green: "#8ab546"}
-let colors = [colorSet.blue,colorSet.red,colorSet.yellow,colorSet.green]
-//,yellow c8c03b
+const superscriptRev = ["\u2070","\u00B9","\u00B2","\u00B3","\u2074"];
+const fontSize = 24;
+
 
 // Node stage tracker (enables collision detection)
 let stageNodeTracker = [];
+// Node storage remembers nodes for stage containers not currently visible
 let stageNodeStorage = [[],[],[],[],[]];
+// Pixel size of each subNode object 
 const nodeSize = 25;
+// Largest subnodes in a container
 const maxNodeGroup = 256;
+// Color codes for container node color change
+const colorSet = {blue: "#005586", red: "#d02237", yellow: "#d6ad4c", green: "#8ab546"}
+let colors = [colorSet.blue,colorSet.red,colorSet.yellow,colorSet.green]
+let visualSeperation = false;
+const colorOffSet = {blue: "#1e8ac9", red: "#f44358", yellow: "#f5c759", green: "#abdb5f"}
+let colorsOff = [colorOffSet.blue,colorOffSet.red,colorOffSet.yellow,colorOffSet.green]
+//,yellow c8c03b
+
 
 // draw select box variables
 let stageSelectorBox;
@@ -37,26 +57,31 @@ let objectEventActive = false;
 let selectedObjects = [];
 let seperateToOnes = true;
 
+// Delay on stage update on resize (1 second)
 let resizeTimer = null;
 const resizeWait = 1000;
 
-let bottomLeftCircle;
-const regInt = new RegExp('^[0-9]$');
-
-let buttonMinus;
-let buttonPlus;
+// Column button variables
+let buttonRemoveColumn;
+let buttonAddColumn;
+// Node container creation buttons
 let add0, add1, add2, add3, add4;
 let expButtons = [add0, add1, add2, add3, add4];
 let expParent;
 
-// Tween Vars
+
+// Determine if tween is currently running on the stage
 let tweenRunningCount = 0;
+// Duration of node tween transition (ms)
 const tweenDuration = 900;
 // Shape object tween controll
 let xTween;
 let yTween;
+// Node objects hidden during tween, reactivated on tween complete
 let tweenHidden = [];
 
+
+// Audio clip variables
 let slideRunning = 0;
 let trashRunning = 0;
 const bloopSound = "res/sound/bloop.mp3";
@@ -64,22 +89,14 @@ const trashSound = "res/sound/trash.mp3";
 const slideSound = "res/sound/slide.mp3";
 const paintSound = "res/sound/clayChirp.mp3";
 
+// User input regex for integer value
+//const regInt = new RegExp('^[0-9]$');
+
 
 //------------------------------------------------------
 //
 //		TODO:	
-//				- trash button invisible until items selected (Hover tool )
-//				- work on getting zoom offset working (Very Complicated!!)
-//				- one set of numbers, inverted prot
-//				- set leg bounds
-//
-//		Complete
-//				- add delete button delete removes all object in stageNodeTracker
-//				- drag onto board - remove tween
-//				- Move all selected objects as one 
-//				- Modify selector to select all, add new only deselect 
-//					if no new is found? (slight bugs) (lag on mouseUp)
-//				- protractor always top of board
+//				- 
 //
 
 
@@ -98,22 +115,20 @@ function main() {
 
 	// get and update container sizes & locations
 	window.onresize = resizeUpdate;
-	//window.addEventListener("resize", resizeUpdate);
 	resizeUpdate();
 
+	// create and initialize stage HTML buttom objects
 	enableButtons();
-	//manageExponentButtonState(activeMaxDiv, getMaxDiv());
 
 	// Draw all stage elements
 	drawStage();
+
 	
 	createjs.Ticker.framerate = 30;
 	createjs.Ticker.addEventListener("tick", stage);
-
-	
-	
 	
 	// displays mouse location on stage, Development use only
+	/*
 	let distxDOM = document.getElementById("distx")
 	let distyDOM = document.getElementById("disty")
 	distxDOM.style.color = distyDOM.style.color = "black";
@@ -127,6 +142,7 @@ function main() {
 		}
 		
 	});
+	*/
 	
 }
 
@@ -191,34 +207,26 @@ function resizeUpdate(){
 	canvas.height = mainStageElem.clientHeight;
 	canvas.width = mainStageElem.clientWidth;
 
-	if (bottomLeftCircle != null) {
-		bottomLeftCircle.graphics.command.y = mainStageElem.clientHeight;
-	}
-
-	// DEMO
-	removeDivBumpers();
-
 	if (dividers[0] != null) {
-		let space = mainStageElem.clientWidth/divContainers
+		let divContWidth = mainStageElem.clientWidth/divContainers
 		let divTrack = [];
 		for (let i = 1; i <= divContainers; i++) {
 			// Adjust Dividers
-			dividers[i-1].graphics.command.x = (space*i);
+			dividers[i-1].graphics.command.x = (divContWidth*i);
 			dividers[i-1].graphics.command.h = mainStageElem.clientHeight;
 			
 			// Rebuild Banners
 			stage.removeChild(banners[i-1]);
 			banners[i-1] = buildBanner(i);
-			banners[i-1].setTransform(i==1 ? (space*(i-1)) : (space*(i-1)+5), 0);
+			banners[i-1].setTransform(i==1 ? 
+				(divContWidth*(i-1)) : (divContWidth*(i-1)+5), 0);
 			stage.addChild(banners[i-1]);
 
 			let bound = new DivTracker(
-				(i==1 ? (space*(i-1)) : (space*(i-1)+5)),0,
-				(space*(i)),mainStageElem.clientHeight);
+				(i==1 ? (divContWidth*(i-1)) : (divContWidth*(i-1)+5)),0,
+				(divContWidth*(i)),mainStageElem.clientHeight);
 			divTrack[i-1] = bound;
-			
-			// DEMO
-			divBumpers(bound, i);
+
 		}
 		prevDivBounds = divBounds;
 		divBounds = new DivSection(divTrack);
@@ -226,31 +234,6 @@ function resizeUpdate(){
 	}
 	updateNodePositions();
 	}
-}
-
-function removeDivBumpers(){
-	/*
-	while (circleBumpers.length >1){
-		stage.removeChild(circleBumpers.pop());
-	}
-	*/
-}
-
-function divBumpers(bound, i) {
-	/*
-	console.log("loop " + i + "\n")
-	console.log("topLeft : " + bound.topX + "," + bound.topY + "\n");
-	console.log("botRight: " + bound.botX + "," + bound.botY + "\n");
-
-	circle1 = new createjs.Shape();
-	circle1.graphics.beginFill("#FFF000").drawCircle(bound.topX, bound.topY, 10);
-	circle2 = new createjs.Shape();
-	circle2.graphics.beginFill("#FFF000").drawCircle(bound.botX, bound.botY, 10);
-	stage.addChild(circle1,circle2);
-	circleBumpers.push(circle1,circle2);
-	circleBumpers.push(circle1);
-	*/
-	
 }
 
 //---------------------------------------------------------------------
@@ -261,52 +244,26 @@ function divBumpers(bound, i) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //---------------------------------------------------------------------
 
-function evaluatePostion(container, exponent){
-	let col = -nodeSize;
-	let row = 0;
-	let mod = getDimension(exponent);
-
-	for (let i = 0; i < Math.pow(baseVal, exponent); i++) {
-		//col = i%(baseVal*mod) == 0 ? col+nodeSize : col;
-		//row = i%(baseVal*mod);
-		col = i%(mod[1]) == 0 ? col+nodeSize : col;
-		row = i%(mod[1]) == 0 ? 0 : row+nodeSize ;
-		//console.log(col + "," + row);
-	}
-
-	getContainerUpdate(container, exponent, mod);		
-	updateNodeTracking(container, container.x, container.y, 
-		container.x+col+nodeSize, container.y+row+nodeSize);
-	
-	return container;
-}
-
-
 function drawStage(){
-	// DEMO
-	//removeDivBumpers();
-
-	let space = mainStageElem.clientWidth/divContainers;
+	let divContWidth = mainStageElem.clientWidth/divContainers;
 	let divTrack = [];
 	// divider
 	for (let i = 1; i <= divContainers; i++) {
 		dividers[i-1] = new createjs.Shape();
 		dividers[i-1].graphics.beginFill("#FFFFFF").
-			drawRect((space*i),0,5,mainStageElem.clientHeight);
+			drawRect((divContWidth*i),0,5,mainStageElem.clientHeight);
 		
 		banners[i-1] = buildBanner(i);
-		banners[i-1].setTransform(i==1 ? (space*(i-1)) : (space*(i-1)+5), 0);
+		banners[i-1].setTransform(i==1 ? (divContWidth*(i-1)) : (divContWidth*(i-1)+5), 0);
 
 		// Track boundaries for each stage division
 		let bound = new DivTracker(
-			(i==1 ? (space*(i-1)) : (space*(i-1)+5)),0,
-			(space*(i)),mainStageElem.clientHeight);
+			(i==1 ? (divContWidth*(i-1)) : (divContWidth*(i-1)+5)),0,
+			(divContWidth*(i)),mainStageElem.clientHeight);
 		divTrack[i-1] = bound;
 
 		stage.addChild(dividers[i-1], banners[i-1]);
 		
-		// DEMO
-		//divBumpers(bound, i);
 	}
 	prevDivBounds = divBounds
 	divBounds = new DivSection(divTrack);
@@ -317,19 +274,20 @@ function drawStage(){
 function buildBanner(i){
 	let banner = new createjs.Container();
 
-	let space = mainStageElem.clientWidth/divContainers;
+	let divContWidth = mainStageElem.clientWidth/divContainers;
 	let shape = new createjs.Shape();
 	shape.graphics.beginFill("#005586")
 		.drawRect(	0,
 					0,
-					i==1 ? space : space-5,
+					i==1 ? divContWidth : divContWidth-5,
 					bannerHeight)
 
 	// Calculate index offset for superscript values
 	let j = (i-1)-(divContainers-5);
-	let text = new createjs.Text(baseVal+superscript[j], "22px Times New Roman", "#FFFFFF");
+	let text = new createjs.Text(baseVal+superscript[j], 
+		fontSize+"px Times New Roman", "#FFFFFF");
 	text.textAlign ="center";
-	text.x = (space)/2;
+	text.x = (divContWidth)/2;
 	text.y = 3;
 	
 	banner.addChild(shape, text);
@@ -350,16 +308,13 @@ function makeRect(exponent) {
 	let mod = getDimension(exponent);
 
 	for (let i = 0; i < Math.pow(baseVal, exponent); i++) {
-		//col = i%(baseVal*mod) == 0 ? col+nodeSize : col;
-		//row = i%(baseVal*mod);
 		col = i%(mod[1]) == 0 ? col+nodeSize : col;
 		row = i%(mod[1]) == 0 ? 0 : row+nodeSize ;
-		//console.log(col + "," + row);
 		let child = buildSubNode(col, row);
 		child.row = row;
 		child.col = col;
 		container.addChild(child);
-		//console.log(col+","+row)
+
 	}
 	container.col = col;
 	container.row = row;
@@ -374,6 +329,18 @@ function makeRect(exponent) {
 	return container;
 }
 
+// Single rectangle for stage object creation
+function buildSubNode(col, row){
+	let node = new createjs.Shape();
+	node.graphics.beginStroke("white");
+	node.graphics.setStrokeStyle(1);
+	node.snapToPixel = true;
+	node.graphics.beginFill(colorSet.blue).
+		drawRoundRect(col, row, nodeSize, nodeSize, 5);
+	return node;
+}
+
+// Single rectangle for tween transition
 function makeSingleRect(x, y) {
 	let container = new createjs.Container();
 	let col = 0;
@@ -393,19 +360,7 @@ function makeSingleRect(x, y) {
 }
 
 
-function buildSubNode(col, row){
-	let node = new createjs.Shape();
-	node.graphics.beginStroke("white");
-	node.graphics.setStrokeStyle(1);
-	node.snapToPixel = true;
-	node.graphics.beginFill(colorSet.blue).
-		drawRoundRect(col, row, nodeSize, nodeSize, 5);
-	return node;
-}
-
-
 function getDimension(i){
-	//console.log(divBounds)
 	// if base^0 return 1
 	if (i==0 || baseVal == 1) {return [1,1] }
 	let width;
@@ -441,7 +396,9 @@ function getDimension(i){
 	return num;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+//						Node Stage Position methods
+////////////////////////////////////////////////////////////////////////////////
 function getContainerPlacement(container, exponent, mod) {
 	let minX,minY, maxX,maxY;
 	if (divContainers == 1) {
@@ -456,10 +413,6 @@ function getContainerPlacement(container, exponent, mod) {
 		maxY = divBounds.array[exponent].botY-(nodeSize*(mod[1]+1));
 	}
 
-	//console.log(minX+","+minY+"   -   "+maxX+","+maxY)
-	
-
-	//console.log(divBounds.array[exponent]);
 	container.x = Math.floor(Math.random() * (maxX - minX + 1) + minX);
 	container.y = Math.floor(Math.random() * (maxY - minY + 1) + minY);
 }
@@ -514,9 +467,7 @@ function getContainerUpdate(container, exponent, mod) {
 	tweenScoot(container, xTween, container.y)
 }
 
-
-
-
+// Update container stage postion tracking variables
 function updateNodeTracking(cont, tlx, tly, brx, bry) {
 	cont.loc = new DivTracker(tlx, tly, brx, bry);
 }
@@ -560,13 +511,9 @@ function updateNodePositions() {
 		storeRemovedNodes(remove);
 	}
 
-	Math.log = (function() {
-		var log = Math.log;
-		return function(n, base) {
-		  return log(n)/(base ? log(base) : 1);
-		};
-	})();
+	
 
+	// 
 	function restoreStoredNodes(restore){
 		if (restore.length != 0) {
 			while (restore.length != 0) {
@@ -612,7 +559,32 @@ function updateNodePositions() {
 			
 		}
 	}
+
+	function evaluatePostion(container, exponent){
+		let col = -nodeSize;
+		let row = 0;
+		let mod = getDimension(exponent);
+	
+		for (let i = 0; i < Math.pow(baseVal, exponent); i++) {
+			col = i%(mod[1]) == 0 ? col+nodeSize : col;
+			row = i%(mod[1]) == 0 ? 0 : row+nodeSize ;
+		}
+	
+		getContainerUpdate(container, exponent, mod);		
+		updateNodeTracking(container, container.x, container.y, 
+			container.x+col+nodeSize, container.y+row+nodeSize);
+		
+		return container;
+	}
 }
+
+// Evaluate log of current baseVal
+Math.log = (function() {
+	var log = Math.log;
+	return function(n, base) {
+	  return log(n)/(base ? log(base) : 1);
+	};
+})();
 
 function selectNode(node){
 	//"#4287f5"
@@ -658,7 +630,6 @@ function updateSelectedObjects(dragger) {
 			return true;
 		}
 	}
-	//console.log(selectedObjects.length)
 }
 
 
@@ -668,10 +639,10 @@ function updateSelectedObjects(dragger) {
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 function manageContainerButtonState() {
-	if (divContainers >= getMaxDiv()) { disablePlus(); }
-	else { enablePlus(); }
-	if (divContainers <= minDiv) { disableMinus(); }
-	else {enableMinus(); }
+	if (divContainers >= getMaxDiv()) { disableAddColumn(); }
+	else { enableAddColumn(); }
+	if (divContainers <= minDiv) { disableRemoveColumn(); }
+	else {enableRemoveColumn(); }
 }
 
 function manageExponentButtonState(){
@@ -702,7 +673,7 @@ function manageExponentButtonState(){
 //
 //----------------------------------------------------
 function handleStageMouseDown(event) {
-	if (!event.primary) { return; }
+	if (!event.primary || tweenRunningCount > 0) { return; }
 	// Store current stage mouse location
 	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
 
@@ -711,7 +682,7 @@ function handleStageMouseDown(event) {
 
 function handleStageMouseMove(event) {
 	// if dragger active or mouse out of bounds return
-	if (!event.primary  || objectEventActive) { return; }
+	if (!event.primary  || objectEventActive || tweenRunningCount > 0) { return; }
 	let stroke = 10;
 
 	// Enable boundary on drawing selector box on selector stage
@@ -732,7 +703,7 @@ function handleStageMouseMove(event) {
 }
 
 function handleStageMouseUp(event) {
-	if (!event.primary) { return; }
+	if (!event.primary || tweenRunningCount > 0) { return; }
 
 	stage.removeChild(stageSelectorBox)
 	stage.removeEventListener("stagemousemove", handleStageMouseMove);
@@ -889,7 +860,7 @@ function applyNodeHandlers(node) {
 }
 
 function tweenScoot(node, xTween, yTween){
-	if (slideRunning < 1 && trashRunning < 1) { PlaySound(slideSound,.1)}
+	if (slideRunning < 1 && trashRunning < 1) { PlaySound(slideSound,.4)}
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", stage);
 	tweenRunningCount++;
@@ -939,16 +910,23 @@ function enableButtons() {
 	let buttonTrash = document.getElementById("button_trash");
 	let buttonReset = document.getElementById("button_refresh");
 	let buttonCombine = document.getElementById("button_combine");
+	let buttonToggleSingle = document.getElementById("button_toggle_single")
+	let buttonToggleGroup = document.getElementById("button_toggle_group")
 	let buttonSeperate = document.getElementById("button_seperate");
 	let buttonColumn = document.getElementById("button_column");
 	let buttonPaint = document.getElementById("button_paint");
-	buttonPlus = document.getElementById("button_add_col");
-	buttonMinus = document.getElementById("button_remove_col");
+	let buttonToggleAssist = document.getElementById("button_toggle_assist")
+	let buttonTogglePlain = document.getElementById("button_toggle_plain")
+	buttonAddColumn = document.getElementById("button_add_col");
+	buttonRemoveColumn = document.getElementById("button_remove_col");
+
+	
 
 	let buttonAdd = document.getElementById("button_add");
 	for (let i = 0; i < activeMaxDiv; i++) {
 		let id = "button_add_" + i;
 		expButtons[i] = document.getElementById(id);
+		expButtons[i].innerHTML = baseVal + superscriptRev[i]
 		handleAddBlock(expButtons[i],i);
 	}
 	expParent = expButtons[0].parentNode;
@@ -957,17 +935,55 @@ function enableButtons() {
 	handleTrash(buttonTrash);
 	handleReset(buttonReset);
 	handleCombine(buttonCombine);
+	handleToggleSingle(buttonToggleSingle, buttonToggleGroup);
+	handleToggleGroup(buttonToggleGroup, buttonToggleSingle);
 	handleSeperate(buttonSeperate);
 	handleColumn(buttonColumn);
 	handlePaint(buttonPaint);
-	handlePlus(buttonPlus);
-	handleMinus(buttonMinus);
+	handleToggleAssist(buttonToggleAssist, buttonTogglePlain);
+	handleTogglePlain(buttonTogglePlain, buttonToggleAssist);
+	handleAddColumn(buttonAddColumn);
+	handleRemoveColumn(buttonRemoveColumn);
 	handleAdd(buttonAdd);
 	
 	buildHandleBase();
 	
-	disableMinus();
+	disableRemoveColumn();
 
+}
+
+function handleToggleSingle(buttonToggleSingle, buttonToggleGroup){
+	buttonToggleSingle.onclick = function(){
+		seperateToOnes = !seperateToOnes;
+		buttonToggleSingle.disabled = true;
+		buttonToggleGroup.disabled = false;
+		console.log(buttonToggleSingle)
+	}
+}
+function handleToggleGroup(buttonToggleGroup, buttonToggleSingle){
+	buttonToggleGroup.onclick = function(){
+		seperateToOnes = !seperateToOnes;
+		buttonToggleGroup.disabled = true;
+		buttonToggleSingle.disabled = false;
+		//buttonToggleSingle
+	}
+}
+
+
+
+function handleToggleAssist(buttonToggleAssist, buttonTogglePlain){
+	buttonToggleAssist.onclick = function(){
+		visualSeperation = !visualSeperation;
+		buttonToggleAssist.disabled = true;
+		buttonTogglePlain.disabled = false;
+	}
+}
+function handleTogglePlain(buttonTogglePlain, buttonToggleAssist){
+	buttonTogglePlain.onclick = function(){
+		visualSeperation = !visualSeperation;
+		buttonTogglePlain.disabled = true;
+		buttonToggleAssist.disabled = false;
+	}
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1003,11 +1019,7 @@ function deleteSelected() {
 		for (let i = 0; i < len; i++) {
 			clearSelectedObject(removed, i);
 			clearStageNodeTracker(removed, i);
-			
-			//clearStoredObject(removed, i);
 		}
-		//clear(dividers);
-		//drawStage();
 	}
 
 	function clearSelectedObject(removed, i) {
@@ -1050,32 +1062,40 @@ function clear(iterable) {
 
 
 function handleCombine(buttonCombine) {
+	//buttonCombine.on
 	buttonCombine.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
-		let exponent;
 		let combine = [[],[],[],[],[]]
+		let deselect = [];
 		// determine if objects can combine
 		for (let i = 0; i < selectedObjects.length; i++) {
 			let node = selectedObjects[i]
-			exponent  = Math.round(Math.log(node.children.length, baseVal));
+			// Get current object exponent value
+			let exponent  = Math.round(Math.log(node.children.length, baseVal));
+			// Check if exponent+1 container can exist on the stage
 			if (exponent < activeMaxDiv) {
+				// if open
 				if(divContainers == 1) {
 					combine[exponent].push(node)
 				} else if (exponent < divContainers-1){
 					combine[exponent].push(node)
-				}	
-			}
+				} else { deselect.push(node) }
+			} else { deselect.push(node) }
 		}
+		// deselect higher exponent 
+		deselect.forEach( element => {
+			let k = selectedObjects.indexOf(element)
+			deselectNode(selectedObjects[k]);
+			selectedObjects.splice(k,1);
+		})
 		
-		let newObject = [];
-		let tweenNodes = [];
-		let index = 0;
+		// Loop through exponent storage
 		for(let i = 0; i < combine.length; i++) {
+			let newObject = [];
+			let tweenNodes = [];
+			let index = 0;
 			// Check if selected nodes can be combined (correct number of nodes)
 			if(combine[i].length != 0 && combine[i].length%baseVal == 0) {
-				for(let j = 0; j < combine[i].length; j++) {
-					
-				}
 				
 				// build single tween nodes
 				for(let j = 0; j < combine[i].length; j++) {
@@ -1083,20 +1103,24 @@ function handleCombine(buttonCombine) {
 					combine[i][j].alpha = 0;
 					for(let k = 0; k < combine[i][j].children.length; k++) {
 						let child = combine[i][j].children[k];
-						//console.log(child)
 						let ptTop = child.localToGlobal(child.regX,child.regY);
 						ptTop.x = ptTop.x+child.col;
 						ptTop.y = ptTop.y+child.row;
 						let tweenNode = makeSingleRect(ptTop.x, ptTop.y)
 						updateColor(tweenNode, combine[i][j].color);
 						updateSelectedObjects(tweenNode);
+						tweenNode.shadow = new createjs.Shadow(colors[combine[i][j].color], 0, 0, 30);
 						tweenNodes.push(tweenNode)
 					}
 				}
 				// build new node
 				let toMake = combine[i].length/baseVal;
 				for(let j = 0; j < toMake; j++) {
-					newObject[index] = buildNew(combine[i][0], i+1);
+					let x = combine[i][j*baseVal].x;
+					let y = combine[i][j*baseVal].y;
+					newObject[index] = buildNew(combine[i][0], i+1, x, y);
+					newObject[index].color = combine[i][j*baseVal].color
+					updateColor(newObject[index], combine[i][j*baseVal].color);
 					index++;
 				}
 				for(let j = 0; j < newObject.length; j++) {
@@ -1109,19 +1133,21 @@ function handleCombine(buttonCombine) {
 
 						tweenScoot(tween[0],ptTop.x,ptTop.y);
 					}
-					//console.log(newObject[j])
+				}
+			} else{
+				// deselect smaller exponent 
+				for(let j = 0; j < combine[i].length; j++) {
+					let k = selectedObjects.indexOf(combine[i][j])
+					deselectNode(selectedObjects[k]);
+					selectedObjects.splice(k,1);
 				}
 			}
 		}
 	}
 
-	function buildTween(prevNode) {
-		// build base ^ n single nodes for TWEEN EFFECT
-		
-	}
 
 	//let tweenHidden = [];
-	function buildNew(node, exp) {
+	function buildNew(node, exp, x, y) {
 		// Build new object
 		let object = makeRect(exp);
 		// Hide during tween
@@ -1131,23 +1157,16 @@ function handleCombine(buttonCombine) {
 		object.color = node.color;
 		updateColor(object, object.color);
 		object.prevExp = exp-1;
+
+		object.x=x;
+		object.y=y;
+		updateNodeTracking(object, object.x, object.y, 
+			object.x+nodeSize, object.y+nodeSize);
 		return object;
-		
-		/*
-		if (newLoc.length == size) {
-			object.x = newLoc[j].x;
-			object.y = newLoc[j].y;	
-			updateNodeTracking(object, newLoc[j].x, newLoc[j].y, 
-				newLoc[j].x+nodeSize, newLoc[j].y+nodeSize);
-		}
-		
-		// Tween tweenNodes to location of new object
-		for(let k = 0; k < object.children.length; k++) {
-			
-		}
-		*/
 	}
 }
+/*
+
 function disableCombine() {
 	if (true) { buttonCombine.disabled = true; }
 }
@@ -1157,12 +1176,13 @@ function enableCombine() {
 		buttonCombine.disabled = false;
 	}
 }
+*/
+
 
 function handleSeperate(buttonSeperate) {
 	buttonSeperate.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
 
-		//seperateToOnes = false;
 		let toSeperate = []
 		let singles = []
 		// Only seperate nodes larger than one
@@ -1203,13 +1223,13 @@ function handleSeperate(buttonSeperate) {
 			let newLoc = [];
 			for(let j = 0; j < node.children.length; j++) {
 				let child = node.children[j];
-				//console.log(child)
 				let ptTop = child.localToGlobal(child.regX,child.regY);
 				ptTop.x = ptTop.x+child.col;
 				ptTop.y = ptTop.y+child.row;
-				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y)
+				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y);
 				updateColor(tweenNodes[j], toSeperate[i].color);
 				updateSelectedObjects(tweenNodes[j]);
+				tweenNodes[j].shadow = new createjs.Shadow(colors[node.color], 0, 0, 30);
 
 				// Structured Decompose for Singles
 				if (size == node.children.length) {
@@ -1220,14 +1240,13 @@ function handleSeperate(buttonSeperate) {
 					}
 					newLoc.push({x: ptTop.x+(modX),y: ptTop.y+(modY)});
 					prevX = ptTop.x;
-				}else if (j%size == 0) {
-					// If breaking down to block
 				}
-				
 			}
 			
 			// build new objects for seperation
 			let newObjects = [];
+			let multiX = node.x;
+			let multiY = node.y;
 			for(let j = 0; j < size; j++) {
 				// Build new object
 				newObjects[j] = makeRect(exp);
@@ -1240,11 +1259,31 @@ function handleSeperate(buttonSeperate) {
 
 				newObjects[j].prevExp = exponent;
 	
-				if (newLoc.length == size) {
+				// Structured Decompose for Singles node
+				if (newLoc.length != 0) {
 					newObjects[j].x = newLoc[j].x;
 					newObjects[j].y = newLoc[j].y;	
 					updateNodeTracking(newObjects[j], newLoc[j].x, newLoc[j].y, 
 						newLoc[j].x+nodeSize, newLoc[j].y+nodeSize);
+				} 
+				// Structured Decompose for Multi-node containers
+				else {
+					let expon = divBounds.array[exp] != null ? exp : 0;
+					let bound = divBounds.array[expon].botX - divBounds.array[expon].topX
+					let offset = multiX+newObjects[j].col+(nodeSize*2)
+		
+					if (offset < bound){
+						multiX += newObjects[j].col+(nodeSize*2)
+					} else {
+						multiY += newObjects[j].row+(nodeSize*2)
+						multiX  = node.x;
+					}
+					
+					newObjects[j].x = multiX;
+					newObjects[j].y = multiY;	
+					updateNodeTracking(newObjects[j], multiX, multiY, 
+						multiX+newObjects[j].col+nodeSize, 
+						multiY+newObjects[j].row+nodeSize);
 				}
 				
 				// Tween tweenNodes to location of new object
@@ -1262,13 +1301,12 @@ function handleSeperate(buttonSeperate) {
 
 		}
 	}
-
 }
 
 function handlePaint(buttonPaint) {
 	buttonPaint.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
-		PlaySound(paintSound, .5)
+		PlaySound(paintSound, .6)
 
 		for (let i = 0; i < selectedObjects.length; i++) {
 			let color = selectedObjects[i].color;
@@ -1279,11 +1317,23 @@ function handlePaint(buttonPaint) {
 		}
 	}
 }
+
+// Update color and varies colors for exponent-1
 function updateColor(node, color){
+	let colorMod = colors[color]
 	for(let j = 0; j < node.children.length; j++) {
-		node.children[j].graphics._fill.style = colors[color]
+		let exponent = Math.round(Math.log(node.children.length, baseVal));
+		if (visualSeperation 
+			&& node.children.length != 1 
+			&& j%Math.pow(baseVal,exponent-1) == 0) {
+			if (colorMod.includes(colors[color])) { colorMod = colorsOff[color] }
+			else { colorMod = colors[color] }
+		} 
+		node.children[j].graphics._fill.style = colorMod;		
 	}
 }
+
+
 
 function handleColumn(buttonColumn) {
 	buttonColumn.onclick = function(){
@@ -1328,57 +1378,57 @@ function openStage() {
 	manageContainerButtonState();
 }
 
-function handlePlus(buttonPlus) {
-	buttonPlus.onclick = function(){
+function handleAddColumn(buttonAddColumn) {
+	buttonAddColumn.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
 
 		let update = (divContainers < activeMaxDiv);
 		divContainers = update ? divContainers+1 : divContainers;
 
-		disablePlus()
+		disableAddColumn()
 		if (update) { 
 			//manageExponentButtonState(divContainers, divContainers);
 			removeDiv(0, divContainers)
 			drawStage() 
 		}
-		enableMinus();
+		enableRemoveColumn();
 	}
-	buttonPlus.addEventListener
+	//buttonAddColumn.addEventListener
 }
-function disablePlus() {
-	if (divContainers == activeMaxDiv) {buttonPlus.disabled = true;}
+function disableAddColumn() {
+	if (divContainers == activeMaxDiv) {buttonAddColumn.disabled = true;}
 }
 
-function enablePlus() {
-	if (buttonPlus.disabled && divContainers < activeMaxDiv) {
-		buttonPlus.disabled = false;
+function enableAddColumn() {
+	if (buttonAddColumn.disabled && divContainers < activeMaxDiv) {
+		buttonAddColumn.disabled = false;
 	}
 }
 
-function handleMinus(buttonMinus) {
-	//buttonMinus.innerHTML = getMinus();
-	buttonMinus.onclick = function(){
+function handleRemoveColumn(buttonRemoveColumn) {
+	//buttonRemoveColumn.innerHTML = getRemoveColumn();
+	buttonRemoveColumn.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
 
 		let update = divContainers > minDiv ;
 		divContainers = update ? divContainers-1 : divContainers;
-		disableMinus();
+		disableRemoveColumn();
 		if (update) { 
 			//manageExponentButtonState(divContainers+1, divContainers);
 			removeDiv(0, divContainers+1);
 			drawStage();
 		}
-		enablePlus();
+		enableAddColumn();
 	}
 }
 
-function disableMinus() {
-	if (divContainers == minDiv) {buttonMinus.disabled = true;}
+function disableRemoveColumn() {
+	if (divContainers == minDiv) {buttonRemoveColumn.disabled = true;}
 }
 
-function enableMinus() {
-	if (buttonMinus.disabled && divContainers > minDiv) {
-		buttonMinus.disabled = false;
+function enableRemoveColumn() {
+	if (buttonRemoveColumn.disabled && divContainers > minDiv) {
+		buttonRemoveColumn.disabled = false;
 	}
 }
 /*
@@ -1431,6 +1481,11 @@ function buildHandleBase() {
 
 				// Find max exponent given base change
 				activeMaxDiv = getMaxDiv();
+
+				// Reset add container node button text to new base
+				for (let i = 0; i < activeMaxDiv; i++) {
+					expButtons[i].innerHTML = baseVal + superscriptRev[i]
+				}
 				drawStage();
 			  } 
 		}
