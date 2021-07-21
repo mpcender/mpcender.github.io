@@ -911,12 +911,14 @@ function enableButtons() {
 	let buttonReset = document.getElementById("button_refresh");
 	let buttonCombine = document.getElementById("button_combine");
 	let buttonToggleSingle = document.getElementById("button_toggle_single")
+	buttonToggleSingle.disabled = true;
 	let buttonToggleGroup = document.getElementById("button_toggle_group")
 	let buttonSeperate = document.getElementById("button_seperate");
 	let buttonColumn = document.getElementById("button_column");
 	let buttonPaint = document.getElementById("button_paint");
 	let buttonToggleAssist = document.getElementById("button_toggle_assist")
 	let buttonTogglePlain = document.getElementById("button_toggle_plain")
+	buttonTogglePlain.disabled = true;
 	buttonAddColumn = document.getElementById("button_add_col");
 	buttonRemoveColumn = document.getElementById("button_remove_col");
 
