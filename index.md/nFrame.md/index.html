@@ -16,29 +16,6 @@
 
 
 <body onload="main();">
-	<header>
-
-		<h1>Base Frame</h1>
-		<table class="buttonTableHead">
-			<tr>
-			   	<td>
-				   	<div >
-					<button class="buttonHead" id="button_trash">
-						<img class="buttonImage" src="res/trash.png">
-					</button>
-			   	</td>
-				<td class="headSpacer"></td>
-				<td>
-					<div>
-					<button class="buttonHead" id="button_refresh">
-						<img class="buttonImage" src="res/refresh.png">
-					</button>
-				</td>
-				<td class="headSpacer"></td>
-		   </tr>
-		</table>
-	</header>
-
 	<div class="mouseHUD">
 		<label id="distx"></label>
 		<label id="disty"></label>
@@ -46,16 +23,9 @@
 	
 	<div class="container" id="cavasDiv">
 		<div class="mainStage" >
-			<canvas id="canvas">
-				
-			</canvas>
-			
+			<canvas id="canvas"></canvas>
 		</div>
-		
-		
 	</div>
-
-	
 
 	<script src="app.js" charset="uft-8"></script>
 	<script src="https://code.createjs.com/easeljs-0.8.1.min.js"></script>
@@ -158,6 +128,24 @@
 							<img class="buttonImage" src="res/columnMinus.png">
 						</button>
 				</td>
+		   </tr>
+		</table>
+		<table class="buttonTableHead">
+			<tr>
+			   	<td>
+				   	<div >
+					<button class="buttonHead" id="button_trash">
+						<img class="buttonImage" src="res/trash.png">
+					</button>
+			   	</td>
+				<td class="headSpacer"></td>
+				<td>
+					<div>
+					<button class="buttonHead" id="button_refresh">
+						<img class="buttonImage" src="res/refresh.png">
+					</button>
+				</td>
+				<td class="headSpacer"></td>
 		   </tr>
 		</table>
 	</footer>

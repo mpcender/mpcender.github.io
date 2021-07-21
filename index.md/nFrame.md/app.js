@@ -1,7 +1,6 @@
 //const containter 
 const mainStageElem = document.getElementById("cavasDiv");
 const canvas = document.getElementById("canvas");
-const stageQuery = document.querySelector("#cavasDiv");
 
 let stage;
 // Base value
@@ -27,7 +26,7 @@ let prevDivBounds;
 // Banner Variables
 let banners = [];
 // height of stage division banners
-const bannerHeight = 25;
+const bannerHeight = 30;
 // exponent character codes for 0,1,2,3,4
 const superscript = ["\u2074","\u00B3","\u00B2","\u00B9","\u2070"];
 const superscriptRev = ["\u2070","\u00B9","\u00B2","\u00B3","\u2074"];
@@ -42,14 +41,6 @@ let stageNodeStorage = [[],[],[],[],[]];
 const nodeSize = 25;
 // Largest subnodes in a container
 const maxNodeGroup = 256;
-// Color codes for container node color change
-const colorSet = {blue: "#005586", red: "#d02237", yellow: "#d6ad4c", green: "#8ab546"}
-let colors = [colorSet.blue,colorSet.red,colorSet.yellow,colorSet.green]
-let visualSeperation = false;
-const colorOffSet = {blue: "#1e8ac9", red: "#f44358", yellow: "#f5c759", green: "#abdb5f"}
-let colorsOff = [colorOffSet.blue,colorOffSet.red,colorOffSet.yellow,colorOffSet.green]
-//,yellow c8c03b
-
 
 // draw select box variables
 let stageSelectorBox;
@@ -81,7 +72,32 @@ let yTween;
 let tweenHidden = [];
 
 
-// Audio clip variables
+// COLOR Properties
+let style = getComputedStyle(document.body)
+let mainBlue = style.getPropertyValue("--main_blue");
+let border = style.getPropertyValue("--border");
+let buttonText = style.getPropertyValue("--button_text");
+//let darkBackground = style.getPropertyValue("--dark_background");
+//let buttonGrey = style.getPropertyValue("--button_grey");
+//let buttonShadow = style.getPropertyValue("--button_grey_shadow");
+//let disabledButton = style.getPropertyValue("--disabled_grey");
+
+// Color codes for container node color change
+// Import CSS node color propery values			
+let colors = [	style.getPropertyValue("--blue_node").replaceAll("\"", ""),
+				style.getPropertyValue("--red_node").replaceAll("\"", ""),
+				style.getPropertyValue("--yellow_node").replaceAll("\"", ""),
+				style.getPropertyValue("--green_node").replaceAll("\"", "")];
+let colorsOff = [style.getPropertyValue("--blue_offset_node").replaceAll("\"", ""),
+				style.getPropertyValue("--red_offset_node").replaceAll("\"", ""),
+				style.getPropertyValue("--yellow_offset_node").replaceAll("\"", ""),
+				style.getPropertyValue("--green_offset_node").replaceAll("\"", "")]
+let bannerBorderColor = border;
+let bannerFontColor = buttonText;
+// Toggle color seperation of node blocks
+let visualSeperation = false;
+
+// AUDIO clip variables
 let slideRunning = 0;
 let trashRunning = 0;
 const bloopSound = "res/sound/bloop.mp3";
@@ -122,10 +138,10 @@ function main() {
 
 	// Draw all stage elements
 	drawStage();
-
 	
 	createjs.Ticker.framerate = 30;
 	createjs.Ticker.addEventListener("tick", stage);
+
 	
 	// displays mouse location on stage, Development use only
 	/*
@@ -202,38 +218,38 @@ function resizeUpdate(){
 
 	function resize() {
 		windowSizeX = window.innerWidth;
-	windowSizeY = window.innerHeight;
-
-	canvas.height = mainStageElem.clientHeight;
-	canvas.width = mainStageElem.clientWidth;
-
-	if (dividers[0] != null) {
-		let divContWidth = mainStageElem.clientWidth/divContainers
-		let divTrack = [];
-		for (let i = 1; i <= divContainers; i++) {
-			// Adjust Dividers
-			dividers[i-1].graphics.command.x = (divContWidth*i);
-			dividers[i-1].graphics.command.h = mainStageElem.clientHeight;
-			
-			// Rebuild Banners
-			stage.removeChild(banners[i-1]);
-			banners[i-1] = buildBanner(i);
-			banners[i-1].setTransform(i==1 ? 
-				(divContWidth*(i-1)) : (divContWidth*(i-1)+5), 0);
-			stage.addChild(banners[i-1]);
-
-			let bound = new DivTracker(
-				(i==1 ? (divContWidth*(i-1)) : (divContWidth*(i-1)+5)),0,
-				(divContWidth*(i)),mainStageElem.clientHeight);
-			divTrack[i-1] = bound;
-
+		windowSizeY = window.innerHeight;
+		
+		canvas.height = mainStageElem.clientHeight;
+		canvas.width = mainStageElem.clientWidth;
+		
+		if (dividers[0] != null) {
+			let divContWidth = mainStageElem.clientWidth/divContainers
+			let divTrack = [];
+			for (let i = 1; i <= divContainers; i++) {
+				// Adjust Dividers
+				dividers[i-1].graphics.command.x = (divContWidth*i);
+				dividers[i-1].graphics.command.h = mainStageElem.clientHeight;
+				
+				// Rebuild Banners
+				stage.removeChild(banners[i-1]);
+				banners[i-1] = buildBanner(i);
+				banners[i-1].setTransform(i==1 ? 
+					(divContWidth*(i-1)) : (divContWidth*(i-1)+5), 0);
+				stage.addChild(banners[i-1]);
+				
+				let bound = new DivTracker(
+					(i==1 ? (divContWidth*(i-1)) : (divContWidth*(i-1)+5)),0,
+					(divContWidth*(i)),mainStageElem.clientHeight);
+				divTrack[i-1] = bound;
+				
+			}
+			prevDivBounds = divBounds;
+			divBounds = new DivSection(divTrack);
+			//stage.update();
 		}
-		prevDivBounds = divBounds;
-		divBounds = new DivSection(divTrack);
-		//stage.update();
-	}
-	updateNodePositions();
-	}
+		updateNodePositions();
+		}
 }
 
 //---------------------------------------------------------------------
@@ -250,7 +266,7 @@ function drawStage(){
 	// divider
 	for (let i = 1; i <= divContainers; i++) {
 		dividers[i-1] = new createjs.Shape();
-		dividers[i-1].graphics.beginFill("#FFFFFF").
+		dividers[i-1].graphics.beginFill(bannerBorderColor).
 			drawRect((divContWidth*i),0,5,mainStageElem.clientHeight);
 		
 		banners[i-1] = buildBanner(i);
@@ -276,7 +292,7 @@ function buildBanner(i){
 
 	let divContWidth = mainStageElem.clientWidth/divContainers;
 	let shape = new createjs.Shape();
-	shape.graphics.beginFill("#005586")
+	shape.graphics.beginFill(bannerBorderColor)
 		.drawRect(	0,
 					0,
 					i==1 ? divContWidth : divContWidth-5,
@@ -285,10 +301,11 @@ function buildBanner(i){
 	// Calculate index offset for superscript values
 	let j = (i-1)-(divContainers-5);
 	let text = new createjs.Text(baseVal+superscript[j], 
-		fontSize+"px Times New Roman", "#FFFFFF");
+		fontSize+"px Balsamiq Sans", bannerFontColor);
 	text.textAlign ="center";
+	
 	text.x = (divContWidth)/2;
-	text.y = 3;
+	text.y = (bannerHeight-fontSize)/2;
 	
 	banner.addChild(shape, text);
 	banner.bannerId = i
@@ -335,7 +352,7 @@ function buildSubNode(col, row){
 	node.graphics.beginStroke("white");
 	node.graphics.setStrokeStyle(1);
 	node.snapToPixel = true;
-	node.graphics.beginFill(colorSet.blue).
+	node.graphics.beginFill(colors[0]).
 		drawRoundRect(col, row, nodeSize, nodeSize, 5);
 	return node;
 }
@@ -693,7 +710,7 @@ function handleStageMouseMove(event) {
 	stage.removeChild(stageSelectorBox)
 	let shape = new createjs.Shape();
 	shape.graphics.setStrokeDash([stroke * 2, stroke]).
-		beginStroke("#FFFFFF").rect(oldPt.x, oldPt.y,
+		beginStroke(bannerFontColor).rect(oldPt.x, oldPt.y,
 			stage.mouseX - oldPt.x, stageMouseY - oldPt.y);
 	
 	stageSelectorBox = shape;
@@ -1448,7 +1465,7 @@ function handleAdd(buttonAdd){
 }
 function getAdd() {
 	let plus =  new createjs.Shape();
-	plus.graphics.beginFill("#FFFFFF").drawRect(15,0,6,36).drawRect(0,15,36,6)
+	plus.graphics.beginFill(bannerFontColor).drawRect(15,0,6,36).drawRect(0,15,36,6)
 	plus.cache(0, 0, 36, 36);
 	var url = plus.getCacheDataURL();
 	return "<img class=\"buttonImage\" src=" + url + ">";
