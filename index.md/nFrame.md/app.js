@@ -100,10 +100,10 @@ let visualSeperation = false;
 // AUDIO clip variables
 let slideRunning = 0;
 let trashRunning = 0;
-const bloopSound = "res/sound/bloop.mp3";
-const trashSound = "res/sound/trash.mp3";
-const slideSound = "res/sound/slide.mp3";
-const paintSound = "res/sound/clayChirp.mp3";
+const bloopSound = new Audio("res/sound/bloop.mp3");
+const trashSound = new Audio("res/sound/trash.mp3");
+const slideSound = new Audio("res/sound/slide.mp3");
+const paintSound = new Audio("res/sound/clayChirp.mp3");
 
 // User input regex for integer value
 //const regInt = new RegExp('^[0-9]$');
@@ -335,11 +335,11 @@ function makeRect(exponent) {
 	}
 	container.col = col;
 	container.row = row;
+	container.setBounds(0, 0, col+nodeSize, row+nodeSize);
 
 	applyNodeHandlers(container)
 	getContainerPlacement(container, exponent, mod);	
-	updateNodeTracking(container, container.x, container.y, 
-		container.x+col+nodeSize, container.y+row+nodeSize);
+	
 	stageNodeTracker.push(container);
 	stage.addChild(container);
 	container.color=0;
@@ -370,6 +370,7 @@ function makeSingleRect(x, y) {
 	applyNodeHandlers(container);
 	container.x = x;
 	container.y = y;	
+	container.setBounds(0, 0, nodeSize, nodeSize);
 	updateNodeTracking(container, x, y, x+nodeSize, y+nodeSize);
 	stageNodeTracker.push(container);
 	stage.addChild(container);
@@ -430,8 +431,23 @@ function getContainerPlacement(container, exponent, mod) {
 		maxY = divBounds.array[exponent].botY-(nodeSize*(mod[1]+1));
 	}
 
-	container.x = Math.floor(Math.random() * (maxX - minX + 1) + minX);
-	container.y = Math.floor(Math.random() * (maxY - minY + 1) + minY);
+	container.x = minX+nodeSize;
+	container.y = minY+nodeSize;
+	updateNodeTracking(container, container.x, container.y, 
+		container.x+container.col+nodeSize, container.y+container.row+nodeSize);
+	container.setBounds(0, 0, container.col+nodeSize, container.row+nodeSize);
+	let pt = nodeCollisionUpdate(container);
+	while (pt.x != 0 || pt.y != 0) {
+		container.y = container.y+minY+nodeSize
+		if (maxY-container.y < 0) {
+			container.y = minY+nodeSize
+			container.x += nodeSize;
+		}
+		updateNodeTracking(container, container.x, container.y, 
+			container.x+container.col+nodeSize, container.y+container.row+nodeSize);
+		pt = nodeCollisionUpdate(container);
+	}
+
 }
 
 function getContainerUpdate(container, exponent, mod) {
@@ -459,6 +475,7 @@ function getContainerUpdate(container, exponent, mod) {
 
 	let xTween = 0;
 	let x = container.x;
+	// If node object is currently active on stage
 	if (prevDivBounds.array[exponent] != null) {
 
 		if (prevDivBounds.array[exp] == null) {
@@ -474,19 +491,110 @@ function getContainerUpdate(container, exponent, mod) {
 				x = Math.floor(Math.random() * (mx - mn + 1) + mn);
 				container.prevExp = undefined;
 		} 
-		
-		let len = prevDivBounds.array[exp].botX - prevDivBounds.array[exp].topX
+		let len = prevDivBounds.array[exp].botX - (prevDivBounds.array[exp].topX+container.col+nodeSize)
 		let dist = x - prevDivBounds.array[exp].topX
 		let ratio = dist/len
-		let distNew = divBounds.array[exponent].botX-divBounds.array[exponent].topX
+		let distNew = divBounds.array[exponent].botX-(divBounds.array[exponent].topX+container.col+nodeSize)
 		xTween = minX + distNew*ratio
 	} 
-	tweenScoot(container, xTween, container.y)
+	// If node object is not active (in stageNodeStorage)
+	else {
+		// if node object is already in correct boundary
+		if (x > divBounds.array[exponent].topX 
+			&& x+container.col+nodeSize < divBounds.array[exponent].botX) {
+			xTween = x;	
+		} 
+		// node object requires move to correct column
+		else {
+			let len = window.windowSizeX
+			let dist = x
+			let ratio = dist/len
+			
+			let distNew = divBounds.array[exponent].botX-divBounds.array[exponent].topX
+			xTween = distNew*ratio
+		}
+	}
+
+
+
+
+
+	
+	// TODO dynamic boundary check and adjust
+	/*
+	let testCont = new createjs.Container();
+	updateNodeTracking(testCont, xTween, container.y, 
+		xTween+container.col+nodeSize, container.y+container.row+nodeSize);
+	testCont.setBounds(0, 0, container.col+nodeSize, container.row+nodeSize);
+
+	updateNodeTracking(container, xTween, container.y, 
+		xTween+container.col+nodeSize, container.y+container.row+nodeSize);
+	let pt = nodeCollisionUpdate(container);
+	*/
+	//console.log("TESTCONT")
+	//console.log(pt)
+	
+
+
+
+
+
+	
+	tweenScoot(container, xTween, container.y);
+
 }
 
 // Update container stage postion tracking variables
 function updateNodeTracking(cont, tlx, tly, brx, bry) {
 	cont.loc = new DivTracker(tlx, tly, brx, bry);
+}
+
+/**
+ * TODO
+ * @param  container 
+ * @returns 
+ */
+function nodeCollisionUpdate(container) {
+	for(let i = 0; i < stageNodeTracker.length; i++){
+		
+		// skip self
+		if (stageNodeTracker[i] == container) { continue; } 
+		else {
+			//console.log(stageNodeTracker[i])
+			let offset = intersect(container, stageNodeTracker[i]);
+			if (offset.x != 0 || offset.y != 0){	
+				return offset
+			}
+		}
+		
+	}
+	return {x: 0, y: 0};
+}
+
+function intersect(r1, r2) {
+    var leftMost = (r1.loc.topX < r2.loc.topX) ? r1 : r2;
+    var rightMost = (r1.x > r2.x) ? r1 : r2;
+    var upMost = (r1.loc.topY < r2.loc.topY) ? r1 : r2;
+    var downMost = (r1.loc.topY > r2.loc.topY) ? r1 : r2;
+
+	var upperLeft = [rightMost.loc.topX, downMost.loc.topY];
+    var upperRight = [leftMost.loc.topX + leftMost._bounds.width, downMost.loc.topY];
+    var lowerLeft = [rightMost.loc.topX, upMost.loc.topY + upMost._bounds.height];
+    var lowerRight = [leftMost.loc.topX + leftMost._bounds.width, upMost.loc.topY + upMost._bounds.height];
+    
+    var width = upperRight[0] - upperLeft[0];
+    var height = lowerLeft[1] - upperLeft[1];
+    
+    if (width < 0 || height < 0) {
+        width = 0;
+        height = 0;
+    }
+    if (r1.loc.topY < r2.loc.topY) {
+		height =  -1*height;
+	}
+    var r = {x: 0, y:height}
+    
+    return r;
 }
 
 
@@ -521,14 +629,11 @@ function updateNodePositions() {
 				remove.push(element);
 			} else {
 				evaluatePostion(element, exponent);
-				
 			}
 
 		});
 		storeRemovedNodes(remove);
 	}
-
-	
 
 	// 
 	function restoreStoredNodes(restore){
@@ -586,11 +691,8 @@ function updateNodePositions() {
 			col = i%(mod[1]) == 0 ? col+nodeSize : col;
 			row = i%(mod[1]) == 0 ? 0 : row+nodeSize ;
 		}
-	
-		getContainerUpdate(container, exponent, mod);		
-		updateNodeTracking(container, container.x, container.y, 
-			container.x+col+nodeSize, container.y+row+nodeSize);
-		
+
+		getContainerUpdate(container, exponent, mod);	
 		return container;
 	}
 }
@@ -891,9 +993,10 @@ function tweenScoot(node, xTween, yTween){
 function handleTweenComplete(evt) {
 	let x = evt._curQueueProps.x;
 	let y = evt._curQueueProps.y;
+
 	updateNodeTracking(evt.target, x, y, 
 		x+evt.target.col+nodeSize, 
-		y+evt.target.col+nodeSize);
+		y+evt.target.row+nodeSize);
 
 	if (tweenHidden.length > 0) { 
 		deleteSelected();
@@ -976,7 +1079,6 @@ function handleToggleSingle(buttonToggleSingle, buttonToggleGroup){
 		seperateToOnes = !seperateToOnes;
 		buttonToggleSingle.disabled = true;
 		buttonToggleGroup.disabled = false;
-		console.log(buttonToggleSingle)
 	}
 }
 function handleToggleGroup(buttonToggleGroup, buttonToggleSingle){
@@ -1142,10 +1244,12 @@ function handleCombine(buttonCombine) {
 					updateColor(newObject[index], combine[i][j*baseVal].color);
 					index++;
 				}
+
 				for(let j = 0; j < newObject.length; j++) {
 					for(let k = 0; k < newObject[j].children.length; k++) {
 						let child = newObject[j].children[k];
 						let ptTop = child.localToGlobal(child.regX,child.regY);
+
 						ptTop.x = ptTop.x+child.col;
 						ptTop.y = ptTop.y+child.row;
 						let tween = tweenNodes.splice(0,1);
@@ -1169,6 +1273,12 @@ function handleCombine(buttonCombine) {
 	function buildNew(node, exp, x, y) {
 		// Build new object
 		let object = makeRect(exp);
+		object.x=x;
+		object.y=y;
+		updateNodeTracking(object, object.x, object.y, 
+			object.x+object.col+nodeSize, object.y+object.row+nodeSize);
+		object.setBounds(0, 0, object.col+nodeSize, object.row+nodeSize);
+
 		// Hide during tween
 		tweenHidden.push(object);
 		object.alpha = 0;
@@ -1177,10 +1287,7 @@ function handleCombine(buttonCombine) {
 		updateColor(object, object.color);
 		object.prevExp = exp-1;
 
-		object.x=x;
-		object.y=y;
-		updateNodeTracking(object, object.x, object.y, 
-			object.x+nodeSize, object.y+nodeSize);
+		
 		return object;
 	}
 }
@@ -1196,6 +1303,12 @@ function enableCombine() {
 	}
 }
 */
+ function toast(message) {
+	let toast = document.getElementById("snackbar");
+	toast.className = "show";
+	  setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+	toast.innerHTML = message;
+ }
 
 
 function handleSeperate(buttonSeperate) {
@@ -1221,8 +1334,22 @@ function handleSeperate(buttonSeperate) {
 
 		for (let i = 0; i < toSeperate.length; i++) {
 			let node = toSeperate[i];
-			node.alpha = 0;
 			let exponent = Math.round(Math.log(node.children.length, baseVal));
+
+			// Prevent node expansion beyond window bounds
+			console.log(node.x+(node.col+nodeSize)*2 + " , "  + (canvas.width))
+			if (node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
+			node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight)) {
+				toast("The " + exponent + superscriptRev[exponent] + 
+					" node will go out of bounds")
+				let j = selectedObjects.indexOf(node)
+				deselectNode(selectedObjects[j]);
+				selectedObjects.splice(j,1);
+				continue;
+			}
+
+			node.alpha = 0;
+			
 			
 			// Seperate to ones or to next lower size
 			let exp = 0;
@@ -1309,6 +1436,13 @@ function handleSeperate(buttonSeperate) {
 				for(let k = 0; k < newObjects[j].children.length; k++) {
 					let child = newObjects[j].children[k];
 					let ptTop = child.localToGlobal(child.regX,child.regY);
+					//console.log(ptTop)
+					//console.log(child)
+
+					child.setBounds(0, 0, nodeSize, nodeSize);
+					updateNodeTracking(child, ptTop.x, ptTop.y, 
+						ptTop.x+child.col+nodeSize, ptTop.y+child.row+nodeSize);
+
 					ptTop.x = ptTop.x+child.col;
 					ptTop.y = ptTop.y+child.row;
 					let tween = tweenNodes.splice(0,1);
@@ -1488,7 +1622,6 @@ function buildHandleBase() {
 		let id = "button_base_" + i;
 		let baseButton = document.getElementById(id);
 		baseButton.id = i;
-		//console.log(n.id)
 		baseButton.onclick = function() {
 			if (tweenRunningCount > 0 ) { return; }
 
@@ -1517,9 +1650,7 @@ function getMaxDiv() {
 	return exp+1;
 }
 
-
 function PlaySound(soundObj, volume) {
-	var audio = new Audio(soundObj);
-	audio.volume = volume;
-	audio.play();
-  }
+	soundObj.volume = volume;
+	soundObj.play();
+}
