@@ -143,6 +143,7 @@ footer > h1 {
 .button {
 	background-color: var(--main_blue);
 	font-family: 'Balsamiq Sans', cursive;
+	font-size: large;
 	color: var(--button_text);
 	height:60px;
 	min-width: 80px;
@@ -207,7 +208,7 @@ footer > h1 {
   .buttonDropup {
   	background-color: var(--button_grey);
 	font-family: 'Balsamiq Sans', cursive;
-	font-size: large;
+	font-size: medium;
 	color: var(--button_text);
   	height:40px;
   	width: 50px;
@@ -232,7 +233,7 @@ footer > h1 {
 .buttonDropupFull {
 	background-color: var(--button_grey);
   	font-family: 'Balsamiq Sans', cursive;
-  	font-size: large;
+  	font-size: medium;
   	color:var(--button_text);
 	height:40px;
 	width: 7vw;
@@ -273,7 +274,7 @@ footer > h1 {
 	z-index: 1;
 	left: 50%;
 	top: 50px;
-	font-size: 17px;
+	font-size: medium;
   }
   
   #snackbar.show {

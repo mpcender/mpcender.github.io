@@ -42,6 +42,10 @@ const nodeSize = 25;
 // Largest subnodes in a container
 const maxNodeGroup = 256;
 
+// In place does not update placement of node to corresponding column
+let inPlaceCompose = false;
+let inPlaceDecompose = false;
+
 // draw select box variables
 let stageSelectorBox;
 let objectEventActive = false;
@@ -96,6 +100,7 @@ let bannerBorderColor = border;
 let bannerFontColor = buttonText;
 // Toggle color seperation of node blocks
 let visualSeperation = false;
+let currentColor = 0;
 
 // AUDIO clip variables
 let slideRunning = 0;
@@ -342,7 +347,8 @@ function makeRect(exponent) {
 	
 	stageNodeTracker.push(container);
 	stage.addChild(container);
-	container.color=0;
+	updateColor(container, currentColor)
+	//container.color=0;
 	return container;
 }
 
@@ -431,17 +437,23 @@ function getContainerPlacement(container, exponent, mod) {
 		maxY = divBounds.array[exponent].botY-(nodeSize*(mod[1]+1));
 	}
 
-	container.x = minX+nodeSize;
-	container.y = minY+nodeSize;
+	let spacing = nodeSize;
+	if (exponent == 0) { spacing = (nodeSize*.25); } 
+	
+	container.x = minX+spacing;
+	container.y = minY+spacing;
 	updateNodeTracking(container, container.x, container.y, 
 		container.x+container.col+nodeSize, container.y+container.row+nodeSize);
 	container.setBounds(0, 0, container.col+nodeSize, container.row+nodeSize);
 	let pt = nodeCollisionUpdate(container);
+
+	// While collision detected
 	while (pt.x != 0 || pt.y != 0) {
-		container.y = container.y+minY+nodeSize
-		if (maxY-container.y < 0) {
-			container.y = minY+nodeSize
-			container.x += nodeSize;
+		container.y = pt.yPrev+nodeSize+spacing;
+		if (container.y > maxY) {
+			container.y = minY+spacing;
+			container.x += spacing;
+			
 		}
 		updateNodeTracking(container, container.x, container.y, 
 			container.x+container.col+nodeSize, container.y+container.row+nodeSize);
@@ -449,6 +461,7 @@ function getContainerPlacement(container, exponent, mod) {
 	}
 
 }
+
 
 function getContainerUpdate(container, exponent, mod) {
 	let minX, maxX;
@@ -461,6 +474,7 @@ function getContainerUpdate(container, exponent, mod) {
 	}
 
 	let exp = exponent;
+	/*
 	if (container.prevExp != undefined) {
 		exp = container.prevExp;
 		container.prevExp = exponent;
@@ -472,15 +486,18 @@ function getContainerUpdate(container, exponent, mod) {
 			exp--;
 		}
 	}
+	*/
 
 	let xTween = 0;
 	let x = container.x;
 	// If node object is currently active on stage
+	console.log(prevDivBounds)
 	if (prevDivBounds.array[exponent] != null) {
-
+		/*
 		if (prevDivBounds.array[exp] == null) {
 			exp = exponent;
 		}
+
 		if (prevDivBounds.array[exp] != null && 
 			container.prevExp != undefined &&
 			(container.x <= prevDivBounds.array[exp].topX ||
@@ -491,15 +508,19 @@ function getContainerUpdate(container, exponent, mod) {
 				x = Math.floor(Math.random() * (mx - mn + 1) + mn);
 				container.prevExp = undefined;
 		} 
-		let len = prevDivBounds.array[exp].botX - (prevDivBounds.array[exp].topX+container.col+nodeSize)
+		*/
+		// Track location in current frame to match to new frame
+		let len = prevDivBounds.array[exp].botX - 
+			(prevDivBounds.array[exp].topX+container.col+nodeSize)
 		let dist = x - prevDivBounds.array[exp].topX
 		let ratio = dist/len
-		let distNew = divBounds.array[exponent].botX-(divBounds.array[exponent].topX+container.col+nodeSize)
+		let distNew = divBounds.array[exponent].botX-
+			(divBounds.array[exponent].topX+container.col+nodeSize)
 		xTween = minX + distNew*ratio
 	} 
 	// If node object is not active (in stageNodeStorage)
 	else {
-		// if node object is already in correct boundary
+		// if node object is already in correct boundary, dont move
 		if (x > divBounds.array[exponent].topX 
 			&& x+container.col+nodeSize < divBounds.array[exponent].botX) {
 			xTween = x;	
@@ -514,31 +535,6 @@ function getContainerUpdate(container, exponent, mod) {
 			xTween = distNew*ratio
 		}
 	}
-
-
-
-
-
-	
-	// TODO dynamic boundary check and adjust
-	/*
-	let testCont = new createjs.Container();
-	updateNodeTracking(testCont, xTween, container.y, 
-		xTween+container.col+nodeSize, container.y+container.row+nodeSize);
-	testCont.setBounds(0, 0, container.col+nodeSize, container.row+nodeSize);
-
-	updateNodeTracking(container, xTween, container.y, 
-		xTween+container.col+nodeSize, container.y+container.row+nodeSize);
-	let pt = nodeCollisionUpdate(container);
-	*/
-	//console.log("TESTCONT")
-	//console.log(pt)
-	
-
-
-
-
-
 	
 	tweenScoot(container, xTween, container.y);
 
@@ -563,6 +559,8 @@ function nodeCollisionUpdate(container) {
 			//console.log(stageNodeTracker[i])
 			let offset = intersect(container, stageNodeTracker[i]);
 			if (offset.x != 0 || offset.y != 0){	
+				offset.xPrev = stageNodeTracker[i].x
+				offset.yPrev = stageNodeTracker[i].y+stageNodeTracker[i].row
 				return offset
 			}
 		}
@@ -760,8 +758,13 @@ function updateSelectedObjects(dragger) {
 function manageContainerButtonState() {
 	if (divContainers >= getMaxDiv()) { disableAddColumn(); }
 	else { enableAddColumn(); }
-	if (divContainers <= minDiv) { disableRemoveColumn(); }
-	else {enableRemoveColumn(); }
+	if (divContainers <= minDiv) { 
+		disableRemoveColumn();
+		console.log("TRUE")
+		inPlaceCompose = true;
+		inPlaceDecompose = true; 
+	}
+	else { enableRemoveColumn(); }
 }
 
 function manageExponentButtonState(){
@@ -1236,12 +1239,22 @@ function handleCombine(buttonCombine) {
 				}
 				// build new node
 				let toMake = combine[i].length/baseVal;
+				//for(let j = toMake-1; j >= k; j--) {
+				let exponent  = i+1;
 				for(let j = 0; j < toMake; j++) {
-					let x = combine[i][j*baseVal].x;
-					let y = combine[i][j*baseVal].y;
-					newObject[index] = buildNew(combine[i][0], i+1, x, y);
-					newObject[index].color = combine[i][j*baseVal].color
-					updateColor(newObject[index], combine[i][j*baseVal].color);
+					
+					console.log() 
+					// swap from vertical to horizontal combine based on exponent
+					let nodeLoc = exponent%2 == 0 ? j : j*baseVal;
+					//let xMod = (j%baseVal)*(combine[i][0].row+nodeSize)
+					//let yMod = (j%baseVal)*(combine[i][0].col+nodeSize)
+					let x = combine[i][nodeLoc].x;
+					let y = combine[i][nodeLoc].y;
+					console.log(x + "," +y)
+					newObject[index] = buildNew(combine[i][0], exponent, x, y);
+					newObject[index].color = combine[i][nodeLoc].color
+					updateColor(newObject[index], combine[i][nodeLoc].color);
+					
 					index++;
 				}
 
@@ -1273,10 +1286,13 @@ function handleCombine(buttonCombine) {
 	function buildNew(node, exp, x, y) {
 		// Build new object
 		let object = makeRect(exp);
-		object.x=x;
-		object.y=y;
-		updateNodeTracking(object, object.x, object.y, 
-			object.x+object.col+nodeSize, object.y+object.row+nodeSize);
+		
+		if (inPlaceCompose) {
+			object.x=x;
+			object.y=y;
+			updateNodeTracking(object, object.x, object.y, 
+				object.x+object.col+nodeSize, object.y+object.row+nodeSize);
+		}
 		object.setBounds(0, 0, object.col+nodeSize, object.row+nodeSize);
 
 		// Hide during tween
@@ -1285,9 +1301,8 @@ function handleCombine(buttonCombine) {
 		// Update color to previous node color
 		object.color = node.color;
 		updateColor(object, object.color);
-		object.prevExp = exp-1;
+		//bject.prevExp = exp-1;
 
-		
 		return object;
 	}
 }
@@ -1337,16 +1352,24 @@ function handleSeperate(buttonSeperate) {
 			let exponent = Math.round(Math.log(node.children.length, baseVal));
 
 			// Prevent node expansion beyond window bounds
-			console.log(node.x+(node.col+nodeSize)*2 + " , "  + (canvas.width))
-			if (node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
-			node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight)) {
+			/*
+			console.log(!inPlaceDecompose && 
+				(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
+				node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight)))
+			if (!inPlaceDecompose && 
+				(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
+				node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight))) {
+
 				toast("The " + exponent + superscriptRev[exponent] + 
 					" node will go out of bounds")
 				let j = selectedObjects.indexOf(node)
 				deselectNode(selectedObjects[j]);
 				selectedObjects.splice(j,1);
 				continue;
+			} else if (inPlaceDecompose) {
+				// Stage bound limit toast??
 			}
+			*/
 
 			node.alpha = 0;
 			
@@ -1403,9 +1426,11 @@ function handleSeperate(buttonSeperate) {
 				newObjects[j].color = toSeperate[i].color;
 				updateColor(newObjects[j], newObjects[j].color);
 
-				newObjects[j].prevExp = exponent;
+				//newObjects[j].prevExp = exponent;
 	
+				// IN PLACE DECOMPOSE
 				// Structured Decompose for Singles node
+				if (inPlaceDecompose){ 
 				if (newLoc.length != 0) {
 					newObjects[j].x = newLoc[j].x;
 					newObjects[j].y = newLoc[j].y;	
@@ -1415,21 +1440,36 @@ function handleSeperate(buttonSeperate) {
 				// Structured Decompose for Multi-node containers
 				else {
 					let expon = divBounds.array[exp] != null ? exp : 0;
-					let bound = divBounds.array[expon].botX - divBounds.array[expon].topX
-					let offset = multiX+newObjects[j].col+(nodeSize*2)
-		
-					if (offset < bound){
-						multiX += newObjects[j].col+(nodeSize*2)
+					//console.log(exp%2 + " , " +exp)
+					let mod = baseVal/3+exp;
+
+					if (exp%2 == 0){
+						let offset = multiY+newObjects[j].row+(nodeSize*mod)+(newObjects[j].row+nodeSize)
+						let bound = divBounds.array[expon].botY - divBounds.array[expon].topY
+						if (offset < bound){
+							multiY += newObjects[j].row+(nodeSize*mod)
+						} else {
+							multiX += newObjects[j].col+(nodeSize*mod)*3
+							multiY = node.y;
+						}
 					} else {
-						multiY += newObjects[j].row+(nodeSize*2)
-						multiX  = node.x;
+						let offset = multiX+newObjects[j].col+(nodeSize*mod)+(newObjects[j].col+nodeSize)
+						let bound = divBounds.array[expon].botX - divBounds.array[expon].topX
+						if (offset < bound){
+							multiX += newObjects[j].col+(nodeSize*mod)
+						} else {
+							multiY += newObjects[j].row+(nodeSize*mod)
+							multiX  = node.x;
+						}
 					}
-					
+
 					newObjects[j].x = multiX;
 					newObjects[j].y = multiY;	
 					updateNodeTracking(newObjects[j], multiX, multiY, 
 						multiX+newObjects[j].col+nodeSize, 
 						multiY+newObjects[j].row+nodeSize);
+					
+				}
 				}
 				
 				// Tween tweenNodes to location of new object
@@ -1484,6 +1524,7 @@ function updateColor(node, color){
 		} 
 		node.children[j].graphics._fill.style = colorMod;		
 	}
+	node.color = color
 }
 
 
@@ -1541,6 +1582,8 @@ function handleAddColumn(buttonAddColumn) {
 		disableAddColumn()
 		if (update) { 
 			//manageExponentButtonState(divContainers, divContainers);
+			inPlaceCompose = false;
+			inPlaceDecompose = false;
 			removeDiv(0, divContainers)
 			drawStage() 
 		}
@@ -1576,7 +1619,11 @@ function handleRemoveColumn(buttonRemoveColumn) {
 }
 
 function disableRemoveColumn() {
-	if (divContainers == minDiv) {buttonRemoveColumn.disabled = true;}
+	if (divContainers == minDiv) { 
+		buttonRemoveColumn.disabled = true;
+		inPlaceCompose = true;
+		inPlaceDecompose = true;
+	}
 }
 
 function enableRemoveColumn() {
@@ -1592,11 +1639,7 @@ function getMinus() {
 	var url = minus.getCacheDataURL();
 	return "<img class=\"buttonImage\" src=" + url + ">";
 }
-*/
 
-function handleAdd(buttonAdd){
-	buttonAdd.innerHTML = getAdd();
-}
 function getAdd() {
 	let plus =  new createjs.Shape();
 	plus.graphics.beginFill(bannerFontColor).drawRect(15,0,6,36).drawRect(0,15,36,6)
@@ -1604,6 +1647,13 @@ function getAdd() {
 	var url = plus.getCacheDataURL();
 	return "<img class=\"buttonImage\" src=" + url + ">";
 }
+*/
+
+function handleAdd(buttonAdd){
+	buttonAdd.innerHTML = "Add Blocks"
+	//buttonAdd.innerHTML = getAdd();
+}
+
 
 function handleAddBlock(add, exponent) {
 	add.onclick = function() {
