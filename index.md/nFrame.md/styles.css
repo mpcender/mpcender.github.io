@@ -203,8 +203,7 @@ footer > h1 {
   .dropup:hover .dropup-content {
 	display: block;
   }
-
-
+  
   .buttonDropup {
   	background-color: var(--button_grey);
 	font-family: 'Balsamiq Sans', cursive;
@@ -229,6 +228,7 @@ footer > h1 {
   	transition-duration: 0.2s;
   	transform: translateY(0px);
   }
+
 
 .buttonDropupFull {
 	background-color: var(--button_grey);

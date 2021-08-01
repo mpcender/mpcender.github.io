@@ -6,6 +6,7 @@ let stage;
 // Base value
 let baseVal = 3;
 // Maximum base of program
+const minBase = 2;
 const maxBase = 10;
 
 
@@ -112,6 +113,13 @@ const paintSound = new Audio("res/sound/clayChirp.mp3");
 
 // User input regex for integer value
 //const regInt = new RegExp('^[0-9]$');
+
+
+// Dropup buttons
+let buttonToggleSingle;
+let buttonToggleGroup;
+let buttonToggleAssist;
+let buttonTogglePlain; 
 
 
 //------------------------------------------------------
@@ -491,7 +499,6 @@ function getContainerUpdate(container, exponent, mod) {
 	let xTween = 0;
 	let x = container.x;
 	// If node object is currently active on stage
-	console.log(prevDivBounds)
 	if (prevDivBounds.array[exponent] != null) {
 		/*
 		if (prevDivBounds.array[exp] == null) {
@@ -760,7 +767,6 @@ function manageContainerButtonState() {
 	else { enableAddColumn(); }
 	if (divContainers <= minDiv) { 
 		disableRemoveColumn();
-		console.log("TRUE")
 		inPlaceCompose = true;
 		inPlaceDecompose = true; 
 	}
@@ -1029,18 +1035,21 @@ function tick(evt) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //---------------------------------------------------------------------
 
+
+
+
 function enableButtons() {
 	let buttonTrash = document.getElementById("button_trash");
 	let buttonReset = document.getElementById("button_refresh");
 	let buttonCombine = document.getElementById("button_combine");
-	let buttonToggleSingle = document.getElementById("button_toggle_single")
+	buttonToggleSingle = document.getElementById("button_toggle_single")
 	buttonToggleSingle.disabled = true;
-	let buttonToggleGroup = document.getElementById("button_toggle_group")
+	buttonToggleGroup = document.getElementById("button_toggle_group")
 	let buttonSeperate = document.getElementById("button_seperate");
 	let buttonColumn = document.getElementById("button_column");
 	let buttonPaint = document.getElementById("button_paint");
-	let buttonToggleAssist = document.getElementById("button_toggle_assist")
-	let buttonTogglePlain = document.getElementById("button_toggle_plain")
+	buttonToggleAssist = document.getElementById("button_toggle_assist")
+	buttonTogglePlain = document.getElementById("button_toggle_plain")
 	buttonTogglePlain.disabled = true;
 	buttonAddColumn = document.getElementById("button_add_col");
 	buttonRemoveColumn = document.getElementById("button_remove_col");
@@ -1060,8 +1069,8 @@ function enableButtons() {
 	handleTrash(buttonTrash);
 	handleReset(buttonReset);
 	handleCombine(buttonCombine);
-	handleToggleSingle(buttonToggleSingle, buttonToggleGroup);
-	handleToggleGroup(buttonToggleGroup, buttonToggleSingle);
+	handleToggleSingle();
+	handleToggleGroup();
 	handleSeperate(buttonSeperate);
 	handleColumn(buttonColumn);
 	handlePaint(buttonPaint);
@@ -1077,38 +1086,58 @@ function enableButtons() {
 
 }
 
-function handleToggleSingle(buttonToggleSingle, buttonToggleGroup){
+function handleToggleSingle(){
 	buttonToggleSingle.onclick = function(){
 		seperateToOnes = !seperateToOnes;
 		buttonToggleSingle.disabled = true;
 		buttonToggleGroup.disabled = false;
+		buttonToggleSingle.style.display = 'none';
+		buttonToggleGroup.style.display = 'none';
 	}
 }
-function handleToggleGroup(buttonToggleGroup, buttonToggleSingle){
+function handleToggleGroup(){
 	buttonToggleGroup.onclick = function(){
 		seperateToOnes = !seperateToOnes;
 		buttonToggleGroup.disabled = true;
 		buttonToggleSingle.disabled = false;
+		buttonToggleSingle.style.display = 'none';
+		buttonToggleGroup.style.display = 'none';
 		//buttonToggleSingle
 	}
 }
 
+function combineMouseover(){
+	buttonToggleSingle.style.display = '';
+	buttonToggleGroup.style.display = '';
+}
 
 
-function handleToggleAssist(buttonToggleAssist, buttonTogglePlain){
+function handleToggleAssist(){
 	buttonToggleAssist.onclick = function(){
 		visualSeperation = !visualSeperation;
 		buttonToggleAssist.disabled = true;
 		buttonTogglePlain.disabled = false;
+		buttonToggleAssist.style.display = 'none';
+		buttonTogglePlain.style.display = 'none';
+		repaintSelected(stage.children, false);
 	}
 }
-function handleTogglePlain(buttonTogglePlain, buttonToggleAssist){
+function handleTogglePlain(){
 	buttonTogglePlain.onclick = function(){
 		visualSeperation = !visualSeperation;
 		buttonTogglePlain.disabled = true;
 		buttonToggleAssist.disabled = false;
+		buttonToggleAssist.style.display = 'none';
+		buttonTogglePlain.style.display = 'none';
+		repaintSelected(stage.children, false);
 	}
 }
+
+function paintMouseover(){
+	buttonToggleAssist.style.display = '';
+	buttonTogglePlain.style.display = '';
+}
+
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
@@ -1185,6 +1214,7 @@ function clear(iterable) {
 }
 
 
+
 function handleCombine(buttonCombine) {
 	//buttonCombine.on
 	buttonCombine.onclick = function(){
@@ -1243,8 +1273,8 @@ function handleCombine(buttonCombine) {
 				let exponent  = i+1;
 				for(let j = 0; j < toMake; j++) {
 					
-					console.log() 
 					// swap from vertical to horizontal combine based on exponent
+					/* In place composition
 					let nodeLoc = exponent%2 == 0 ? j : j*baseVal;
 					//let xMod = (j%baseVal)*(combine[i][0].row+nodeSize)
 					//let yMod = (j%baseVal)*(combine[i][0].col+nodeSize)
@@ -1252,12 +1282,13 @@ function handleCombine(buttonCombine) {
 					let y = combine[i][nodeLoc].y;
 					console.log(x + "," +y)
 					newObject[index] = buildNew(combine[i][0], exponent, x, y);
-					newObject[index].color = combine[i][nodeLoc].color
-					updateColor(newObject[index], combine[i][nodeLoc].color);
+					*/
+					newObject[index] = buildNew(combine[i][0], exponent);
 					
 					index++;
 				}
 
+				// Evaluate location for tween nodes to translate to
 				for(let j = 0; j < newObject.length; j++) {
 					for(let k = 0; k < newObject[j].children.length; k++) {
 						let child = newObject[j].children[k];
@@ -1283,16 +1314,18 @@ function handleCombine(buttonCombine) {
 
 
 	//let tweenHidden = [];
-	function buildNew(node, exp, x, y) {
+	function buildNew(node, exp) {
 		// Build new object
 		let object = makeRect(exp);
 		
+		/*
 		if (inPlaceCompose) {
 			object.x=x;
 			object.y=y;
 			updateNodeTracking(object, object.x, object.y, 
 				object.x+object.col+nodeSize, object.y+object.row+nodeSize);
 		}
+		*/
 		object.setBounds(0, 0, object.col+nodeSize, object.row+nodeSize);
 
 		// Hide during tween
@@ -1498,16 +1531,27 @@ function handleSeperate(buttonSeperate) {
 
 function handlePaint(buttonPaint) {
 	buttonPaint.onclick = function(){
-		if (tweenRunningCount > 0 ) { return; }
-		PlaySound(paintSound, .6)
+		repaintSelected(selectedObjects, true);
+	}
+}
 
-		for (let i = 0; i < selectedObjects.length; i++) {
-			let color = selectedObjects[i].color;
-			color = selectedObjects[i].color = color>=3 ? 0 : ++color;
-			let node = selectedObjects[i];
-			updateColor(node, selectedObjects[i].color);
-			selectedObjects[i].shadow = new createjs.Shadow(colors[color], 0, 0, 30);
+function repaintSelected(objects, nextColor){
+	if (tweenRunningCount > 0 ) { return; }
+	PlaySound(paintSound, .6)
+
+	for (let i = 0; i < objects.length; i++) {
+		if (objects[i]._listeners == null || objects[i].color == undefined) { 
+			continue;
 		}
+		
+		let color;
+		color = objects[i].color;
+		if (nextColor) {
+			color = objects[i].color = color>=3 ? 0 : ++color;
+			objects[i].shadow = new createjs.Shadow(colors[color], 0, 0, 30);
+		}
+		// Objects current color
+		updateColor(objects[i], objects[i].color);
 	}
 }
 
@@ -1668,7 +1712,7 @@ function handleAddBlock(add, exponent) {
 }
 
 function buildHandleBase() {
-	for (let i = 1; i <= maxBase; i++) {
+	for (let i = minBase; i <= maxBase; i++) {
 		let id = "button_base_" + i;
 		let baseButton = document.getElementById(id);
 		baseButton.id = i;
