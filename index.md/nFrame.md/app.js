@@ -40,6 +40,8 @@ let stageNodeTracker = [];
 let stageNodeStorage = [[],[],[],[],[]];
 // Pixel size of each subNode object 
 const nodeSize = 25;
+const shadowSize = 50;
+const borderThickness = 1.5;
 // Largest subnodes in a container
 const maxNodeGroup = 256;
 
@@ -313,8 +315,18 @@ function buildBanner(i){
 
 	// Calculate index offset for superscript values
 	let j = (i-1)-(divContainers-5);
-	let text = new createjs.Text(baseVal+superscript[j], 
-		fontSize+"px Balsamiq Sans", bannerFontColor);
+	let text;
+	
+	// Display "Base N" on open stage
+	if (divContainers <= 1) {
+		text = new createjs.Text("Base " + baseVal, 
+			fontSize+"px Balsamiq Sans", bannerFontColor);
+	} 
+	// Display N^k on column view
+	else {
+		text = new createjs.Text(baseVal+superscript[j], 
+			fontSize+"px Balsamiq Sans", bannerFontColor);
+	}
 	text.textAlign ="center";
 	
 	text.x = (divContWidth)/2;
@@ -364,7 +376,7 @@ function makeRect(exponent) {
 function buildSubNode(col, row){
 	let node = new createjs.Shape();
 	node.graphics.beginStroke("white");
-	node.graphics.setStrokeStyle(1);
+	node.graphics.setStrokeStyle(borderThickness);
 	node.snapToPixel = true;
 	node.graphics.beginFill(colors[0]).
 		drawRoundRect(col, row, nodeSize, nodeSize, 5);
@@ -712,7 +724,7 @@ Math.log = (function() {
 
 function selectNode(node){
 	//"#4287f5"
-	node.shadow = new createjs.Shadow(colors[node.color], 0, 0, 30);
+	node.shadow = new createjs.Shadow(colors[node.color], 0, 0, shadowSize);
 	selectedObjects.push(node);
 	node.stageForDeselect = false;
 }
@@ -839,6 +851,14 @@ function handleStageMouseUp(event) {
 	// if dragger active or mouse out of bounds return
 	if (objectEventActive ) { return; }
 	let deselectAll = [];
+
+	// If stage click (not drag) deselect all stage objects
+	if (oldPt.x == stage.mouseX && oldPt.y == stage.mouseY){
+		for (j = selectedObjects.length-1; j >= 0; j--){
+			deselectNode(selectedObjects[j]);
+			selectedObjects.splice(j,1);
+		} 
+	}
 	
 	for (i = 0; i < stageNodeTracker.length; i++){
 		hitTop = {x: stageNodeTracker[i].loc.topX, y: stageNodeTracker[i].loc.topY}
@@ -909,6 +929,13 @@ function handleStageMouseUp(event) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 function applyNodeHandlers(node) {
 
+	node.on("click", function (evt) {
+		
+		//updateSelectedObjects(node);
+
+		//node.shadow = new createjs.Shadow(colors[node.color], 0, 0, shadowSize);
+	});
+
     node.on("mousedown", function (evt) {
         // if tween is running disable
         if (tweenRunningCount > 0) { return }
@@ -968,6 +995,16 @@ function applyNodeHandlers(node) {
 
         // if tween is running disable
         if (tweenRunningCount > 0 ) { return }
+
+		// If object did not move select/deselect
+		if (!node.onTheMove) { 
+			if (selectedObjects.includes(node)) {
+				deselectNode(node)
+				selectedObjects.splice(selectedObjects.indexOf(node), 1);
+			} else {
+				selectNode(node)
+			}
+		}
 
 		if (node.multiDrag) {
 			for (i = 0; i < selectedObjects.length; i++) {
@@ -1263,7 +1300,7 @@ function handleCombine(buttonCombine) {
 						let tweenNode = makeSingleRect(ptTop.x, ptTop.y)
 						updateColor(tweenNode, combine[i][j].color);
 						updateSelectedObjects(tweenNode);
-						tweenNode.shadow = new createjs.Shadow(colors[combine[i][j].color], 0, 0, 30);
+						tweenNode.shadow = new createjs.Shadow(colors[combine[i][j].color], 0, 0, shadowSize);
 						tweenNodes.push(tweenNode)
 					}
 				}
@@ -1431,7 +1468,7 @@ function handleSeperate(buttonSeperate) {
 				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y);
 				updateColor(tweenNodes[j], toSeperate[i].color);
 				updateSelectedObjects(tweenNodes[j]);
-				tweenNodes[j].shadow = new createjs.Shadow(colors[node.color], 0, 0, 30);
+				tweenNodes[j].shadow = new createjs.Shadow(colors[node.color], 0, 0, shadowSize);
 
 				// Structured Decompose for Singles
 				if (size == node.children.length) {
@@ -1548,7 +1585,7 @@ function repaintSelected(objects, nextColor){
 		color = objects[i].color;
 		if (nextColor) {
 			color = objects[i].color = color>=3 ? 0 : ++color;
-			objects[i].shadow = new createjs.Shadow(colors[color], 0, 0, 30);
+			objects[i].shadow = new createjs.Shadow(colors[color], 0, 0, shadowSize);
 		}
 		// Objects current color
 		updateColor(objects[i], objects[i].color);
