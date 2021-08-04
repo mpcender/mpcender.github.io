@@ -40,7 +40,8 @@ let stageNodeTracker = [];
 let stageNodeStorage = [[],[],[],[],[]];
 // Pixel size of each subNode object 
 const nodeSize = 25;
-const shadowSize = 50;
+const nodeShadowSize = 50;
+const nodeOpacity = .7;
 const borderThickness = 1.5;
 // Largest subnodes in a container
 const maxNodeGroup = 256;
@@ -84,7 +85,7 @@ let style = getComputedStyle(document.body)
 let mainBlue = style.getPropertyValue("--main_blue");
 let border = style.getPropertyValue("--border");
 let buttonText = style.getPropertyValue("--button_text");
-//let darkBackground = style.getPropertyValue("--dark_background");
+let darkBackground = style.getPropertyValue("--dark_background");
 //let buttonGrey = style.getPropertyValue("--button_grey");
 //let buttonShadow = style.getPropertyValue("--button_grey_shadow");
 //let disabledButton = style.getPropertyValue("--disabled_grey");
@@ -118,8 +119,6 @@ const paintSound = new Audio("res/sound/clayChirp.mp3");
 
 
 // Dropup buttons
-let buttonToggleSingle;
-let buttonToggleGroup;
 let buttonToggleAssist;
 let buttonTogglePlain; 
 
@@ -296,7 +295,7 @@ function drawStage(){
 		stage.addChild(dividers[i-1], banners[i-1]);
 		
 	}
-	prevDivBounds = divBounds
+	prevDivBounds = divBounds;
 	divBounds = new DivSection(divTrack);
 	manageExponentButtonState();
 	updateNodePositions();
@@ -362,6 +361,8 @@ function makeRect(exponent) {
 	container.row = row;
 	container.setBounds(0, 0, col+nodeSize, row+nodeSize);
 
+	container.addChild(buildBorder(col, row));
+
 	applyNodeHandlers(container)
 	getContainerPlacement(container, exponent, mod);	
 	
@@ -380,6 +381,18 @@ function buildSubNode(col, row){
 	node.snapToPixel = true;
 	node.graphics.beginFill(colors[0]).
 		drawRoundRect(col, row, nodeSize, nodeSize, 5);
+	return node;
+}
+
+function buildBorder(col, row){
+	let node = new createjs.Shape();
+	node.graphics.beginStroke(darkBackground);
+	node.shadow = new createjs.Shadow(darkBackground, 0, 0, 5);
+	//node.alpha = .7
+	node.graphics.setStrokeStyle(4);
+	node.snapToPixel = true;
+	node.graphics.
+		drawRoundRect(-4, -4, col+nodeSize+8, row+nodeSize+8, 5);
 	return node;
 }
 
@@ -458,7 +471,7 @@ function getContainerPlacement(container, exponent, mod) {
 	}
 
 	let spacing = nodeSize;
-	if (exponent == 0) { spacing = (nodeSize*.25); } 
+	if (exponent == 0 && divContainers != 1) { spacing = (nodeSize*.25); } 
 	
 	container.x = minX+spacing;
 	container.y = minY+spacing;
@@ -494,53 +507,26 @@ function getContainerUpdate(container, exponent, mod) {
 	}
 
 	let exp = exponent;
-	/*
-	if (container.prevExp != undefined) {
-		exp = container.prevExp;
-		container.prevExp = exponent;
-		if (exp == exponent){ 
-			container.prevExp = undefined; 
-			exp = exponent;
-		}
-		if (exp == divContainers){
-			exp--;
-		}
-	}
-	*/
 
 	let xTween = 0;
 	let x = container.x;
+	
 	// If node object is currently active on stage
 	if (prevDivBounds.array[exponent] != null) {
-		/*
-		if (prevDivBounds.array[exp] == null) {
-			exp = exponent;
-		}
-
-		if (prevDivBounds.array[exp] != null && 
-			container.prevExp != undefined &&
-			(container.x <= prevDivBounds.array[exp].topX ||
-			container.x >= prevDivBounds.array[exp].botX) ) {
-				let oldMod = getDimension(exp)
-				let mx = prevDivBounds.array[exp].botX-(nodeSize*(oldMod[0]+1));
-				let mn  = prevDivBounds.array[exp].topX;
-				x = Math.floor(Math.random() * (mx - mn + 1) + mn);
-				container.prevExp = undefined;
-		} 
-		*/
 		// Track location in current frame to match to new frame
 		let len = prevDivBounds.array[exp].botX - 
 			(prevDivBounds.array[exp].topX+container.col+nodeSize)
 		let dist = x - prevDivBounds.array[exp].topX
 		let ratio = dist/len
-		let distNew = divBounds.array[exponent].botX-
+		let distNew;
+		distNew = divBounds.array[exponent].botX-
 			(divBounds.array[exponent].topX+container.col+nodeSize)
-		xTween = minX + distNew*ratio
+		xTween = minX + distNew*ratio 
 	} 
 	// If node object is not active (in stageNodeStorage)
 	else {
 		// if node object is already in correct boundary, dont move
-		if (x > divBounds.array[exponent].topX 
+		if (divContainers == (exp+1) && divBounds.array[exponent].topX 
 			&& x+container.col+nodeSize < divBounds.array[exponent].botX) {
 			xTween = x;	
 		} 
@@ -550,8 +536,11 @@ function getContainerUpdate(container, exponent, mod) {
 			let dist = x
 			let ratio = dist/len
 			
-			let distNew = divBounds.array[exponent].botX-divBounds.array[exponent].topX
-			xTween = distNew*ratio
+			let distNew = divBounds.array[exp].botX-divBounds.array[exp].topX
+			
+			xTween = divContainers == (exp+1) ? 
+				distNew*ratio+nodeSize : 
+				divBounds.array[exp+1].botX+distNew*ratio+nodeSize
 		}
 	}
 	
@@ -637,9 +626,9 @@ function updateNodePositions() {
 	
 		let remove = []
 		stageNodeTracker.forEach(element => {
-
-			let exponent = Math.round(Math.log(element.children.length, baseVal));
-
+			
+			let exponent = Math.round(Math.log(element.children.length-1, baseVal));
+			
 			// is stage reduced below exponent value remove from stage
 			if (exponent+1 > divContainers) {
 				stage.removeChild(element);
@@ -677,7 +666,7 @@ function updateNodePositions() {
 				} 
 			}
 			if (j != -1) {
-				let exponent = Math.round(Math.log(stageNodeTracker[j].children.length, baseVal));
+				let exponent = Math.round(Math.log(stageNodeTracker[j].children.length-1, baseVal));
 				stageNodeStorage[exponent].push(stageNodeTracker.splice(j,1));
 			}
 
@@ -724,12 +713,14 @@ Math.log = (function() {
 
 function selectNode(node){
 	//"#4287f5"
-	node.shadow = new createjs.Shadow(colors[node.color], 0, 0, shadowSize);
+	node.shadow = new createjs.Shadow(colors[node.color], 0, 0, nodeShadowSize);
+	node.alpha = nodeOpacity;
 	selectedObjects.push(node);
 	node.stageForDeselect = false;
 }
 function deselectNode(node){
 	node.shadow = null;
+	node.alpha = 1;
 }
 
 
@@ -813,7 +804,8 @@ function manageExponentButtonState(){
 //
 //----------------------------------------------------
 function handleStageMouseDown(event) {
-	if (!event.primary || tweenRunningCount > 0) { return; }
+	if (stageEventInvalid(event)) { return; }
+	if (objectEventActive) { return; }
 	// Store current stage mouse location
 	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
 
@@ -821,8 +813,13 @@ function handleStageMouseDown(event) {
 }
 
 function handleStageMouseMove(event) {
+	// Select objects / remove selectorBox if off banner
+	if (stage.mouseY < bannerHeight) { 
+		multiSelectEvent(event);
+	}
 	// if dragger active or mouse out of bounds return
-	if (!event.primary  || objectEventActive || tweenRunningCount > 0) { return; }
+	if (stageEventInvalid(event)) { return; }
+	if (objectEventActive) { return; }
 	let stroke = 10;
 
 	// Enable boundary on drawing selector box on selector stage
@@ -842,14 +839,18 @@ function handleStageMouseMove(event) {
 	stage.update();
 }
 
-function handleStageMouseUp(event) {
-	if (!event.primary || tweenRunningCount > 0) { return; }
 
+function handleStageMouseUp(event) {
+	if (stageEventInvalid(event)) { return; }
+	multiSelectEvent(event);	
+}
+
+function multiSelectEvent(event) {
 	stage.removeChild(stageSelectorBox)
 	stage.removeEventListener("stagemousemove", handleStageMouseMove);
 	
 	// if dragger active or mouse out of bounds return
-	if (objectEventActive ) { return; }
+	if (objectEventActive) { return; }
 	let deselectAll = [];
 
 	// If stage click (not drag) deselect all stage objects
@@ -914,6 +915,12 @@ function handleStageMouseUp(event) {
 	}
 }
 
+// Determine if stage selector is valid event
+function stageEventInvalid(event) {
+	return (!event.primary || tweenRunningCount > 0 || stage.mouseY < bannerHeight);
+} 
+
+
 //---------------------------------------------------------------------
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
@@ -933,7 +940,7 @@ function applyNodeHandlers(node) {
 		
 		//updateSelectedObjects(node);
 
-		//node.shadow = new createjs.Shadow(colors[node.color], 0, 0, shadowSize);
+		//node.shadow = new createjs.Shadow(colors[node.color], 0, 0, nodeShadowSize);
 	});
 
     node.on("mousedown", function (evt) {
@@ -1076,24 +1083,25 @@ function tick(evt) {
 
 
 function enableButtons() {
-	let buttonTrash = document.getElementById("button_trash");
-	let buttonReset = document.getElementById("button_refresh");
+	//let buttonAddBlock = document.getElementById("button_add_block");
+
 	let buttonCombine = document.getElementById("button_combine");
-	buttonToggleSingle = document.getElementById("button_toggle_single")
-	buttonToggleSingle.disabled = true;
-	buttonToggleGroup = document.getElementById("button_toggle_group")
-	let buttonSeperate = document.getElementById("button_seperate");
-	let buttonColumn = document.getElementById("button_column");
+	let buttonSingle = document.getElementById("button_single")
+	let buttonGroup = document.getElementById("button_group")
 	let buttonPaint = document.getElementById("button_paint");
 	buttonToggleAssist = document.getElementById("button_toggle_assist")
 	buttonTogglePlain = document.getElementById("button_toggle_plain")
 	buttonTogglePlain.disabled = true;
+
+	let buttonSortColumn = document.getElementById("button_sort_column");
+	let buttonColumn = document.getElementById("button_column");
 	buttonAddColumn = document.getElementById("button_add_col");
 	buttonRemoveColumn = document.getElementById("button_remove_col");
 
-	
+	let buttonTrash = document.getElementById("button_trash");
+	let buttonReset = document.getElementById("button_refresh");
 
-	let buttonAdd = document.getElementById("button_add");
+	
 	for (let i = 0; i < activeMaxDiv; i++) {
 		let id = "button_add_" + i;
 		expButtons[i] = document.getElementById(id);
@@ -1103,44 +1111,26 @@ function enableButtons() {
 	expParent = expButtons[0].parentNode;
 	
 
-	handleTrash(buttonTrash);
-	handleReset(buttonReset);
+	//handleAdd(buttonAddBlock); // Add Blocks button (draws icon)
+
 	handleCombine(buttonCombine);
-	handleToggleSingle();
-	handleToggleGroup();
-	handleSeperate(buttonSeperate);
-	handleColumn(buttonColumn);
+	handleSeperate(buttonSingle);
+	handleSeperate(buttonGroup);
 	handlePaint(buttonPaint);
 	handleToggleAssist(buttonToggleAssist, buttonTogglePlain);
 	handleTogglePlain(buttonTogglePlain, buttonToggleAssist);
+	
+	handleSortColumn(buttonSortColumn);
+	handleColumn(buttonColumn);
 	handleAddColumn(buttonAddColumn);
 	handleRemoveColumn(buttonRemoveColumn);
-	handleAdd(buttonAdd);
+	
+
+	handleTrash(buttonTrash);
+	handleReset(buttonReset);
 	
 	buildHandleBase();
-	
 	disableRemoveColumn();
-
-}
-
-function handleToggleSingle(){
-	buttonToggleSingle.onclick = function(){
-		seperateToOnes = !seperateToOnes;
-		buttonToggleSingle.disabled = true;
-		buttonToggleGroup.disabled = false;
-		buttonToggleSingle.style.display = 'none';
-		buttonToggleGroup.style.display = 'none';
-	}
-}
-function handleToggleGroup(){
-	buttonToggleGroup.onclick = function(){
-		seperateToOnes = !seperateToOnes;
-		buttonToggleGroup.disabled = true;
-		buttonToggleSingle.disabled = false;
-		buttonToggleSingle.style.display = 'none';
-		buttonToggleGroup.style.display = 'none';
-		//buttonToggleSingle
-	}
 }
 
 function combineMouseover(){
@@ -1262,7 +1252,7 @@ function handleCombine(buttonCombine) {
 		for (let i = 0; i < selectedObjects.length; i++) {
 			let node = selectedObjects[i]
 			// Get current object exponent value
-			let exponent  = Math.round(Math.log(node.children.length, baseVal));
+			let exponent  = Math.round(Math.log(node.children.length-1, baseVal));
 			// Check if exponent+1 container can exist on the stage
 			if (exponent < activeMaxDiv) {
 				// if open
@@ -1292,7 +1282,7 @@ function handleCombine(buttonCombine) {
 				for(let j = 0; j < combine[i].length; j++) {
 					tweenHidden.push(combine[i][j]);
 					combine[i][j].alpha = 0;
-					for(let k = 0; k < combine[i][j].children.length; k++) {
+					for(let k = 0; k < combine[i][j].children.length-1; k++) {
 						let child = combine[i][j].children[k];
 						let ptTop = child.localToGlobal(child.regX,child.regY);
 						ptTop.x = ptTop.x+child.col;
@@ -1300,7 +1290,7 @@ function handleCombine(buttonCombine) {
 						let tweenNode = makeSingleRect(ptTop.x, ptTop.y)
 						updateColor(tweenNode, combine[i][j].color);
 						updateSelectedObjects(tweenNode);
-						tweenNode.shadow = new createjs.Shadow(colors[combine[i][j].color], 0, 0, shadowSize);
+						tweenNode.shadow = new createjs.Shadow(colors[combine[i][j].color], 0, 0, nodeShadowSize);
 						tweenNodes.push(tweenNode)
 					}
 				}
@@ -1327,7 +1317,7 @@ function handleCombine(buttonCombine) {
 
 				// Evaluate location for tween nodes to translate to
 				for(let j = 0; j < newObject.length; j++) {
-					for(let k = 0; k < newObject[j].children.length; k++) {
+					for(let k = 0; k < newObject[j].children.length-1; k++) {
 						let child = newObject[j].children[k];
 						let ptTop = child.localToGlobal(child.regX,child.regY);
 
@@ -1400,11 +1390,18 @@ function handleSeperate(buttonSeperate) {
 	buttonSeperate.onclick = function(){
 		if (tweenRunningCount > 0 ) { return; }
 
+		// determines which button is being pressed
+		if(buttonSeperate.id == "button_single") {
+			seperateToOnes = true;
+		} else {
+			seperateToOnes = false;
+		}
+
 		let toSeperate = []
 		let singles = []
 		// Only seperate nodes larger than one
 		for (let i = 0; i < selectedObjects.length; i++) {
-			if (selectedObjects[i].children.length > 1) {
+			if (selectedObjects[i].children.length-1 > 1) {
 				toSeperate.push(selectedObjects[i])
 			} else {
 				singles.push(selectedObjects[i]);
@@ -1419,7 +1416,7 @@ function handleSeperate(buttonSeperate) {
 
 		for (let i = 0; i < toSeperate.length; i++) {
 			let node = toSeperate[i];
-			let exponent = Math.round(Math.log(node.children.length, baseVal));
+			let exponent = Math.round(Math.log(node.children.length-1, baseVal));
 
 			// Prevent node expansion beyond window bounds
 			/*
@@ -1446,7 +1443,7 @@ function handleSeperate(buttonSeperate) {
 			
 			// Seperate to ones or to next lower size
 			let exp = 0;
-			let size = node.children.length;
+			let size = node.children.length-1;
 			
 			if (!seperateToOnes) { 
 				exp = exponent-1<0 ? 0 : exponent-1; 
@@ -1460,7 +1457,7 @@ function handleSeperate(buttonSeperate) {
 			// build base ^ n single nodes for TWEEN EFFECT
 			let tweenNodes = []
 			let newLoc = [];
-			for(let j = 0; j < node.children.length; j++) {
+			for(let j = 0; j < node.children.length-1; j++) {
 				let child = node.children[j];
 				let ptTop = child.localToGlobal(child.regX,child.regY);
 				ptTop.x = ptTop.x+child.col;
@@ -1468,10 +1465,10 @@ function handleSeperate(buttonSeperate) {
 				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y);
 				updateColor(tweenNodes[j], toSeperate[i].color);
 				updateSelectedObjects(tweenNodes[j]);
-				tweenNodes[j].shadow = new createjs.Shadow(colors[node.color], 0, 0, shadowSize);
+				tweenNodes[j].shadow = new createjs.Shadow(colors[node.color], 0, 0, nodeShadowSize);
 
 				// Structured Decompose for Singles
-				if (size == node.children.length) {
+				if (size == node.children.length-1) {
 					modY = modY+nodeSize*.5;
 					if(ptTop.x != prevX) { 
 						modX = modX+nodeSize*.5;
@@ -1543,7 +1540,7 @@ function handleSeperate(buttonSeperate) {
 				}
 				
 				// Tween tweenNodes to location of new object
-				for(let k = 0; k < newObjects[j].children.length; k++) {
+				for(let k = 0; k < newObjects[j].children.length-1; k++) {
 					let child = newObjects[j].children[k];
 					let ptTop = child.localToGlobal(child.regX,child.regY);
 					//console.log(ptTop)
@@ -1585,7 +1582,7 @@ function repaintSelected(objects, nextColor){
 		color = objects[i].color;
 		if (nextColor) {
 			color = objects[i].color = color>=3 ? 0 : ++color;
-			objects[i].shadow = new createjs.Shadow(colors[color], 0, 0, shadowSize);
+			objects[i].shadow = new createjs.Shadow(colors[color], 0, 0, nodeShadowSize);
 		}
 		// Objects current color
 		updateColor(objects[i], objects[i].color);
@@ -1595,10 +1592,10 @@ function repaintSelected(objects, nextColor){
 // Update color and varies colors for exponent-1
 function updateColor(node, color){
 	let colorMod = colors[color]
-	for(let j = 0; j < node.children.length; j++) {
-		let exponent = Math.round(Math.log(node.children.length, baseVal));
+	for(let j = 0; j < node.children.length-1; j++) {
+		let exponent = Math.round(Math.log(node.children.length-1, baseVal));
 		if (visualSeperation 
-			&& node.children.length != 1 
+			&& node.children.length-1 != 1 
 			&& j%Math.pow(baseVal,exponent-1) == 0) {
 			if (colorMod.includes(colors[color])) { colorMod = colorsOff[color] }
 			else { colorMod = colors[color] }
@@ -1608,7 +1605,28 @@ function updateColor(node, color){
 	node.color = color
 }
 
+function handleSortColumn(buttonSortColumn){
+	buttonSortColumn.onclick = function(){
 
+		//Determine larges Block on stage
+		let largest = 0;
+		for(i=0;i<stage.children.length;i++){
+			if (stage.children[i].row == undefined) { continue; }
+			let exp = Math.round(Math.log(stage.children[i].children.length-1 , baseVal));
+			largest = largest < exp ? exp : largest;	
+		}
+		console.log(largest)
+		divContainers = largest+1;
+		inPlaceCompose = false;
+		inPlaceDecompose = false; 
+		
+		//console.log(divContainers)
+		removeDiv(0,5);
+		drawStage();
+		manageContainerButtonState();
+
+	}
+}
 
 function handleColumn(buttonColumn) {
 	buttonColumn.onclick = function(){
@@ -1666,7 +1684,7 @@ function handleAddColumn(buttonAddColumn) {
 			inPlaceCompose = false;
 			inPlaceDecompose = false;
 			removeDiv(0, divContainers)
-			drawStage() 
+			drawStage(); 
 		}
 		enableRemoveColumn();
 	}
@@ -1728,12 +1746,15 @@ function getAdd() {
 	var url = plus.getCacheDataURL();
 	return "<img class=\"buttonImage\" src=" + url + ">";
 }
-*/
 
-function handleAdd(buttonAdd){
-	buttonAdd.innerHTML = "Add Blocks"
+// Javascript draw button icon
+function handleAdd(buttonAddBlock){
+	buttonAddBlock.innerHTML = "Add Blocks"
 	//buttonAdd.innerHTML = getAdd();
 }
+
+*/
+
 
 
 function handleAddBlock(add, exponent) {
