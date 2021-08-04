@@ -123,15 +123,27 @@ let buttonToggleAssist;
 let buttonTogglePlain; 
 
 
+
+
 //------------------------------------------------------
 //
 //		TODO:	
 //				- 
 //
 
+/* Detect touchscreen devices
+let isMobileDevice;
+function isTouchDevice() {
+	return (('ontouchstart' in window) ||
+	   (navigator.maxTouchPoints > 0) ||
+	   (navigator.msMaxTouchPoints > 0));
+}
+*/
 
 function main() {
 	stage = new createjs.Stage("canvas");
+
+	//isMobileDevice = isTouchDevice();
 
 	// Selector Box
 	stage.addEventListener("stagemousedown", handleStageMouseDown);
@@ -842,7 +854,7 @@ function handleStageMouseMove(event) {
 
 function handleStageMouseUp(event) {
 	if (stageEventInvalid(event)) { return; }
-	multiSelectEvent(event);	
+	multiSelectEvent(event);
 }
 
 function multiSelectEvent(event) {
@@ -1165,7 +1177,6 @@ function paintMouseover(){
 	buttonTogglePlain.style.display = '';
 }
 
-
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 // 				   		BUTTON EVENT HANDLERS
@@ -1289,6 +1300,7 @@ function handleCombine(buttonCombine) {
 						ptTop.y = ptTop.y+child.row;
 						let tweenNode = makeSingleRect(ptTop.x, ptTop.y)
 						updateColor(tweenNode, combine[i][j].color);
+						tweenNode.children[0].graphics._fill.style = colors[combine[i][j].color];
 						updateSelectedObjects(tweenNode);
 						tweenNode.shadow = new createjs.Shadow(colors[combine[i][j].color], 0, 0, nodeShadowSize);
 						tweenNodes.push(tweenNode)
@@ -1361,7 +1373,7 @@ function handleCombine(buttonCombine) {
 		// Update color to previous node color
 		object.color = node.color;
 		updateColor(object, object.color);
-		//bject.prevExp = exp-1;
+		//object.prevExp = exp-1;
 
 		return object;
 	}
@@ -1465,6 +1477,7 @@ function handleSeperate(buttonSeperate) {
 				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y);
 				updateColor(tweenNodes[j], toSeperate[i].color);
 				updateSelectedObjects(tweenNodes[j]);
+				tweenNodes[j].children[0].graphics._fill.style = colors[toSeperate[i].color];
 				tweenNodes[j].shadow = new createjs.Shadow(colors[node.color], 0, 0, nodeShadowSize);
 
 				// Structured Decompose for Singles
@@ -1600,7 +1613,7 @@ function updateColor(node, color){
 			if (colorMod.includes(colors[color])) { colorMod = colorsOff[color] }
 			else { colorMod = colors[color] }
 		} 
-		node.children[j].graphics._fill.style = colorMod;		
+		node.children[j].graphics._fill.style = colorMod;
 	}
 	node.color = color
 }
@@ -1615,7 +1628,6 @@ function handleSortColumn(buttonSortColumn){
 			let exp = Math.round(Math.log(stage.children[i].children.length-1 , baseVal));
 			largest = largest < exp ? exp : largest;	
 		}
-		console.log(largest)
 		divContainers = largest+1;
 		inPlaceCompose = false;
 		inPlaceDecompose = false; 
