@@ -1110,6 +1110,7 @@ function enableButtons() {
 	buttonAddColumn = document.getElementById("button_add_col");
 	buttonRemoveColumn = document.getElementById("button_remove_col");
 
+	let buttonHelp = document.getElementById("button_help");
 	let buttonTrash = document.getElementById("button_trash");
 	let buttonReset = document.getElementById("button_refresh");
 
@@ -1137,7 +1138,7 @@ function enableButtons() {
 	handleAddColumn(buttonAddColumn);
 	handleRemoveColumn(buttonRemoveColumn);
 	
-
+	handleHelp(buttonHelp);
 	handleTrash(buttonTrash);
 	handleReset(buttonReset);
 	
@@ -1390,12 +1391,15 @@ function enableCombine() {
 	}
 }
 */
- function toast(message) {
-	let toast = document.getElementById("snackbar");
-	toast.className = "show";
-	  setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
-	toast.innerHTML = message;
- }
+let currentToast;
+let toastTimeout;
+function toast(message) {
+	currentToast = document.getElementById("snackbar");
+	currentToast.innerHTML = message;
+	currentToast.className = "show";
+	toastTimeout = setTimeout(function(){ currentToast.className = 
+		currentToast.className.replace("show", ""); }, 15000);
+}
 
 
 function handleSeperate(buttonSeperate) {
@@ -1817,4 +1821,187 @@ function getMaxDiv() {
 function PlaySound(soundObj, volume) {
 	soundObj.volume = volume;
 	soundObj.play();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//							   HELP TUTORIAL
+//
+////////////////////////////////////////////////////////////////////////////////
+
+let currentTween;
+let tweenObj;
+let arrow;
+let rect;
+let helpActive = false;
+//let actions = {action2, action3, action4, action5, action6}
+
+function handleHelp(buttonHelp){
+	buttonHelp.onclick = function() {
+		if(helpActive) {
+			actionFinal();
+			tweenObj.setPaused(true);
+			document.getElementById("snackbar").classList.remove("show")
+			clearTimeout(toastTimeout)
+			return;
+		}
+		helpActive = true;
+		rect = new createjs.Shape();
+		rect.graphics.beginFill(darkBackground).
+			drawRoundRect(0,0,window.innerWidth,window.innerHeight,5);
+		rect.alpha = .8;
+		rect.on("click", function (evt) {
+			tweenObj.setPaused(true);
+			if (currentTween==0) { action2(); }
+			else if (currentTween==1) { action3(); }
+			else if (currentTween==2) { action4(); }
+			else if (currentTween==3) { action5(); }
+			else if (currentTween==4) { action6(); }
+			else if (currentTween==5) { action7(); }
+			else if (currentTween==6) { action8(); }
+			else if (currentTween==7) { action9(); }
+			else if (currentTween==8) { action10(); }
+			else if (currentTween==9) { action11(); }
+			else if (currentTween==10) { action12(); }
+			else if (currentTween==11) { action13(); }
+			else if (currentTween==12) { action14(); }
+			else if (currentTween==13) { actionFinal(); }
+			//actions[currentTween+1]
+		});
+
+		
+		
+		stage.addChild(rect);
+
+		let loc = document.getElementById("button_n").getBoundingClientRect();
+		arrow = makeArrow(loc.x+loc.width/2, loc.top-loc.height-75);
+		tweenObj = createjs.Tween.get(arrow).to({alpha:1}, 500);
+		tweenObj = createjs.Tween.get(rect).to({alpha:.5}, 15500).call(action2);
+		currentTween=0;
+		toast("The base change button allows you to change the base number " +
+		"that you will be working with. <br><br>This program allows the selection " 
+		+ "of bases between 2 and 10"+
+		"<br><br>(click on the stage for the next hint)"+
+		"<br>(click the help button again to quit help)")
+
+	}
+}
+function action(num, element, next, text){
+	currentTween=num;
+	stage.removeChild(rect, arrow)
+	stage.addChild(rect, arrow)
+
+	// Clear current Toast
+	document.getElementById("snackbar").classList.remove("show")
+	clearTimeout(toastTimeout)
+	  
+	loc = document.getElementById(element).getBoundingClientRect();
+	tweenObj = createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-75}, 500);
+	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, 15500).call(next);
+	toast(text)
+}
+
+function action2(){
+	action(1, "button_add_block", action3, 
+	"The \"ADD BLOCK\" button allows you to add blocks to the stage")
+}
+function action3(){
+	action(2, "button_combine", action4, 
+	"The \"COMBINE\" button allows you to combine blocks <br><br>"
+	+ "The blocks will only combine when a correct number of blocks are" 
+	+ " currently selected.")
+}
+function action4(){
+	action(3, "button_group", action5, 
+	"The \"SPLIT GROUP\" button allows you to seperate blocks " +
+	 "into the next smallest grouping of blocks")
+}
+function action5(){
+	action(4, "button_single", action6, 
+	"The \"SPLIT ONES\" button allows you to seperate blocks " +
+	"into ones, breaking the entire block to its lowest units")
+}
+function action6(){
+	action(5, "button_paint", action7, 
+	"The \"PAINTBRUSH\" button allows you to change the color of the blocks " +
+	"that are currently selected")
+}
+function action7(){
+	currentTween=6;
+	loc = document.getElementById("button_paint").getBoundingClientRect();
+	tweenObj = createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-140}, 500);
+	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, 15500).call(action8);
+	toast("The \"2-TONE\" will color the blocks in two shades to help show the " +
+	"the seperation of values within the block" )
+}
+function action8(){
+	currentTween=7;
+	loc = document.getElementById("button_paint").getBoundingClientRect();
+	tweenObj = createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-140}, 500);
+	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, 15500).call(action9);
+	toast("The \"PLAIN\" button will color each block in a solid color")
+}
+function action9(){
+	action(8, "button_sort_column", action10, 
+	"The \"SORT TO COLUMN\" button will automatically sort all blocks currently" +
+	" on the stage to columns")
+}
+function action10(){
+	action(9, "button_column", action11, 
+	"The \"OPEN STAGE\" button will remove all columns from the stage" +
+	" allowing an open space to work with blocks of any size")
+}
+function action11(){
+	action(10, "button_add_col", action12, 
+	"The \"ADD COLUMN\" button add one column for the next magnitude or " +
+	"\"place\" value")
+}
+function action12(){
+	action(11, "button_remove_col", action13, 
+	"The \"REMOVE COLUMN\" button will remove one column of the highest " +
+	"magnitude or \"place\" value")
+}
+function action13(){
+	action(12, "button_trash", action14, 
+	"The \"TRASH\" button will remove all currently selected blocks from" +
+	" the stage")
+}
+function action14(){
+	action(13, "button_refresh", actionFinal, 
+	"The \"REFRESH\" button will reset the board")
+}
+
+function actionFinal(){
+	helpActive = false;
+	stage.removeChild(rect)
+	stage.removeChild(arrow)
+}
+
+function makeArrow(x,y){
+    var arrow = new createjs.Shape();
+    var arrowSize = 100;
+    var arrowRotation = 90;
+	let LINE_RADIUS = 10;
+	let ARROWHEAD_DEPTH = 30;
+	let ARROWHEAD_RADIUS = 25;
+    arrow.graphics.s("white")
+            .f("white")
+            .mt(0, 0)
+            .lt(0, LINE_RADIUS)
+            .lt(arrowSize - ARROWHEAD_DEPTH, LINE_RADIUS)
+            .lt(arrowSize - ARROWHEAD_DEPTH, ARROWHEAD_RADIUS)
+            .lt(arrowSize, 0)
+            .lt(arrowSize - ARROWHEAD_DEPTH, -ARROWHEAD_RADIUS)
+            .lt(arrowSize - ARROWHEAD_DEPTH, -LINE_RADIUS)
+            .lt(0, -LINE_RADIUS)
+            .lt(0, 0)
+            .es();
+    arrow.x = x-5;
+    arrow.y = y;
+    arrow.alpha = 1;
+    arrow.rotation = arrowRotation;
+	arrow.alpha = 0;
+    stage.addChild(arrow);
+	return arrow;
 }
