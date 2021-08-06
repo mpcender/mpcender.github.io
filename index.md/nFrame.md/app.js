@@ -1122,6 +1122,8 @@ function enableButtons() {
 		handleAddBlock(expButtons[i],i);
 	}
 	expParent = expButtons[0].parentNode;
+
+	console.log(buttonPaint.style)
 	
 
 	//handleAdd(buttonAddBlock); // Add Blocks button (draws icon)
@@ -1145,12 +1147,6 @@ function enableButtons() {
 	buildHandleBase();
 	disableRemoveColumn();
 }
-
-function combineMouseover(){
-	buttonToggleSingle.style.display = '';
-	buttonToggleGroup.style.display = '';
-}
-
 
 function handleToggleAssist(){
 	buttonToggleAssist.onclick = function(){
@@ -1266,7 +1262,7 @@ function handleCombine(buttonCombine) {
 			// Get current object exponent value
 			let exponent  = Math.round(Math.log(node.children.length-1, baseVal));
 			// Check if exponent+1 container can exist on the stage
-			if (exponent < activeMaxDiv) {
+			if (exponent+1 < activeMaxDiv) {
 				// if open
 				if(divContainers == 1) {
 					combine[exponent].push(node)
@@ -1815,7 +1811,10 @@ function buildHandleBase() {
 function getMaxDiv() {
 	let exp = 4;
 	while( Math.pow(baseVal,exp) >= maxNodeGroup ) { --exp; } 
-	return exp+1;
+	// Frank request: Prevent 5^3 and 6^3 blocks
+	if (baseVal == 5 || baseVal == 6){ return exp; }
+	else{ return exp+1; }
+	
 }
 
 function PlaySound(soundObj, volume) {
@@ -1925,10 +1924,15 @@ function action5(){
 function action6(){
 	action(5, "button_paint", action7, 
 	"The \"PAINTBRUSH\" button allows you to change the color of the blocks " +
-	"that are currently selected")
+	"that are currently selected <br><br> Hover your mouse over the paint " +
+	"button to see the selectable options")
 }
 function action7(){
 	currentTween=6;
+	stage.removeChild(rect, arrow)
+	stage.addChild(rect, arrow)
+	document.getElementById("snackbar").classList.remove("show")
+	clearTimeout(toastTimeout)
 	loc = document.getElementById("button_paint").getBoundingClientRect();
 	tweenObj = createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-140}, 500);
 	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, 15500).call(action8);
@@ -1937,6 +1941,10 @@ function action7(){
 }
 function action8(){
 	currentTween=7;
+	stage.removeChild(rect, arrow)
+	stage.addChild(rect, arrow)
+	document.getElementById("snackbar").classList.remove("show")
+	clearTimeout(toastTimeout)
 	loc = document.getElementById("button_paint").getBoundingClientRect();
 	tweenObj = createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-140}, 500);
 	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, 15500).call(action9);
@@ -1954,7 +1962,7 @@ function action10(){
 }
 function action11(){
 	action(10, "button_add_col", action12, 
-	"The \"ADD COLUMN\" button add one column for the next magnitude or " +
+	"The \"ADD COLUMN\" button adds one column for the next magnitude or " +
 	"\"place\" value")
 }
 function action12(){
@@ -1976,6 +1984,9 @@ function actionFinal(){
 	helpActive = false;
 	stage.removeChild(rect)
 	stage.removeChild(arrow)
+	// Clear current Toast
+	document.getElementById("snackbar").classList.remove("show")
+	clearTimeout(toastTimeout)
 }
 
 function makeArrow(x,y){
