@@ -2202,28 +2202,28 @@ function action9(){
 	action(9, action10, loc.x+loc.width/2-10, loc.top-loc.height-75, 90, 
 	"The \"SORT TO COLUMN\" button will automatically sort all blocks currently" +
 	" on the stage to columns" +
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress")
+	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
 }
 function action10(){
 	let loc = document.getElementById("button_column").getBoundingClientRect();
 	action(10, action11, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
 	"The \"OPEN STAGE\" button will remove all columns from the stage" +
 	" allowing an open space to work with blocks of any size"+
-	"<br><br><h5 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress")
+	"<br><br><h5 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
 }
 function action11(){
 	let loc = document.getElementById("button_add_col").getBoundingClientRect();
 	action(11, action12, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
 	"The \"ADD COLUMN\" button adds one column for the next magnitude or " +
 	"\"place\" value<br><br> Click this a few times to add some extra columns"+
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress")
+	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
 }
 function action12(){
 	let loc = document.getElementById("button_remove_col").getBoundingClientRect();
 	action(12, action13, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
 	"The \"REMOVE COLUMN\" button will remove one column of the highest " +
 	"magnitude or \"place\" value"+
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress")
+	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
 }
 function action13(){
 	let loc = document.getElementById("button_trash").getBoundingClientRect();
