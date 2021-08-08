@@ -14,8 +14,8 @@
 	--green_node: "#8ab546";
 	--blue_offset_node: "#1e8ac9";
 	--red_offset_node: "#f44358"; 
-	--yellow_offset_node: "#f5c759";
-	--green_offset_node: "#abdb5f";
+	--yellow_offset_node: "#ffdc6b";
+	--green_offset_node: "#c0f26f";
   }
 
 *{
@@ -328,8 +328,8 @@ footer > h1 {
   
   #snackbar.show {
 	visibility: visible;
-	-webkit-animation: fadein 0.5s, fadeout 0.5s 14.5s;
-	animation: fadein 0.5s, fadeout 0.5s 14.5s;
+	-webkit-animation: fadein 0.5s, fadeout 0.5s 19.5s;
+	animation: fadein 0.5s, fadeout 0.5s 19.5s;
   }
   
   @-webkit-keyframes fadein {
