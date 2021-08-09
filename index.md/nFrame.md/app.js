@@ -577,7 +577,6 @@ function nodeCollisionUpdate(container) {
 		// skip self
 		if (stageNodeTracker[i] == container) { continue; } 
 		else {
-			//console.log(stageNodeTracker[i])
 			let offset = intersect(container, stageNodeTracker[i]);
 			if (offset.x != 0 || offset.y != 0){	
 				offset.xPrev = stageNodeTracker[i].x
@@ -725,8 +724,6 @@ Math.log = (function() {
 })();
 
 function selectNode(node){
-	//"#4287f5"
-	console.log(node)
 	let color = colors[node.color];
 	if (node.children.length <= 2) { color = shadowColors[node.color]; }
 	node.shadow = new createjs.Shadow(color, 0, 0, nodeShadowSize);
@@ -778,7 +775,7 @@ function updateSelectedObjects(dragger) {
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-// 				   BUTTON INTERACTIVITY
+// 				         BUTTON STATE
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 function manageContainerButtonState() {
@@ -814,11 +811,11 @@ function manageExponentButtonState(){
 	}
 }
 
-//----------------------------------------------------
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//		Stage object selection box event hadlers
+// 				   STAGE SELECTOR BOX EVENT HANDLERS
 //
-//----------------------------------------------------
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 function handleStageMouseDown(event) {
 	if (stageEventInvalid(event)) { return; }
 	if (objectEventActive) { return; }
@@ -934,15 +931,6 @@ function stageEventInvalid(event) {
 	return (!event.primary || tweenRunningCount > 0 || stage.mouseY < bannerHeight);
 } 
 
-
-//---------------------------------------------------------------------
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//
-// 				   		SEPERATE EVENT HANDLERS
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//---------------------------------------------------------------------
-
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 // 				   		NODE EVENT HANDLERS
@@ -997,7 +985,6 @@ function applyNodeHandlers(node) {
 		// On the move check for
         node.onTheMove = true;
 
-		console.log(node.onTheMove)
 		// If moving multiple stage items
 		if (node.multiDrag) {
 			for (i = 0; i < selectedObjects.length; i++) {
@@ -1116,9 +1103,6 @@ function tick(evt) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //---------------------------------------------------------------------
 
-
-
-
 function enableButtons() {
 	//let buttonAddBlock = document.getElementById("button_add_block");
 
@@ -1147,11 +1131,6 @@ function enableButtons() {
 		handleAddBlock(expButtons[i],i);
 	}
 	expParent = expButtons[0].parentNode;
-
-	console.log(buttonPaint.style)
-	
-
-	//handleAdd(buttonAddBlock); // Add Blocks button (draws icon)
 
 	handleCombine(buttonCombine);
 	handleSeperate(buttonSingle);
@@ -1182,7 +1161,7 @@ function handleToggleAssist(){
 		buttonTogglePlain.style.display = 'none';
 		repaintSelected(stage.children, false);
 
-		if (helpActive && currentTween==7) {action8();}
+		//if (helpActive && currentTween==7) {action8();}
 	}
 }
 function handleTogglePlain(){
@@ -1194,7 +1173,7 @@ function handleTogglePlain(){
 		buttonTogglePlain.style.display = 'none';
 		repaintSelected(stage.children, false);
 
-		if (helpActive && currentTween==8) {action9();}
+		//if (helpActive && currentTween==8) {action9();}
 	}
 }
 
@@ -1283,7 +1262,6 @@ function handleCombine(buttonCombine) {
 	
 	//buttonCombine.on
 	buttonCombine.onclick = function(){
-		console.log(selectedObjects)
 		if (tweenRunningCount > 0 ) { return; }
 		let combine = [[],[],[],[],[]]
 		let deselect = [];
@@ -1336,22 +1314,9 @@ function handleCombine(buttonCombine) {
 				}
 				// build new node
 				let toMake = combine[i].length/baseVal;
-				//for(let j = toMake-1; j >= k; j--) {
 				let exponent  = i+1;
 				for(let j = 0; j < toMake; j++) {
-					
-					// swap from vertical to horizontal combine based on exponent
-					/* In place composition
-					let nodeLoc = exponent%2 == 0 ? j : j*baseVal;
-					//let xMod = (j%baseVal)*(combine[i][0].row+nodeSize)
-					//let yMod = (j%baseVal)*(combine[i][0].col+nodeSize)
-					let x = combine[i][nodeLoc].x;
-					let y = combine[i][nodeLoc].y;
-					console.log(x + "," +y)
-					newObject[index] = buildNew(combine[i][0], exponent, x, y);
-					*/
 					newObject[index] = buildNew(combine[i][0], exponent);
-					
 					index++;
 				}
 
@@ -1377,14 +1342,14 @@ function handleCombine(buttonCombine) {
 				}
 			}
 		}
+		/*
 		if (helpActive && currentTween==5) { 
 			console.log(selectedObjects)
 			action6(); 
 		}
+		*/
 	}
 
-
-	//let tweenHidden = [];
 	function buildNew(node, exp) {
 		// Build new object
 		let object = makeRect(exp);
@@ -1448,7 +1413,6 @@ function seperateObjects(buttonID){
 		} else {
 			seperateToOnes = false;
 		}
-		console.log(seperateToOnes)
 
 		let toSeperate = []
 		let singles = []
@@ -1561,7 +1525,6 @@ function seperateObjects(buttonID){
 				// Structured Decompose for Multi-node containers
 				else {
 					let expon = divBounds.array[exp] != null ? exp : 0;
-					//console.log(exp%2 + " , " +exp)
 					let mod = baseVal/3+exp;
 
 					if (exp%2 == 0){
@@ -1597,8 +1560,6 @@ function seperateObjects(buttonID){
 				for(let k = 0; k < newObjects[j].children.length-1; k++) {
 					let child = newObjects[j].children[k];
 					let ptTop = child.localToGlobal(child.regX,child.regY);
-					//console.log(ptTop)
-					//console.log(child)
 
 					child.setBounds(0, 0, nodeSize, nodeSize);
 					updateNodeTracking(child, ptTop.x, ptTop.y, 
@@ -1612,12 +1573,13 @@ function seperateObjects(buttonID){
 				}
 
 			} 
-			
+			/*
 			if (helpActive) {
 				document.getElementById("snackbar").classList.remove("show")
 				clearTimeout(toastTimeout)
 				toast("Great, now click and drag to select the new blocks on the screen")
 			}
+			*/
 
 		}
 }
@@ -1626,7 +1588,7 @@ function handlePaint(buttonPaint) {
 	buttonPaint.onclick = function(){
 		repaintSelected(selectedObjects, true);
 
-		if (helpActive && currentTween==6) {action7();}
+		//if (helpActive && currentTween==6) {action7();}
 	}
 }
 
@@ -1647,7 +1609,6 @@ function repaintSelected(objects, nextColor){
 			let shadowColor = colors[color];
 			if (objects[i].children.length <= 2) { shadowColor = shadowColors[color]; }
 			objects[i].shadow = new createjs.Shadow(shadowColor, 0, 0, nodeShadowSize);
-			//objects[i].shadow = new createjs.Shadow(shadowColor, 0, 0, nodeShadowSize);
 		}
 		// Objects current color
 		updateColor(objects[i], objects[i].color);
@@ -1688,7 +1649,6 @@ function sortColumns(){
 	inPlaceCompose = false;
 	inPlaceDecompose = false; 
 	
-	//console.log(divContainers)
 	removeDiv(0,5);
 	drawStage();
 	manageContainerButtonState();
@@ -1827,6 +1787,7 @@ function handleAddBlock(add, exponent) {
 	add.onclick = function() {
 		if (tweenRunningCount > 0 ) { return; }
 
+		/*
 		if(helpActive && currentTween == 1) {
 			console.log(add.id == "button_add_2")
 			if (add.id == "button_add_2"){
@@ -1842,6 +1803,7 @@ function handleAddBlock(add, exponent) {
 				return;
 			}
 		}
+		*/
 		
 		PlaySound(bloopSound, .8);
 
@@ -1852,7 +1814,7 @@ function handleAddBlock(add, exponent) {
 }
 
 // disable tween transitions
-let baseChangeActive = false;
+let baseChangeActive = false; // On baseChange, skip tween animation onComplete
 function buildHandleBase() {
 	for (let i = minBase; i <= maxBase; i++) {
 		let id = "button_base_" + i;
@@ -1862,6 +1824,7 @@ function buildHandleBase() {
 			if (tweenRunningCount > 0 ) { return; }
 
 			// HELP bar
+			/*
 			if(helpActive){
 				tweenObj.setPaused(true);
 				if (baseButton.id == 4) {
@@ -1874,9 +1837,12 @@ function buildHandleBase() {
 					return;
 				}
 			}
+			*/
 
-			if (confirm("Are you sure you want to change base?")) {
-				if (confirm("Would to like to keep the blocks currently on the stage")) {
+			if (confirm("Are you sure you want to change base?" +
+			"\n\n \"Ok\" changes base. \"Cancel\"  keeps the current base.")) {
+				if (confirm("Would to like to keep the blocks currently on the" +
+				" stage" + " \n\n \"Ok\" to keep blocks.  \"Cancel\"  clears stage.")) {
 					baseChangeActive = true;
 					openStage();
 					//sortColumns();
@@ -1903,12 +1869,15 @@ function buildHandleBase() {
 					expButtons[i].innerHTML = baseVal + superscriptRev[i]
 				}
 				//drawStage();
-			} else if (helpActive){
+			} 
+			/*
+			else if (helpActive){
 				action0continue = false;
 				action0text = "You'll need to hover your mouse over the " +
 					"\"Base Change\" button and click 4. <br>Then click \"OK\"";
 				action0();
 			}
+			*/
 			baseChangeActive = false;
 		}
 	}
@@ -1928,373 +1897,4 @@ function PlaySound(soundObj, volume) {
 	soundObj.play();
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-//
-//							   HELP TUTORIAL
-//
-////////////////////////////////////////////////////////////////////////////////
-
-let currentTween;
-let tweenObj;
-let arrow;
-let rect;
-let helpActive = false;
-let time = 20500;
-
-//let actions = {action2, action3, action4, action5, action6}
-
-function handleHelp(buttonHelp){
-	buttonHelp.onclick = function() {
-		if(helpActive) {
-			actionFinal();
-			tweenObj.setPaused(true);
-			document.getElementById("snackbar").classList.remove("show")
-			clearTimeout(toastTimeout)
-			return;
-		}
-		helpActive = true;
-		rect = new createjs.Shape();
-		rect.graphics.beginFill(darkBackground).
-			drawRoundRect(0,0,window.innerWidth,window.innerHeight,5);
-		rect.alpha = .8;
-		handleHelpStage(rect);
-		
-		stage.addChild(rect);
-		action0continue = false;
-		action0text = "The base change button allows you to change the base "
-+ "number that you will be working with. This program allows the "
-+ "selection of bases between 2 and 10"+
-"<br><br>&#8226; click the \"help\" button again to quit</h5>" +
-"<br><br>Go ahead and select base 4 from the \"Base Change\" button";
-	action1text = "The \"ADD BLOCK\" button allows you to add blocks to the stage" +
-"<br><br>Lets add a 4"+superscript[2]+" block to the stage"
-		action2_5text = "You can also select blocks indiviually by clicking on "
-		+ "them<br><br>Click the stage to progress"
-
-	let loc = document.getElementById("button_n").getBoundingClientRect();
-	arrow = makeArrow(loc.x+loc.width/2, loc.top-loc.height-75);
-	tweenObj = createjs.Tween.get(arrow).to({alpha:1}, 500);
-	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, time).call(action0_5);
-		action0();
-		
-			/*
-		
-		
-		tweenObj = createjs.Tween.get(arrow).to({alpha:1}, 500);
-		tweenObj = createjs.Tween.get(rect).to({alpha:.5}, time).call(action0_5);
-		currentTween=0;
-		toast()
-		*/
-	}
-}
-
-function handleHelpStage(rect){
-	rect.on("click", function (evt) {
-		if (tweenRunningCount > 0 ) { return; }
-		tweenObj.setPaused(true);
-		console.log(currentTween)
-		if (!action0continue) { return; }
-		else if (currentTween==0) { action0_5(); }
-		else if (currentTween==0.5) { action1(); }
-		else if (!action2continue) { return; }
-		else if (currentTween==1) { action2(); }
-		else if (currentTween==2) { action2_5(); }
-		else if (currentTween==2 && tutorialSelected == undefined) { action2_5();}
-		else if (currentTween==2.5) { action3(); }
-		/*else if (currentTween==3) { action4(); }
-		else if (currentTween==4 && selectedObjects.length < 4 ) { 
-			action4(); }
-		else if (currentTween==4) { action5(); }
-		else if (currentTween==5 && selectedObjects.length < 16 ) { 
-			action5(); }
-		else if (currentTween==6) { action7(); }
-		else if (currentTween==7) { action8(); }
-		else if (currentTween==8) { action9(); }
-		*/
-		else if (currentTween==9) { action10(); }
-		else if (currentTween==10) { action11(); }
-		else if (currentTween==11) { action12(); }
-		else if (currentTween==12) { action13(); }
-		else if (currentTween==13) { action14(); }
-		else if (currentTween==14) { actionFinal(); }
-		//actions[currentTween+1]
-	});
-}
-
-function action(num, next, x, y, rot, text){
-	currentTween=num;
-	stage.removeChild(rect, arrow)
-	stage.addChild(rect, arrow)
-
-	// Clear current Toast
-	tweenObj.setPaused(true);
-	document.getElementById("snackbar").classList.remove("show")
-	clearTimeout(toastTimeout)
-	if (currentToast != undefined){
-		currentToast.className = currentToast.className.replace("show", "");
-	}
-	
-	  
-	tweenObj = createjs.Tween.get(arrow).to({x:x, y:y, rotation:rot}, 500);
-	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, time).call(next);
-	toast(text)
-}
-
-let action0text;
-let action0continue = false;
-function action0(){
-	let loc = document.getElementById("button_n").getBoundingClientRect();
-
-	action(0, action0_5, loc.x+loc.width/2, loc.top-loc.height-75, 90, 
-		action0text);
-}
-
-// Change Base
-function action0_5(){
-	if (!action0continue) { action0(); return; }
-	action(0.5, action1, window.innerWidth/2, 150, -90,
-		"Great Job! You should now see \"Base 4\" at the top of the stage" +
-		"<br><br>Click the stage to progress");
-
-	/*
-	currentTween=0.5;
-	stage.removeChild(rect, arrow)
-	stage.addChild(rect, arrow)
-
-	document.getElementById("snackbar").classList.remove("show")
-	clearTimeout(toastTimeout)
-	tweenObj.setPaused(true);
-
-	tweenObj = createjs.Tween.get(arrow).to({x:window.innerWidth/2, y:150, rotation:-90}, 500);
-	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, time).call(action1);
-	toast("Great Job! You should now see \"Base 4\" at the top of the stage");
-	*/
-}
-
-
-let action1text;
-function action1(){
-	let loc = document.getElementById("button_add_block").getBoundingClientRect();
-	action(1, action2, loc.x+loc.width/2-10, loc.top-loc.height-75, 90, 
-		action1text);
-}
-
-// Add Block
-let action2text = "";
-let action2continue = false;
-function action2(){
-	if (!action2continue) { action1(); }
-	let loc = document.getElementById("button_add_block").getBoundingClientRect();
-	action(2, action2_5, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	action2text);
-}
-
-// Select Box
-let tutorialSelected;
-let action2_5text;
-function action2_5(){
-	if (selectedObjects.length != 1) { action2(); return; }
-	let loc = document.getElementById("button_add_block").getBoundingClientRect();
-	action(2.5, action3, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-		action2_5text)
-	tutorialSelected = selectedObjects[0];
-	stage.removeChild(tutorialSelected)
-	stage.addChild(tutorialSelected)
-
-	
-}
-
-function action3(){
-	if (tutorialSelected == undefined) { action2_5() }
-	if (selectedObjects == 0) { selectNode(tutorialSelected) }
-	rect.removeAllEventListeners("click");
-	rect.on("click", function (evt) { 
-		if (tweenRunningCount > 0 ) { return; }
-		if (selectedObjects.length >= 4){
-			action4();
-		}
-	});
-
-	let loc = document.getElementById("button_group").getBoundingClientRect()
-	action(3, action3, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"SPLIT GROUP\" button allows you to seperate blocks " +
-	 "into the next smallest grouping of blocks <br><br>" + 
-	"With your block selected, split your block to groups of 4" + superscript[3])
-
-	stage.removeChild(tutorialSelected)
-	stage.addChild(tutorialSelected)
-
-	
-	
-}
-
-function action4(){
-	if (selectedObjects < 4) { 
-		document.getElementById("snackbar").classList.remove("show")
-		clearTimeout(toastTimeout)
-		toast("Make sure to select the blocks on screen");
-		action3();
-	} 
-	stage.removeChild(tutorialSelected)
-	rect.removeAllEventListeners("click");
-	rect.on("click", function (evt) { 
-		if (tweenRunningCount > 0 ) { return; }
-		if (selectedObjects.length >= 16){
-			action5();
-		}
-	});
-	
-	let loc = document.getElementById("button_single").getBoundingClientRect();
-	action(4, action4, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"SPLIT ONES\" button allows you to seperate blocks " +
-	"into ones, breaking the entire block to its lowest units<br><br>" + 
-	"With your blocks selected, split everything to ones")
-
-	helpPersistentSelect()
-}
-
-function action5(){
-	if (selectedObjects.length < 16) { 
-		document.getElementById("snackbar").classList.remove("show")
-		clearTimeout(toastTimeout)
-		toast("Make sure to select the blocks on the stage") 
-		action4();
-		return;
-	} 
-
-	let loc = document.getElementById("button_combine").getBoundingClientRect();
-	action(5, action5, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"COMBINE\" button allows you to combine blocks <br><br>"
-	+ "The blocks will only combine when a correct number of blocks are" 
-	+ " currently selected. <br><br> Go ahead and combine the ones on the stage.")
-	helpPersistentSelect();
-}
-function action6(){
-	rect.removeAllEventListeners("click");
-	rect.on("click", function (evt) { 
-		if (tweenRunningCount > 0 ) { return; }
-		helpPersistentSelect();
-	});
-	let loc = document.getElementById("button_paint").getBoundingClientRect();
-	action(6, action6, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"PAINTBRUSH\" button allows you to change the color of the blocks " +
-	"that are currently selected <br><br> Click the Paintbrush  button"+
-	" to change the color of selected pieces.")
-}
-function action7(){
-	let loc = document.getElementById("button_paint").getBoundingClientRect();
-	action(7, action7, loc.x+loc.width/2-10, loc.top-loc.height-140, 90,
-	"The \"2-TONE\" will color the blocks in two shades to help show the " +
-	"the seperation of values within the block");
-	helpPersistentSelect();
-}
-function action8(){
-	let loc = document.getElementById("button_paint").getBoundingClientRect();
-	action(8, action8, loc.x+loc.width/2-10, loc.top-loc.height-140, 90,
-	"The \"PLAIN\" button will color each block in a solid color");
-	helpPersistentSelect();
-}
-function action9(){
-	rect.removeAllEventListeners("click");
-	handleHelpStage(rect);
-	let loc = document.getElementById("button_sort_column").getBoundingClientRect();
-	action(9, action10, loc.x+loc.width/2-10, loc.top-loc.height-75, 90, 
-	"The \"SORT TO COLUMN\" button will automatically sort all blocks currently" +
-	" on the stage to columns" +
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
-}
-function action10(){
-	let loc = document.getElementById("button_column").getBoundingClientRect();
-	action(10, action11, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"OPEN STAGE\" button will remove all columns from the stage" +
-	" allowing an open space to work with blocks of any size"+
-	"<br><br><h5 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
-}
-function action11(){
-	let loc = document.getElementById("button_add_col").getBoundingClientRect();
-	action(11, action12, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"ADD COLUMN\" button adds one column for the next magnitude or " +
-	"\"place\" value<br><br> Click this a few times to add some extra columns"+
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
-}
-function action12(){
-	let loc = document.getElementById("button_remove_col").getBoundingClientRect();
-	action(12, action13, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"REMOVE COLUMN\" button will remove one column of the highest " +
-	"magnitude or \"place\" value"+
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress</h4>")
-}
-function action13(){
-	let loc = document.getElementById("button_trash").getBoundingClientRect();
-	action(13, action14, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"TRASH\" button will remove all currently selected blocks from" +
-	" the stage"+
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to progress")
-}
-function action14(){
-	let loc = document.getElementById("button_refresh").getBoundingClientRect();
-	action(14, actionFinal, loc.x+loc.width/2-10, loc.top-loc.height-75, 90,
-	"The \"REFRESH\" button will reset the board"+
-	"<br><br><h4 style=\"color:Grey;\">&#8226; click anywhere on the stage to "
-	+"progress</h4><br><br>"+
-	"Now you have the basics down. <br><br>Have fun and happy learning!")
-}
-
-function actionFinal(){
-	helpActive = false;
-	stage.removeChild(rect)
-	stage.removeChild(arrow)
-	// Clear current Toast
-	document.getElementById("snackbar").classList.remove("show")
-	clearTimeout(toastTimeout)
-	//toast()
-
-	action0continue = false;
-	action2continue = false;
-}
-
-function makeArrow(x,y){
-    var arrow = new createjs.Shape();
-    var arrowSize = 100;
-    var arrowRotation = 90;
-	let LINE_RADIUS = 10;
-	let ARROWHEAD_DEPTH = 30;
-	let ARROWHEAD_RADIUS = 25;
-    arrow.graphics.s("white")
-            .f("white")
-            .mt(0, 0)
-            .lt(0, LINE_RADIUS)
-            .lt(arrowSize - ARROWHEAD_DEPTH, LINE_RADIUS)
-            .lt(arrowSize - ARROWHEAD_DEPTH, ARROWHEAD_RADIUS)
-            .lt(arrowSize, 0)
-            .lt(arrowSize - ARROWHEAD_DEPTH, -ARROWHEAD_RADIUS)
-            .lt(arrowSize - ARROWHEAD_DEPTH, -LINE_RADIUS)
-            .lt(0, -LINE_RADIUS)
-            .lt(0, 0)
-            .es();
-    arrow.x = x-5;
-    arrow.y = y;
-    arrow.alpha = 1;
-    arrow.rotation = arrowRotation;
-	arrow.alpha = 0;
-    stage.addChild(arrow);
-	return arrow;
-}
-
-function helpPersistentSelect(){
-	let nodes = [];
-	for(i=0; i < stage.children.length; i++){
-		if (stage.children[i].row != undefined) {
-			nodes.push(stage.children[i])
-		}
-	}
-	nodes.forEach( node => {
-		stage.removeChild(node)
-		stage.addChild(node)
-		if(node.shadow == undefined || node.shadow == null){
-			selectNode(node)
-		}
-	})
-}
 
