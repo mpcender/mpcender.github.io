@@ -17,8 +17,6 @@ function handleHelp(buttonHelp){
 		if(helpActive) {
 			actionFinal();
 			tweenObj.setPaused(true);
-			document.getElementById("snackbar").classList.remove("show")
-			clearTimeout(toastTimeout)
 			return;
 		}
 		helpActive = true;
@@ -55,7 +53,7 @@ function handleHelp(buttonHelp){
 		createjs.Tween.get(arrow).to({alpha:1}, 500);
 		tweenObj = createjs.Tween.get(rect).to({alpha:.5}, helpToastTime).call(action2);
 		currentTween=0;
-		toast("The base change button allows you to change the base number " +
+		toastTutorial("The base change button allows you to change the base number " +
 		"that you will be working with. <br><br>This program allows the selection " 
 		+ "of bases between 2 and 10"+
 		"<br><br>(click on the stage for the next hint)"+
@@ -69,13 +67,13 @@ function action(num, element, next, text){
 	stage.addChild(rect, arrow)
 
 	// Clear current Toast
-	document.getElementById("snackbar").classList.remove("show")
+	document.getElementById("snackbarTutorial").classList.remove("show")
 	clearTimeout(toastTimeout)
 
 	loc = document.getElementById(element).getBoundingClientRect();
 	createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-75}, 500);
 	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, helpToastTime).call(next);
-	toast(text)
+	toastTutorial(text)
 }
 
 function action2(){
@@ -108,7 +106,7 @@ function action7(){
 	loc = document.getElementById("button_paint").getBoundingClientRect();
 	createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-140}, 500);
 	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, helpToastTime).call(action8);
-	toast("Hovering over the Paintbrush button will reveal additional options"+
+	toastTutorial("Hovering over the Paintbrush button will reveal additional options"+
 	"<br><br>The \"2-TONE\" will color the blocks in two shades to help show the " +
 	"the seperation of values within the block.<br><br> This change is applied to all" +
 	" blocks on the stage" )
@@ -118,7 +116,7 @@ function action8(){
 	loc = document.getElementById("button_paint").getBoundingClientRect();
 	createjs.Tween.get(arrow).to({x:loc.x+loc.width/2-10, y:loc.top-loc.height-140}, 500);
 	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, helpToastTime).call(action9);
-	toast("The \"PLAIN\" button will color each block in a solid color" + 
+	toastTutorial("The \"PLAIN\" button will color each block in a solid color" + 
 	"<br><br> This change is applied to all blocks on the stage")
 }
 function action9(){
@@ -155,6 +153,10 @@ function actionFinal(){
 	helpActive = false;
 	stage.removeChild(rect)
 	stage.removeChild(arrow)
+
+    // Clear current Toast
+	document.getElementById("snackbarTutorial").classList.remove("show")
+	clearTimeout(toastTimeout)
 }
 
 function makeArrow(x,y){
@@ -207,7 +209,7 @@ function handleHelp(buttonHelp){
 		if(helpActive) {
 			actionFinal();
 			tweenObj.setPaused(true);
-			document.getElementById("snackbar").classList.remove("show")
+			document.getElementById("snackbarTutorial").classList.remove("show")
 			clearTimeout(toastTimeout)
 			return;
 		}
@@ -269,7 +271,7 @@ function action(num, next, x, y, rot, text){
 
 	// Clear current Toast
 	tweenObj.setPaused(true);
-	document.getElementById("snackbar").classList.remove("show")
+	document.getElementById("snackbarTutorial").classList.remove("show")
 	clearTimeout(toastTimeout)
 	if (currentToast != undefined){
 		currentToast.className = currentToast.className.replace("show", "");
@@ -278,7 +280,7 @@ function action(num, next, x, y, rot, text){
 	  
 	tweenObj = createjs.Tween.get(arrow).to({x:x, y:y, rotation:rot}, 500);
 	tweenObj = createjs.Tween.get(rect).to({alpha:.5}, time).call(next);
-	toast(text)
+	toastTutorial(text)
 }
 
 let action0text;
@@ -357,9 +359,9 @@ function action3(){
 
 function action4(){
 	if (selectedObjects < 4) { 
-		document.getElementById("snackbar").classList.remove("show")
+		document.getElementById("snackbarTutorial").classList.remove("show")
 		clearTimeout(toastTimeout)
-		toast("Make sure to select the blocks on screen");
+		toastTutorial("Make sure to select the blocks on screen");
 		action3();
 	} 
 	stage.removeChild(tutorialSelected)
@@ -382,9 +384,9 @@ function action4(){
 
 function action5(){
 	if (selectedObjects.length < 16) { 
-		document.getElementById("snackbar").classList.remove("show")
+		document.getElementById("snackbarTutorial").classList.remove("show")
 		clearTimeout(toastTimeout)
-		toast("Make sure to select the blocks on the stage") 
+		toastTutorial("Make sure to select the blocks on the stage") 
 		action4();
 		return;
 	} 
@@ -472,9 +474,8 @@ function actionFinal(){
 	stage.removeChild(rect)
 	stage.removeChild(arrow)
 	// Clear current Toast
-	document.getElementById("snackbar").classList.remove("show")
+	document.getElementById("snackbarTutorial").classList.remove("show")
 	clearTimeout(toastTimeout)
-	//toast()
 
 	action0continue = false;
 	action2continue = false;

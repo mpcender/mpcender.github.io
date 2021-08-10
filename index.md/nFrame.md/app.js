@@ -1389,18 +1389,26 @@ function enableCombine() {
 */
 let currentToast;
 let toastTimeout;
-function toast(message) {
-	currentToast = document.getElementById("snackbar");
+function toastTutorial(message) {
+	currentToast = document.getElementById("snackbarTutorial");
 	currentToast.innerHTML = message;
 	currentToast.className = "show";
 	toastTimeout = setTimeout(function(){ currentToast.className = 
 		currentToast.className.replace("show", ""); }, time-500);
+}
+function toast(message) {
+	currentToast = document.getElementById("toast");
+	currentToast.innerHTML = message; //+ "<br><br>" + buttonAddColumn.outerHTML;
+	currentToast.className = "show";
+	toastTimeout = setTimeout(function(){ currentToast.className = 
+		currentToast.className.replace("show", ""); }, 4500-500);
 }
 
 
 function handleSeperate(buttonSeperate) {
 	buttonSeperate.onclick = function(){
 		seperateObjects(buttonSeperate.id);
+		
 	}
 }
 
@@ -1444,7 +1452,7 @@ function seperateObjects(buttonID){
 				(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
 				node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight))) {
 
-				toast("The " + exponent + superscriptRev[exponent] + 
+				toastTutorial("The " + exponent + superscriptRev[exponent] + 
 					" node will go out of bounds")
 				let j = selectedObjects.indexOf(node)
 				deselectNode(selectedObjects[j]);
@@ -1577,7 +1585,7 @@ function seperateObjects(buttonID){
 			if (helpActive) {
 				document.getElementById("snackbar").classList.remove("show")
 				clearTimeout(toastTimeout)
-				toast("Great, now click and drag to select the new blocks on the screen")
+				toastTutorial("Great, now click and drag to select the new blocks on the screen")
 			}
 			*/
 

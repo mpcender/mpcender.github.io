@@ -308,7 +308,7 @@ footer > h1 {
 }
 
 /* TOAST MESSAGE */
-#snackbar {
+#snackbarTutorial {
 	visibility: hidden;
 	font-family: 'Balsamiq Sans', cursive;
   	font-size: medium;
@@ -326,7 +326,7 @@ footer > h1 {
 	top: 35%;
   }
   
-  #snackbar.show {
+  #snackbarTutorial.show {
 	visibility: visible;
 	-webkit-animation: fadein 0.5s, fadeout 0.5s 19.5s;
 	animation: fadein 0.5s, fadeout 0.5s 19.5s;
@@ -349,5 +349,50 @@ footer > h1 {
   
   @keyframes fadeout {
 	from {top: 35%; opacity: 1;}
+	to {top: 0px; opacity: 0;}
+  }
+
+  /* TOAST MESSAGE */
+#toast {
+	visibility: hidden;
+	font-family: 'Balsamiq Sans', cursive;
+  	font-size: medium;
+	min-width: 300px;
+	max-width: 300px;
+	margin-left: -150px;
+	background-color: var(--border);
+	color: var(--button_text);
+	text-align: center;
+	border-radius: 15px;
+	padding: 16px;
+	position: fixed;
+	z-index: 1;
+	left: 50%;
+	top: 8%;
+  }
+  
+  #toast.show {
+	visibility: visible;
+	-webkit-animation: toast_fadein 0.5s, toast_fadeout 0.5s 3.5s;
+	animation: toast_fadein 0.5s, toast_fadeout 0.5s 3.5s;
+  }
+  
+  @-webkit-keyframes toast_fadein {
+	from {top: 0; opacity: 0;} 
+	to {top: 8%; opacity: 1;}
+  }
+  
+  @keyframes toast_fadein {
+	from {top: 0; opacity: 0;}
+	to {top: 8%; opacity: 1;}
+  }
+  
+  @-webkit-keyframes toast_fadeout {
+	from {top: 8%; opacity: 1;} 
+	to {top: 0px; opacity: 0;}
+  }
+  
+  @keyframes toast_fadeout {
+	from {top: 8%; opacity: 1;}
 	to {top: 0px; opacity: 0;}
   }
