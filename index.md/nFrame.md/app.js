@@ -1349,6 +1349,7 @@ function handleCombine(buttonCombine) {
 				}
 			}
 		}
+		toggleSortColumn();
 		/*
 		if (helpActive && currentTween==5) { 
 			console.log(selectedObjects)
@@ -1420,183 +1421,189 @@ function handleSeperate(buttonSeperate) {
 }
 
 function seperateObjects(buttonID){
+	
 	if (tweenRunningCount > 0 ) { return; }
+	let selectedMax = 0;  // toggleSortColumn - selected blocks
+	let totalMax = 0; // // toggleSortColumn - total blocks
+	
+	// determines which button is being pressed
+	if(buttonID == "button_single") {
+		seperateToOnes = true;
+	} else {
+		seperateToOnes = false;
+	}
 
-		// determines which button is being pressed
-		if(buttonID == "button_single") {
-			seperateToOnes = true;
+	let toSeperate = []
+	let singles = []
+	// Only seperate nodes larger than one
+	for (let i = 0; i < selectedObjects.length; i++) {
+		if (selectedObjects[i].children.length-1 > 1) {
+			toSeperate.push(selectedObjects[i])
+			// toggleSortColumn - count number of max size blocks
+			let n = selectedObjects[i].children.length-1;
+			if ((Math.round(Math.log(n, baseVal)))+1 == divContainers) { 
+				selectedMax++; 
+			} // end toggleSortColumn
 		} else {
-			seperateToOnes = false;
+			singles.push(selectedObjects[i]);
 		}
+	}
+	// toggleSortColumn - check number of max size blocks on stage 
+	stageNodeTracker.forEach( node => {
+		let n = node.children.length-1;
+		if ((Math.round(Math.log(n, baseVal)))+1 == divContainers) { 
+			totalMax++; 
+		}
+	})
+	// if all max objects are being seperated, enable SortColumn
+	if (selectedMax == totalMax) { 
+		buttonSortColumn.disabled = false; 
+	}// end toggleSortColumn
 
-		let toSeperate = []
-		let singles = []
-		// Only seperate nodes larger than one
-		for (let i = 0; i < selectedObjects.length; i++) {
-			if (selectedObjects[i].children.length-1 > 1) {
-				toSeperate.push(selectedObjects[i])
-			} else {
-				singles.push(selectedObjects[i]);
-			}
-		}
-		// deselect single nodes
-		for (let i = 0; i < singles.length; i++) {
-			let j = selectedObjects.indexOf(singles[i])
+	// deselect single nodes
+	for (let i = 0; i < singles.length; i++) {
+		let j = selectedObjects.indexOf(singles[i])
+		deselectNode(selectedObjects[j]);
+		selectedObjects.splice(j,1);
+	}
+	for (let i = 0; i < toSeperate.length; i++) {
+		let node = toSeperate[i];
+		let exponent = Math.round(Math.log(node.children.length-1, baseVal));
+		// Prevent node expansion beyond window bounds
+		/*
+		console.log(!inPlaceDecompose && 
+			(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
+			node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight)))
+		if (!inPlaceDecompose && 
+			(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
+			node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight))) {
+			toastTutorial("The " + exponent + superscriptRev[exponent] + 
+				" node will go out of bounds")
+			let j = selectedObjects.indexOf(node)
 			deselectNode(selectedObjects[j]);
 			selectedObjects.splice(j,1);
+			continue;
+		} else if (inPlaceDecompose) {
+			// Stage bound limit toast??
 		}
-
-		for (let i = 0; i < toSeperate.length; i++) {
-			let node = toSeperate[i];
-			let exponent = Math.round(Math.log(node.children.length-1, baseVal));
-
-			// Prevent node expansion beyond window bounds
-			/*
-			console.log(!inPlaceDecompose && 
-				(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
-				node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight)))
-			if (!inPlaceDecompose && 
-				(node.x+(node.col+nodeSize)*1.5 > (canvas.width) ||
-				node.y+(node.row+nodeSize)*1.5 > (canvas.height-bannerHeight))) {
-
-				toastTutorial("The " + exponent + superscriptRev[exponent] + 
-					" node will go out of bounds")
-				let j = selectedObjects.indexOf(node)
-				deselectNode(selectedObjects[j]);
-				selectedObjects.splice(j,1);
-				continue;
-			} else if (inPlaceDecompose) {
-				// Stage bound limit toast??
+		*/
+		node.alpha = 0;
+		
+		
+		// Seperate to ones or to next lower size
+		let exp = 0;
+		let size = node.children.length-1;
+		
+		if (!seperateToOnes) { 
+			exp = exponent-1<0 ? 0 : exponent-1; 
+			size = baseVal;
+		} 
+		let modX = nodeSize
+		let modY = 0
+		let prevX = 0;
+		// build base ^ n single nodes for TWEEN EFFECT
+		let tweenNodes = []
+		let newLoc = [];
+		for(let j = 0; j < node.children.length-1; j++) {
+			let child = node.children[j];
+			let ptTop = child.localToGlobal(child.regX,child.regY);
+			ptTop.x = ptTop.x+child.col;
+			ptTop.y = ptTop.y+child.row;
+			tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y);
+			updateColor(tweenNodes[j], toSeperate[i].color);
+			updateSelectedObjects(tweenNodes[j]);
+			tweenNodes[j].children[0].graphics._fill.style = colors[toSeperate[i].color];
+			tweenNodes[j].shadow = new createjs.Shadow(shadowColors[node.color], 0, 0, nodeShadowSize);
+			// Structured Decompose for Singles
+			if (size == node.children.length-1) {
+				modY = modY+nodeSize*.5;
+				if(ptTop.x != prevX) { 
+					modX = modX+nodeSize*.5;
+					modY = 0;
+				}
+				newLoc.push({x: ptTop.x+(modX),y: ptTop.y+(modY)});
+				prevX = ptTop.x;
 			}
-			*/
+		}
+		
+		// build new objects for seperation
+		let newObjects = [];
+		let multiX = node.x;
+		let multiY = node.y;
+		for(let j = 0; j < size; j++) {
+			// Build new object
+			newObjects[j] = makeRect(exp);
+			// Hide during tween
+			tweenHidden.push(newObjects[j]);
+			newObjects[j].alpha = 0;
+			// Update color to previous node color
+			newObjects[j].color = toSeperate[i].color;
+			updateColor(newObjects[j], newObjects[j].color);
+			//newObjects[j].prevExp = exponent;
 
-			node.alpha = 0;
-			
-			
-			// Seperate to ones or to next lower size
-			let exp = 0;
-			let size = node.children.length-1;
-			
-			if (!seperateToOnes) { 
-				exp = exponent-1<0 ? 0 : exponent-1; 
-				size = baseVal;
+			// IN PLACE DECOMPOSE
+			// Structured Decompose for Singles node
+			if (inPlaceDecompose){ 
+			if (newLoc.length != 0) {
+				newObjects[j].x = newLoc[j].x;
+				newObjects[j].y = newLoc[j].y;	
+				updateNodeTracking(newObjects[j], newLoc[j].x, newLoc[j].y, 
+					newLoc[j].x+nodeSize, newLoc[j].y+nodeSize);
 			} 
-
-			let modX = nodeSize
-			let modY = 0
-			let prevX = 0;
-
-			// build base ^ n single nodes for TWEEN EFFECT
-			let tweenNodes = []
-			let newLoc = [];
-			for(let j = 0; j < node.children.length-1; j++) {
-				let child = node.children[j];
+			// Structured Decompose for Multi-node containers
+			else {
+				let expon = divBounds.array[exp] != null ? exp : 0;
+				let mod = baseVal/3+exp;
+				if (exp%2 == 0){
+					let offset = multiY+newObjects[j].row+(nodeSize*mod)+(newObjects[j].row+nodeSize)
+					let bound = divBounds.array[expon].botY - divBounds.array[expon].topY
+					if (offset < bound){
+						multiY += newObjects[j].row+(nodeSize*mod)
+					} else {
+						multiX += newObjects[j].col+(nodeSize*mod)*3
+						multiY = node.y;
+					}
+				} else {
+					let offset = multiX+newObjects[j].col+(nodeSize*mod)+(newObjects[j].col+nodeSize)
+					let bound = divBounds.array[expon].botX - divBounds.array[expon].topX
+					if (offset < bound){
+						multiX += newObjects[j].col+(nodeSize*mod)
+					} else {
+						multiY += newObjects[j].row+(nodeSize*mod)
+						multiX  = node.x;
+					}
+				}
+				newObjects[j].x = multiX;
+				newObjects[j].y = multiY;	
+				updateNodeTracking(newObjects[j], multiX, multiY, 
+					multiX+newObjects[j].col+nodeSize, 
+					multiY+newObjects[j].row+nodeSize);
+				
+			}
+			}
+			
+			// Tween tweenNodes to location of new object
+			for(let k = 0; k < newObjects[j].children.length-1; k++) {
+				let child = newObjects[j].children[k];
 				let ptTop = child.localToGlobal(child.regX,child.regY);
+				child.setBounds(0, 0, nodeSize, nodeSize);
+				updateNodeTracking(child, ptTop.x, ptTop.y, 
+					ptTop.x+child.col+nodeSize, ptTop.y+child.row+nodeSize);
 				ptTop.x = ptTop.x+child.col;
 				ptTop.y = ptTop.y+child.row;
-				tweenNodes[j] = makeSingleRect(ptTop.x, ptTop.y);
-				updateColor(tweenNodes[j], toSeperate[i].color);
-				updateSelectedObjects(tweenNodes[j]);
-				tweenNodes[j].children[0].graphics._fill.style = colors[toSeperate[i].color];
-				tweenNodes[j].shadow = new createjs.Shadow(shadowColors[node.color], 0, 0, nodeShadowSize);
-
-				// Structured Decompose for Singles
-				if (size == node.children.length-1) {
-					modY = modY+nodeSize*.5;
-					if(ptTop.x != prevX) { 
-						modX = modX+nodeSize*.5;
-						modY = 0;
-					}
-					newLoc.push({x: ptTop.x+(modX),y: ptTop.y+(modY)});
-					prevX = ptTop.x;
-				}
-			}
-			
-			// build new objects for seperation
-			let newObjects = [];
-			let multiX = node.x;
-			let multiY = node.y;
-			for(let j = 0; j < size; j++) {
-				// Build new object
-				newObjects[j] = makeRect(exp);
-				// Hide during tween
-				tweenHidden.push(newObjects[j]);
-				newObjects[j].alpha = 0;
-				// Update color to previous node color
-				newObjects[j].color = toSeperate[i].color;
-				updateColor(newObjects[j], newObjects[j].color);
-
-				//newObjects[j].prevExp = exponent;
-	
-				// IN PLACE DECOMPOSE
-				// Structured Decompose for Singles node
-				if (inPlaceDecompose){ 
-				if (newLoc.length != 0) {
-					newObjects[j].x = newLoc[j].x;
-					newObjects[j].y = newLoc[j].y;	
-					updateNodeTracking(newObjects[j], newLoc[j].x, newLoc[j].y, 
-						newLoc[j].x+nodeSize, newLoc[j].y+nodeSize);
-				} 
-				// Structured Decompose for Multi-node containers
-				else {
-					let expon = divBounds.array[exp] != null ? exp : 0;
-					let mod = baseVal/3+exp;
-
-					if (exp%2 == 0){
-						let offset = multiY+newObjects[j].row+(nodeSize*mod)+(newObjects[j].row+nodeSize)
-						let bound = divBounds.array[expon].botY - divBounds.array[expon].topY
-						if (offset < bound){
-							multiY += newObjects[j].row+(nodeSize*mod)
-						} else {
-							multiX += newObjects[j].col+(nodeSize*mod)*3
-							multiY = node.y;
-						}
-					} else {
-						let offset = multiX+newObjects[j].col+(nodeSize*mod)+(newObjects[j].col+nodeSize)
-						let bound = divBounds.array[expon].botX - divBounds.array[expon].topX
-						if (offset < bound){
-							multiX += newObjects[j].col+(nodeSize*mod)
-						} else {
-							multiY += newObjects[j].row+(nodeSize*mod)
-							multiX  = node.x;
-						}
-					}
-
-					newObjects[j].x = multiX;
-					newObjects[j].y = multiY;	
-					updateNodeTracking(newObjects[j], multiX, multiY, 
-						multiX+newObjects[j].col+nodeSize, 
-						multiY+newObjects[j].row+nodeSize);
-					
-				}
-				}
+				let tween = tweenNodes.splice(0,1);
 				
-				// Tween tweenNodes to location of new object
-				for(let k = 0; k < newObjects[j].children.length-1; k++) {
-					let child = newObjects[j].children[k];
-					let ptTop = child.localToGlobal(child.regX,child.regY);
-
-					child.setBounds(0, 0, nodeSize, nodeSize);
-					updateNodeTracking(child, ptTop.x, ptTop.y, 
-						ptTop.x+child.col+nodeSize, ptTop.y+child.row+nodeSize);
-
-					ptTop.x = ptTop.x+child.col;
-					ptTop.y = ptTop.y+child.row;
-					let tween = tweenNodes.splice(0,1);
-					
-					tweenScoot(tween[0],ptTop.x,ptTop.y);
-				}
-
-			} 
-			/*
-			if (helpActive) {
-				document.getElementById("snackbar").classList.remove("show")
-				clearTimeout(toastTimeout)
-				toastTutorial("Great, now click and drag to select the new blocks on the screen")
+				tweenScoot(tween[0],ptTop.x,ptTop.y);
 			}
-			*/
-
+		} 
+		/*
+		if (helpActive) {
+			document.getElementById("snackbar").classList.remove("show")
+			clearTimeout(toastTimeout)
+			toastTutorial("Great, now click and drag to select the new blocks on the screen")
 		}
+		*/
+	}
 }
 
 function handlePaint(buttonPaint) {
