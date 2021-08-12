@@ -61,6 +61,7 @@ let resizeTimer = null;
 const resizeWait = 1000;
 
 // Column button variables
+let buttonSortColumn;
 let buttonRemoveColumn;
 let buttonAddColumn;
 // Node container creation buttons
@@ -787,6 +788,7 @@ function manageContainerButtonState() {
 		inPlaceDecompose = true; 
 	}
 	else { enableRemoveColumn(); }
+	toggleSortColumn();
 }
 
 function manageExponentButtonState(){
@@ -1103,6 +1105,7 @@ function tick(evt) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //---------------------------------------------------------------------
 
+
 function enableButtons() {
 	//let buttonAddBlock = document.getElementById("button_add_block");
 
@@ -1114,7 +1117,7 @@ function enableButtons() {
 	buttonTogglePlain = document.getElementById("button_toggle_plain")
 	buttonTogglePlain.disabled = true;
 
-	let buttonSortColumn = document.getElementById("button_sort_column");
+	buttonSortColumn = document.getElementById("button_sort_column");
 	let buttonColumn = document.getElementById("button_column");
 	buttonAddColumn = document.getElementById("button_add_col");
 	buttonRemoveColumn = document.getElementById("button_remove_col");
@@ -1196,6 +1199,7 @@ function handleTrash(buttonTrash) {
 		trashRunning++;
 		PlaySound(trashSound, 1);
 		deleteSelected();
+		toggleSortColumn()
 	}
 }
 
@@ -1247,7 +1251,10 @@ function resetStage() {
 	stageNodeTracker = [];
 	stageNodeStorage = [[],[],[],[],[]];
 	
+	openStage()
+	manageContainerButtonState()
 	drawStage();
+	
 }
 function clear(iterable) {
 	iterable.forEach(element => {
@@ -1641,7 +1648,9 @@ function updateColor(node, color){
 
 function handleSortColumn(buttonSortColumn){
 	buttonSortColumn.onclick = function(){
+		if (tweenRunningCount > 0 ) { return; }
 		sortColumns();
+		toggleSortColumn();
 	}
 }
 
@@ -1660,6 +1669,28 @@ function sortColumns(){
 	removeDiv(0,5);
 	drawStage();
 	manageContainerButtonState();
+}
+
+
+function toggleSortColumn() {
+	//console.log(divContainers + " " + stageNodeTracker.length);
+	// if open stage enable button
+	if (divContainers == 1) {
+		buttonSortColumn.disabled = false;
+		return;
+	}
+	for (i=0; i < stageNodeTracker.length; i++){
+		let node = stageNodeTracker[i]
+		let exp = Math.round(Math.log(node.children.length-1 , baseVal));
+		console.log(exp+1 + " " + divContainers)
+		if (exp+1 < divContainers) { 
+			buttonSortColumn.disabled = false;
+		} else {
+			buttonSortColumn.disabled = true;
+			break;
+		}
+	}
+	
 }
 
 function handleColumn(buttonColumn) {
@@ -1713,6 +1744,7 @@ function handleAddColumn(buttonAddColumn) {
 		divContainers = update ? divContainers+1 : divContainers;
 
 		disableAddColumn()
+		
 		if (update) { 
 			//manageExponentButtonState(divContainers, divContainers);
 			inPlaceCompose = false;
@@ -1721,6 +1753,7 @@ function handleAddColumn(buttonAddColumn) {
 			drawStage(); 
 		}
 		enableRemoveColumn();
+		toggleSortColumn();
 	}
 	//buttonAddColumn.addEventListener
 }
@@ -1733,6 +1766,7 @@ function enableAddColumn() {
 		buttonAddColumn.disabled = false;
 	}
 }
+
 
 function handleRemoveColumn(buttonRemoveColumn) {
 	//buttonRemoveColumn.innerHTML = getRemoveColumn();
@@ -1748,6 +1782,7 @@ function handleRemoveColumn(buttonRemoveColumn) {
 			drawStage();
 		}
 		enableAddColumn();
+		toggleSortColumn()
 	}
 }
 
@@ -1794,7 +1829,10 @@ function handleAdd(buttonAddBlock){
 function handleAddBlock(add, exponent) {
 	add.onclick = function() {
 		if (tweenRunningCount > 0 ) { return; }
-
+		// Check for sort column button toggle
+		if (divContainers != 1 && exponent+1 == divContainers) { 
+			buttonSortColumn.disabled = true; 
+		}
 		/*
 		if(helpActive && currentTween == 1) {
 			console.log(add.id == "button_add_2")
@@ -1814,7 +1852,6 @@ function handleAddBlock(add, exponent) {
 		*/
 		
 		PlaySound(bloopSound, .8);
-
 		if (divContainers == 1 || divBounds.array[exponent] != null) {
 			makeRect(exponent)
 		}
