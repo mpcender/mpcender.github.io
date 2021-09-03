@@ -829,9 +829,11 @@ function handleStageMouseDown(event) {
 
 function handleStageMouseMove(event) {
 	// Select objects / remove selectorBox if off banner
+	/*
 	if (stage.mouseY < bannerHeight) { 
 		multiSelectEvent(event);
 	}
+	*/
 	// if dragger active or mouse out of bounds return
 	if (stageEventInvalid(event)) { return; }
 	if (objectEventActive) { return; }
