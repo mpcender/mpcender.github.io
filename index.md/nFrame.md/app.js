@@ -1605,6 +1605,7 @@ function seperateObjects(buttonID){
 			toastTutorial("Great, now click and drag to select the new blocks on the screen")
 		}
 		*/
+		
 	}
 }
 

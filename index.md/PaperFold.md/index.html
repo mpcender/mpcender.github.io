@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>nFrame</title>
+	<link rel="stylesheet" href="styles.css">
+	<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({tex2jax: {inlineMath: [['\\(','\\)']]}});
+	  </script>
+	  <script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	  </script>
+</head>
+
+
+<body onload="main();">
+	<div class="container" id="cavasDiv">
+		<div class="mainStage" >
+			<canvas id="canvas"></canvas>	
+		</div>
+	</div>
+
+	<div class="mouseHUD">
+		<label id="distx"></label>
+		<label id="disty"></label>
+	</div>
+
+	<script src="app.js" charset="uft-8"></script>
+	<script src="grid.js" charset="uft-8"></script>
+	<script src="help.js" charset="uft-8"></script>
+	<script src="https://code.createjs.com/easeljs-0.8.1.min.js"></script>
+	<script src="https://code.createjs.com/1.0.0/tweenjs.min.js"></script>
+	<script src="./lib/tweenjs-NEXT.combined.js"></script>
+	<script src="./lib/preloadjs-NEXT.min.js"></script>
+	<script src="https://code.jquery.com/jquery-1.12.4.js"
+	integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU="
+	crossorigin="anonymous"></script>
+
+	<footer class="footer">
+		</table>
+		<table class="buttonTableHead">
+			<tr>
+				<td class="bigSpacer"></td>
+		   </tr>
+		</table>
+		<table class="buttonTable">
+			<tr>
+				<td>
+					<div class="dropup">
+						<button class="button" id="button_grid">
+							Grid
+						</button>
+						<div class="dropup-content">
+						  	<button class="buttonDropup" id="button_1x1">1x1</button>
+						  	<button class="buttonDropup" id="button_2x2">2x2</button>
+						  	<button class="buttonDropup" id="button_3x3">3x3</button>
+						</div>
+					  </div>
+				</td>
+				<td>
+					<div class="dropup">
+						<button class="button" id="button_define">
+							Define
+						</button>
+						<div class="dropup-fraction">
+							<div class="fracContainer">
+								<div class="Row">row</div>
+								<div class="rNum"><input class="fracNumBox" type="number" id="rNum" autocomplete="off" required></div>
+								<div class="rDiv"></div>
+								<div class="rDen"><input class="fracNumBox" type="number" id="rDen" autocomplete="off" required></div>
+								<div class="centerSep"></div>
+								<div class="Column">column</div>
+								<div class="cNum"><input class="fracNumBox" type="number" id="cNum" autocomplete="off" required></div>
+								<div class="cDiv"></div>
+								<div class="cDen"><input class="fracNumBox" type="number" id="cDen" autocomplete="off" required></div>
+								
+							  </div>
+							
+
+						</div>​
+					</div>
+					
+				</td>
+				<td>
+					<div >
+				 		<button class="button" id="button_product">
+							Find<br>Product
+				 		</button>
+					</td>
+			 	<td>
+				 	<div>
+				 		<button class="button" id="button_display">
+							Display
+				 		</button>
+			 	</td>
+		   </tr>
+		</table>
+		<table class="buttonTableHead">
+			<tr>
+				<td>
+					<div >
+				 		<button class="buttonSmall" id="button_help">
+							Help
+				 		</button>
+				</td>
+			 	<td class="headSpacer"></td>
+				<td>
+					<div>
+					<button class="buttonSmall" id="button_refresh">
+						<img class="buttonImage" src="res/refresh.png">
+					</button>
+				</td>
+				<td class="headSpacer"></td>
+		   </tr>
+		</table>
+	</footer>
+	<div id="snackbarTutorial">Some text some message..</div>
+	<div id="toast">Some text some message..</div>
+</body>
+
+</html>
