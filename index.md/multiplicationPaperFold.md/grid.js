@@ -527,8 +527,7 @@ class Grid {
             this.y = (this.y-snapper[j-1] < snapper[j]-this.y) ? snapper[j-1] : snapper[j];
             evt.target.cover.graphics.command.h = this.y;
             let numVal = this.y/width;
-            evt.target.frac.children[0].text = numVal;
-            evt.target.frac.children[2].text = div;
+            evt.target.frac.children[0].text = Math.round(numVal);
             evt.target.frac.children[2].text = Math.round(div/evt.target.properties.#gridDiv);
 
             evt.target.properties.updateDefineFractions(evt.target.frac.children[0].text,evt.target.frac.children[2].text, -1,-1);
