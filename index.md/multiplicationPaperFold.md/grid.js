@@ -8,7 +8,7 @@ class Grid {
     #grid;
     #xdiv;
     #ydiv;
-    #MAXDIV = 36;
+    #MAXDIV = 12;
 
     #gridDiv;
     #gridDivDisplay;
@@ -40,7 +40,7 @@ class Grid {
         rect.graphics.setStrokeStyle(4).beginStroke(bannerBorderColor)
     		.drawRect(0,0,this.#paperSize.x,this.#paperSize.y);
 
-        this.updateDefineFractions(0, 0, 0, 0);
+        this.updateDefineFractions(0, 1, 0, 1);
 
         this.#grid = [];
 
@@ -105,6 +105,9 @@ class Grid {
         if (div > this.#MAXDIV) { return; }
         this.#gridDiv = div;
         this.updateGrid(div, div, clear);
+        this.updateDefineFractions(0,1,0,1);
+        this.#frac.leftFrac.children[3].text = this.#ydiv/this.#gridDiv;
+        this.#frac.topFrac.children[3].text = this.#ydiv/this.#gridDiv;
     }
 
     updateGrid(xdiv, ydiv, clear) {
@@ -135,25 +138,23 @@ class Grid {
 
     resetSliders(xClear, yClear){
         if (xClear) { 
-            this.#frac.topFrac.children[2].text = 0;
+            this.#frac.topFrac.children[3].text = 0;
             this.#nodeCol.x = 0;
             this.#nodeCol.cover.graphics.command.w = 0;
-            this.#frac.topFrac.children[0].text = 0;
-            this.updateDefineFractions(-1, -1, 0, 0);
+            this.#frac.topFrac.children[1].text = 0;
         } else { 
-            let slideTo = (this.#paperSize.x/this.#xdiv)*this.#frac.topFrac.children[0].text
+            let slideTo = (this.#paperSize.x/this.#xdiv)*this.#frac.topFrac.children[1].text
             this.#nodeCol.x = slideTo;
             this.#nodeCol.cover.graphics.command.w = slideTo;
         }
 
         if (yClear) {
-            this.#frac.leftFrac.children[2].text = 0;
+            this.#frac.leftFrac.children[3].text = 0;
             this.#nodeRow.y = 0;
             this.#nodeRow.cover.graphics.command.h = 0;
-            this.#frac.leftFrac.children[0].text = 0;
-            this.updateDefineFractions(0, 0, -1, -1);
+            this.#frac.leftFrac.children[1].text = 0;
         } else {
-            let slideTo = (this.#paperSize.y/this.#ydiv)*this.#frac.leftFrac.children[0].text
+            let slideTo = (this.#paperSize.y/this.#ydiv)*this.#frac.leftFrac.children[1].text
             this.#nodeRow.y = slideTo;
             this.#nodeRow.cover.graphics.command.h = slideTo;
         }
@@ -193,17 +194,17 @@ class Grid {
         }
 
         if (update){
-            this.#frac.leftFrac.children[0].text = rNum;
-            this.#frac.leftFrac.children[2].text = rDen;
-            this.#frac.topFrac.children[0].text = cNum
-            this.#frac.topFrac.children[2].text = cDen; 
+            this.#frac.leftFrac.children[1].text = rNum;
+            this.#frac.leftFrac.children[3].text = rDen;
+            this.#frac.topFrac.children[1].text = cNum
+            this.#frac.topFrac.children[3].text = cDen; 
 
             this.resetSliders(false, false)
         }
     }
 
     isValidInput(rDen, cDen, div){
-        if (rDen > this.#MAXDIV/div || cDen > this.#MAXDIV/div) {
+        if (rDen > this.#MAXDIV || cDen > this.#MAXDIV) {
             let rowGreater = rDen > cDen;
             console.log(rowGreater )
             alert("The Fractions are too large!");
@@ -222,13 +223,13 @@ class Grid {
     }
 
     findProduct(){
-        let rowNum = this.#frac.leftFrac.children[0].text;
-        let rowDen = this.#frac.leftFrac.children[2].text;
-        let colNum = this.#frac.topFrac.children[0].text;
-        let colDen = this.#frac.topFrac.children[2].text;
+        let rowNum = this.#frac.leftFrac.children[1].text;
+        let rowDen = this.#frac.leftFrac.children[3].text;
+        let colNum = this.#frac.topFrac.children[1].text;
+        let colDen = this.#frac.topFrac.children[3].text;
 
-        this.#frac.result.children[0].text = Math.round(rowNum*colNum)
-        this.#frac.result.children[2].text = Math.round(rowDen*colDen)
+        this.#frac.result.children[1].text = Math.round(rowNum*colNum)
+        this.#frac.result.children[3].text = Math.round(rowDen*colDen)
 
         this.#paper.removeChild(this.#frac.result);
         this.#paper.addChild(this.#frac.result);
@@ -244,13 +245,39 @@ class Grid {
         .to({y: orig}, 0);
     }
 
+    revealUnit(){
+        let rect = new createjs.Shape();
+        
+        rect.graphics.setStrokeStyle(5).beginStroke("white")
+        .drawRoundRectComplex(0,0,this.#paperSize.x/this.#gridDiv,this.#paperSize.y/this.#gridDiv,5,5,5,5);
+        rect.alpha = 0;
+        rect.shadow = new createjs.Shadow("#FFFFFF", 0, 0, 25);
+        rect.paper = this.#paper;
+        this.#paper.addChild(rect)
+
+        createjs.Tween.get(rect)
+	    .to({alpha:1}, 1000).wait(1000).to({alpha:0}, 1000).call(handleComplete);
+    
+        function handleComplete() {
+            rect.paper.removeChild(rect);
+        }
+        
+    }
+
     
 
     #buildFracSet(n){
         let leftFrac = this.#buildFrac(-50, (this.#paperSize.y*.5), n[0].n, n[0].d, this.#color_red , fontSize);
         let topFrac = this.#buildFrac(this.#paperSize.x*.5, -50, n[1].n, n[1].d, this.#color_blue, fontSize);
-        let resultFrac = this.#buildFrac(this.#paperSize.x*.5, this.#paperSize.y*.4, n[2].n, n[2].d, "white", 48);
+        let resultFrac = this.#buildFrac(this.#paperSize.x*.5, this.#paperSize.y*.4, n[2].n, n[2].d, "white", 60);
         resultFrac.alpha = 0;
+        let shadow = new createjs.Shadow(bannerBorderColor, 0, 0, 20);
+        resultFrac.children[0].shadow = shadow;
+        resultFrac.children[1].shadow = shadow;
+        resultFrac.children[2].shadow = shadow;
+        resultFrac.children[3].shadow = shadow;
+        resultFrac.children[0].alpha = .8;
+    
 
         this.#frac = {leftFrac: leftFrac, topFrac: topFrac, result: resultFrac};
     }
@@ -267,12 +294,16 @@ class Grid {
         let line = this.#drawLine(-(font*(5/6)),(font*(5/12)),(font*(5/6)),(font*(5/12)), color); 
         line.textAlign = 'center';
 
-        denom = num == 0 ? 0 : denom;
+        //denom = num == 0 ? 0 : denom;
         var fractDenom = new createjs.Text(denom, font+"px Balsamiq Sans", color);
         fractDenom.textAlign = 'center';
         fractDenom.y = (font*(5/6));
 
-        frac.addChild(fractNum, line, fractDenom);
+        let rect = new createjs.Shape();
+        rect.graphics.beginFill(bannerBorderColor).drawRoundRectComplex(-font,-font,font*2,font*3,font,font,font,font);
+        rect.alpha = 0;
+        
+        frac.addChild(rect, fractNum, line, fractDenom);
         this.#paper.addChild(frac);
         return frac
     }
@@ -281,11 +312,7 @@ class Grid {
         let row = this.#generateStageRowColButton("row", this.#color_red,  
             (this.#paperSize.x+25), (this.#paperSize.y*.5), -80, 50);
         row.rotation = -90;
-        /*
-        row.children[2].rotation = 90;
-        row.children[2].x = row.children[2].x + 17;
-        row.children[2].y = row.children[2].y + 17;
-        */
+
         let col = this.#generateStageRowColButton("column", this.#color_blue,
             (this.#paperSize.x*.5), (this.#paperSize.y+25), -100, 70);
         
@@ -321,6 +348,8 @@ class Grid {
             plusHit.addEventListener("click", function(event) { 
                 let i = event.target.source.#gridDiv
                 event.target.source.updateGrid(event.target.source.#xdiv,event.target.source.#ydiv+i);
+                event.target.source.updateDefineFractions(0, event.target.source.#ydiv/i, -1, event.target.source.#xdiv/i);
+                event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/i;
              });
             //plusHit.on("click", addRow); 
             minusHit.addEventListener("click", function(event) { 
@@ -329,12 +358,16 @@ class Grid {
                     console.log(event.target.source.#ydiv)
                 } else {
                     event.target.source.updateGrid(event.target.source.#xdiv,event.target.source.#ydiv-i);
+                    event.target.source.updateDefineFractions(0, event.target.source.#ydiv, -1, event.target.source.#xdiv);
+                    event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/i;
                 }
              });
         } else {
             plusHit.addEventListener("click", function(event) { 
                 let i = event.target.source.#gridDiv
                 event.target.source.updateGrid(event.target.source.#xdiv+i,event.target.source.#ydiv);
+                event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
+                event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/i;
              });
             //plusHit.on("click", addRow); 
             minusHit.addEventListener("click", function(event) { 
@@ -343,6 +376,8 @@ class Grid {
                     console.log(event.target.source.#xdiv)
                 } else {
                     event.target.source.updateGrid(event.target.source.#xdiv-i,event.target.source.#ydiv);
+                    event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
+                    event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/i;
                 }
              });
         }
@@ -381,6 +416,7 @@ class Grid {
             lines[i] = this.#drawLine(0,paperSize.y*(((i-(xdiv-1))+1)/ydiv), 
             paperSize.x,paperSize.y*(((i-(xdiv-1))+1)/ydiv), color); 
         }
+        
         return lines;
     }
 
@@ -451,10 +487,10 @@ class Grid {
             this.x = (this.x-snapper[j-1] < snapper[j]-this.x) ? snapper[j-1] : snapper[j];
             let numVal = (this.x/width);
             evt.target.cover.graphics.command.w = this.x;
-            evt.target.frac.children[0].text = Math.round(numVal);
-            evt.target.frac.children[2].text = Math.round(div/evt.target.properties.#gridDiv);
+            evt.target.frac.children[1].text = Math.round(numVal);
+            evt.target.frac.children[3].text = Math.round(div/evt.target.properties.#gridDiv);
 
-            evt.target.properties.updateDefineFractions(-1,-1,evt.target.frac.children[0].text,evt.target.frac.children[2].text);
+            evt.target.properties.updateDefineFractions(-1,-1,evt.target.frac.children[1].text,evt.target.frac.children[3].text);
         });
 
         node.on("mouseover", function (evt) {
@@ -527,10 +563,10 @@ class Grid {
             this.y = (this.y-snapper[j-1] < snapper[j]-this.y) ? snapper[j-1] : snapper[j];
             evt.target.cover.graphics.command.h = this.y;
             let numVal = this.y/width;
-            evt.target.frac.children[0].text = Math.round(numVal);
-            evt.target.frac.children[2].text = Math.round(div/evt.target.properties.#gridDiv);
+            evt.target.frac.children[1].text = Math.round(numVal);
+            evt.target.frac.children[3].text = Math.round(div/evt.target.properties.#gridDiv);
 
-            evt.target.properties.updateDefineFractions(evt.target.frac.children[0].text,evt.target.frac.children[2].text, -1,-1);
+            evt.target.properties.updateDefineFractions(evt.target.frac.children[1].text,evt.target.frac.children[3].text, -1,-1);
         });
 
         node.on("mouseover", function (evt) {

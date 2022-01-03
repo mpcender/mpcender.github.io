@@ -215,7 +215,7 @@ let rowNum = document.getElementById("rNum");
 
 function enableButtons() {
 	//let buttonAddBlock = document.getElementById("button_add_block");
-
+	let button_show_unit= document.getElementById("button_show_unit");
 	let button_grid		= document.getElementById("button_grid");
 	let button_1x1		= document.getElementById("button_1x1");
 	let button_2x2		= document.getElementById("button_2x2");
@@ -237,6 +237,10 @@ function enableButtons() {
 		let cNum = document.getElementById("cNum").value;
 		let cDen = document.getElementById("cDen").value;
 		mainPaper.updateStageFractions(rNum, rDen, cNum, cDen);
+	}
+
+	button_show_unit.onclick = function(){
+		mainPaper.revealUnit();
 	}
 
 	button_grid.onclick = function() {
