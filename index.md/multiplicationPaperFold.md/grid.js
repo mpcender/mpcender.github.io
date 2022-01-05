@@ -49,6 +49,9 @@ class Grid {
         stage.addChild(this.#paper);
     }
 
+    getMaxDiv(){
+        return this.#MAXDIV;
+    }
     getRow() {
         return this.#ydiv;
     }

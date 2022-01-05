@@ -264,10 +264,13 @@ function handleDefine(button_define) {
 	let rDen = document.getElementById("rDen");
 	let cNum = document.getElementById("cNum");
 	let cDen = document.getElementById("cDen");
+	// Allows clicking "ENTER" to submit text entry fractions.
 	enableEnterOnEntryFields(rNum);
 	enableEnterOnEntryFields(rDen);
 	enableEnterOnEntryFields(cNum);
 	enableEnterOnEntryFields(cDen);
+	// Set max text entry (with arrow keys) to paper object max Div
+	rNum.max = rDen.max = cNum.max = cDen.max = mainPaper.getMaxDiv();
   
 	button_define.onclick = function() {
 		define();
