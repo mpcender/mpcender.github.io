@@ -230,14 +230,10 @@ function enableButtons() {
 	handleHelp(buttonHelp);
 	handlePaper(button_display);
 	handleReset(buttonReset);
+	handleDefine(button_define);
 
-	button_define.onclick = function() {
-		let rNum = document.getElementById("rNum").value;
-		let rDen = document.getElementById("rDen").value;
-		let cNum = document.getElementById("cNum").value;
-		let cDen = document.getElementById("cDen").value;
-		mainPaper.updateStageFractions(rNum, rDen, cNum, cDen);
-	}
+
+	
 
 	button_show_unit.onclick = function(){
 		mainPaper.revealUnit();
@@ -261,6 +257,36 @@ function enableButtons() {
 	button_product.onclick = function() {
 		mainPaper.findProduct();
 	}
+}
+
+function handleDefine(button_define) {
+	let rNum = document.getElementById("rNum");
+	let rDen = document.getElementById("rDen");
+	let cNum = document.getElementById("cNum");
+	let cDen = document.getElementById("cDen");
+	enableEnterOnEntryFields(rNum);
+	enableEnterOnEntryFields(rDen);
+	enableEnterOnEntryFields(cNum);
+	enableEnterOnEntryFields(cDen);
+  
+	button_define.onclick = function() {
+		define();
+	}
+
+	function enableEnterOnEntryFields(id){
+		// Execute a function when the user releases a key on the keyboard
+		id.addEventListener("keyup", function(event) {
+			// Number 13 is the "Enter" key on the keyboard
+			if (event.keyCode === 13) {
+				define();
+			}
+		});
+	}
+
+	function define(){
+	  	mainPaper.updateStageFractions(rNum.value, rDen.value, cNum.value, cDen.value);
+	}
+	
 }
 
 

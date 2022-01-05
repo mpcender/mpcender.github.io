@@ -26,6 +26,7 @@ class Grid {
     #paper;
 
     constructor(size, x, y){
+        
         this.#paper = new createjs.Container();
         this.#paperSize = size;
 
@@ -171,24 +172,28 @@ class Grid {
         let update = true;
 
         if (rNum/rDen <= 1 && cNum/cDen <= 1) {
-            if (!this.isValidInput(rDen, cDen, 1)) { return; }
+            if (!this.isValidInput(rNum, rDen, cNum, cDen, 1)) { return; }
             this.#gridDiv = 1;
             this.updateGrid(cDen*this.#gridDiv, rDen*this.#gridDiv)
         } else if(rNum/rDen <= 2 && cNum/cDen <= 2) {
-            if (!this.isValidInput(rDen, cDen, 2)) { return; }
+            if (!this.isValidInput(rNum, rDen, cNum, cDen, 2)) { return; }
             this.#gridDiv = 2;
             this.updateGrid(cDen*this.#gridDiv, rDen*this.#gridDiv)
         } else if(rNum/rDen <= 3 && cNum/cDen <= 3){
-            if (!this.isValidInput(rDen, cDen, 3)) { return; }
+            if (!this.isValidInput(rNum, rDen, cNum, cDen, 3)) { return; }
             this.#gridDiv = 3;
             this.updateGrid(cDen*this.#gridDiv, rDen*this.#gridDiv)
         } else {
             update = false;
             if (rDen == 0 || cDen == 0) { 
-                alert("Cannot divide by zero")
+                this.#toastAlert("Cannot divide by zero");
+                //alert("Cannot divide by zero")
             } 
             if (rNum/rDen > 3 || cNum/cDen > 3) {
-                alert("Fractions cannot be larger than 3")
+                this.#toastAlert("Fractions cannot be larger than 3");
+            }
+            else {
+                this.#toastAlert("An error occured, please select different values");
             }
             
         }
@@ -203,11 +208,32 @@ class Grid {
         }
     }
 
-    isValidInput(rDen, cDen, div){
-        if (rDen > this.#MAXDIV || cDen > this.#MAXDIV) {
-            let rowGreater = rDen > cDen;
-            console.log(rowGreater )
-            alert("The Fractions are too large!");
+    isValidInput(rNum, rDen, cNum, cDen, div){
+        if (rNum*rDen > Math.pow(this.#MAXDIV/div,2)) {
+
+        }
+        if (rNum > this.#MAXDIV) {
+            this.#toastAlert("Fractions numerators cannot exceed " + this.#MAXDIV);
+            this.#frac.leftFrac.children[1].text = "0";
+            this.updateDefineFractions(0, -1, -1, -1);
+            return false;
+        }
+        if (rDen > this.#MAXDIV ) {
+            this.#toastAlert("Fractions denominators cannot exceed " + this.#MAXDIV);
+            this.#frac.leftFrac.children[3].text = "0";
+            this.updateDefineFractions(-1, 1, -1, -1);
+            return false;
+        }
+        if (cNum > this.#MAXDIV) {
+            this.#toastAlert("Fractions numerators cannot exceed " + this.#MAXDIV);
+            this.#frac.topFrac.children[1].text = "0";
+            this.updateDefineFractions(-1, -1, 0, -1);
+            return false;
+        }
+        if (cDen > this.#MAXDIV) {
+            this.#toastAlert("Fractions denominators cannot exceed " + this.#MAXDIV);
+            this.#frac.topFrac.children[3].text = "0";
+            this.updateDefineFractions(-1, -1, -1, 1);
             return false;
         }
         return true;
@@ -581,5 +607,13 @@ class Grid {
     
         dragger.addChild(node);
         return dragger;
+    }
+
+    #toastAlert(message) {
+	    currentToast = document.getElementById("toast");
+	    currentToast.innerHTML = "<br>"+message+"<br><br>";
+	    currentToast.className = "show";
+	    toastTimeout = setTimeout(function(){ currentToast.className = 
+	    	currentToast.className.replace("show", ""); }, 4000);
     }
 }

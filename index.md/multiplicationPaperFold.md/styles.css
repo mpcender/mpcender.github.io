@@ -414,11 +414,12 @@ footer > h1 {
 	color: var(--button_text);
 	text-align: center;
 	border-radius: 15px;
+	box-shadow: 0px 0px 5px 5px rgb(255, 255, 255);
 	padding: 16px;
 	position: fixed;
 	z-index: 1;
 	left: 50%;
-	top: 8%;
+	top: 40%;
   }
   
   #toast.show {
@@ -429,20 +430,20 @@ footer > h1 {
   
   @-webkit-keyframes toast_fadein {
 	from {top: 0; opacity: 0;} 
-	to {top: 8%; opacity: 1;}
+	to {top: 40%; opacity: 1;}
   }
   
   @keyframes toast_fadein {
 	from {top: 0; opacity: 0;}
-	to {top: 8%; opacity: 1;}
+	to {top: 40%; opacity: 1;}
   }
   
   @-webkit-keyframes toast_fadeout {
-	from {top: 8%; opacity: 1;} 
+	from {top: 40%; opacity: 1;} 
 	to {top: 0px; opacity: 0;}
   }
   
   @keyframes toast_fadeout {
-	from {top: 8%; opacity: 1;}
+	from {top: 40%; opacity: 1;}
 	to {top: 0px; opacity: 0;}
   }
