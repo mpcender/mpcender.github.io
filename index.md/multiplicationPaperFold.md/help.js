@@ -52,3 +52,6 @@ function actionFinal(){
 	document.getElementById("snackbarTutorial").classList.remove("show")
 	clearTimeout(toastTimeout)
 }
+
+
+

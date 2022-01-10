@@ -346,8 +346,26 @@ footer > h1 {
 	
 }
 
+/*
+
+*/
 .unitContainer {  display: grid;
-	grid-template-columns: 100px 100px;
+	grid-template-columns: 100px 75px 25px;
+	grid-template-rows: 25px 25px 15px 25px 25px;
+	gap: 0px 10px;
+	grid-auto-flow: row;
+	grid-template-areas:
+	  "unitRow rUnitNum rUp"
+	  "unitRow rUnitNum rDown"
+	  "unitCenterSep unitCenterSep unitCenterSep"
+	  "unitColumn cUnitNum cUp"
+	  "unitColumn cUnitNum cDown";
+  }
+
+
+/*
+.unitContainer {  display: grid;
+	grid-template-columns: 100px 100px ;
 	grid-template-rows: 80px 15px 80px;
 	gap: 0px 10px;
 	grid-auto-flow: row;
@@ -356,6 +374,7 @@ footer > h1 {
 	  "unitCenterSep unitCenterSep"
 	  "unitColumn cUnitNum";
 }
+*/
   
 .unitRow { 	
 	grid-area: unitRow; 
@@ -367,7 +386,13 @@ footer > h1 {
 .rUnitNum { 
 	grid-area: rUnitNum;
 	margin: auto;
- }
+}
+.rUp {
+	grid-area: rUp;
+}
+.rDown{
+	grid-area: rDown;
+}
 
 .unitCenterSep { grid-area: unitCenterSep; }
 
@@ -382,6 +407,13 @@ footer > h1 {
 	grid-area: cUnitNum;
 	margin: auto;
 }
+
+.cUp {
+	grid-area: cUp;
+}
+.cDown{
+	grid-area: cDown;
+}
   
 .dropup_u:hover .dropup-unit {	
 	display: block;
@@ -394,8 +426,8 @@ footer > h1 {
 	border-radius: 25px;
 	border: 5px solid var(--border);
 	background-color: var(--dark_background);
-	height:220px;
-	width: 250px;
+	height:160px;
+	width: 280px;
 	box-sizing: border-box;
     padding: 10px;
 
@@ -415,8 +447,8 @@ footer > h1 {
 	border-radius: 25px;
 	border: 5px solid var(--border);
 	background-color: var(--dark_background);
-	height:220px;
-	width: 250px;
+	height:160px;
+	width: 280px;
 	box-sizing: border-box;
     padding: 10px;
 
@@ -436,15 +468,15 @@ footer > h1 {
 
 
 /* SUB-DROPUP BUTTONS (Reduced Width) (BASE and BLOCK) */
-/*
+
 .buttonDropup {
 	background-color: var(--button_grey);
 	font-family: 'Balsamiq Sans', cursive;
 	font-size: medium;
 	color: var(--button_text);
-	height:40px;
-	width: 7vw;
-	border-radius: 20px;
+	height: 25px;
+	width: 50px;
+	border-radius: 10px;
 	transition-duration: 0.6s;
 }
 
@@ -461,7 +493,36 @@ footer > h1 {
 	transition-duration: 0.2s;
 	transform: translateY(0px);
 }
-*/
+
+.buttonDropdown {
+	background-color: var(--button_grey);
+	font-family: 'Balsamiq Sans', cursive;
+	font-size: medium;
+	color: var(--button_text);
+	height:25px;
+	width: 50px;
+	border-radius: 20px;
+	transition-duration: 0.6s;
+}
+
+.buttonDropdown:hover {
+	background-color: var(--main_blue); 
+	border: 2px solid var(--main_blue);
+	transform: translateY(4px);
+	color: var(--button_text); 
+}
+
+.buttonDropdown:active {
+	background-color: var(--main_blue);
+	box-shadow: 0 5px var(--button_grey_shadow);
+	transition-duration: 0.2s;
+	transform: translateY(0px);
+}
+
+.arrowImage {
+	max-width:100%;
+	max-height:100%;
+}
 
 /* TOAST MESSAGE */
 #snackbarTutorial {

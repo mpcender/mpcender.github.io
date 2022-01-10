@@ -13,9 +13,6 @@ class Grid {
 
     #xUnitDiv;
     #yUnitDiv;
-    #gridDiv;
-    
-    #gridDivDisplay;
 
     #color_red = "#94c2fe";
     #color_blue = "#f7aaa4";
@@ -38,7 +35,6 @@ class Grid {
         this.#ydiv = 1;
         this.#xUnitDiv = 1;
         this.#yUnitDiv = 1;
-        this.#gridDiv = 1;
 
         this.#paper.x = x-(this.#paperSize.x/2);
         this.#paper.y = y-(this.#paperSize.y/2)+bannerHeight/2;
@@ -57,6 +53,9 @@ class Grid {
 
     getMaxDiv(){
         return this.#MAXDIV;
+    }
+    getMaxUnit(){
+        return this.#MAXUNIT;
     }
     getRow() {
         return this.#ydiv;
@@ -122,7 +121,7 @@ class Grid {
     }
     */
     updateGridSections(xdiv, ydiv, clear){
-        console.log("updateGridSections " + xdiv)
+        //console.log("updateGridSections " + xdiv)
         if (xdiv > this.#MAXUNIT || ydiv > this.#MAXUNIT ) { 
             this.#toastAlert("Units cannot be larger than " + this.#MAXUNIT);
             return; 
@@ -131,7 +130,7 @@ class Grid {
             this.#toastAlert("Units cannot be less than 1");
             return; 
         }
-        console.log(xdiv + " " + ydiv)
+        //console.log(xdiv + " " + ydiv)
         this.#xUnitDiv = xdiv;
         this.#yUnitDiv = ydiv;
         
@@ -143,7 +142,7 @@ class Grid {
     
 
     updateGrid(xdiv, ydiv, clear) {
-        console.log("updateGrid: " + xdiv)
+        //console.log("updateGrid: " + xdiv)
         if (xdiv > this.#MAXDIV || ydiv > this.#MAXDIV) { return; }
 
         PlaySound(bloopSound,.4);
@@ -190,7 +189,7 @@ class Grid {
             let slideTo = (this.#paperSize.y/this.#ydiv)*this.#frac.leftFrac.children[1].text
             this.#nodeRow.y = slideTo;
             this.#nodeRow.cover.graphics.command.h = slideTo;
-            console.log("resetSliders " + this.#paperSize.y + " "+ this.#ydiv+ " "+ this.#frac.leftFrac.children[1].text);
+            //console.log("resetSliders " + this.#paperSize.y + " "+ this.#ydiv+ " "+ this.#frac.leftFrac.children[1].text);
         }
     }
 
@@ -252,11 +251,20 @@ class Grid {
             this.#toastAlert("Fractions cannot be larger than " + this.#MAXUNIT);
             return false;
         }
-        if ((rNum/rDen > 1 && (rNum/rDen)%1 < 1/(this.#MAXDIV/2)) || 
-            (cNum/cDen > 1 && (cNum/cDen)%1 < 1/(this.#MAXDIV/2))) {
-            this.#toastAlert("Fractional components above 1 cannot be less than 1/" + (this.#MAXDIV/2));
+        let rowValid2 = (rNum/rDen > 2 && rDen > (this.#MAXDIV/3));
+        let colValid2 = (cNum/cDen > 2 && cDen > (this.#MAXDIV/3));
+        let rowValid1 = (rNum/rDen > 1 && rDen > (this.#MAXDIV/2));
+        let colValid1 = (cNum/cDen > 1 && cDen > (this.#MAXDIV/2));
+        if (rowValid2 || colValid2) {
+            let text = (colValid2 ? "" : "Row") + "" + (rowValid2 ? "" : "Column");
+            this.#toastAlert(text+" Invalid: Fractions greater than 2 must have denominators of " + (this.#MAXDIV/3) + " or less");
+            return false;
+        } else if (rowValid1 || colValid1) {
+            let text = (colValid1 ? "" : "Row") + "" + (rowValid1 ? "" : "Column");
+            this.#toastAlert(text+" Invalid: Fractions greater than 1 must have denominators of " + (this.#MAXDIV/2) + " or less");
             return false;
         }
+
         return true;
     }
 
@@ -344,7 +352,7 @@ class Grid {
         fractDenom.y = (font*(5/6));
 
         let rect = new createjs.Shape();
-        rect.graphics.beginFill(bannerBorderColor).drawRoundRectComplex(-font,-font,font*2,font*3,font,font,font,font);
+        rect.graphics.beginFill(bannerBorderColor).drawRoundRectComplex(-font,-font*1.2,font*2,font*3.3,font,font,font,font);
         rect.alpha = 0;
         
         frac.addChild(rect, fractNum, line, fractDenom);
@@ -397,7 +405,7 @@ class Grid {
             minusHit.addEventListener("click", function(event) { 
                 let i = event.target.source.#yUnitDiv
                 if (event.target.source.#ydiv <= i) {
-                    console.log(event.target.source.#ydiv)
+                    //console.log(event.target.source.#ydiv)
                 } else {
                     event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)-parseFloat(i));
                     event.target.source.updateDefineFractions(0, event.target.source.#ydiv, -1, event.target.source.#xdiv);
@@ -414,7 +422,7 @@ class Grid {
             minusHit.addEventListener("click", function(event) { 
                 let i = event.target.source.#xUnitDiv
                 if (event.target.source.#xdiv <= i) {
-                    console.log(event.target.source.#xdiv)
+                    //console.log(event.target.source.#xdiv)
                 } else {
                     event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)-parseFloat(i),event.target.source.#ydiv);
                     event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
@@ -439,7 +447,8 @@ class Grid {
             if (this.#xUnitDiv <= 2) {
                 color = (xdiv/this.#xUnitDiv)-1 == i ? xSeperatorColor : bannerBorderColor;
             } else {
-                color = (xdiv/this.#xUnitDiv)-1 == i || (((xdiv/this.#xUnitDiv)*2)-1)  == i ? xSeperatorColor : bannerBorderColor;
+                color = (xdiv/this.#xUnitDiv)-1 == i || (((xdiv/this.#xUnitDiv)*2)-1)  == i ? 
+                        xSeperatorColor : bannerBorderColor;
             }
             // Draw row divider
             lines[i] = this.#drawLine(paperSize.x*((i+1)/xdiv),0, 
@@ -452,7 +461,8 @@ class Grid {
             if (this.#yUnitDiv <= 2) {
                 color = (ydiv/this.#yUnitDiv)-1 == i-(xdiv-1) ? ySeperatorColor : bannerBorderColor;
             } else {
-                color = (ydiv/this.#yUnitDiv)-1 == i-(xdiv-1) || (((ydiv/this.#yUnitDiv)*2)-1)  == i-(xdiv-1) ? ySeperatorColor : bannerBorderColor;
+                color = (ydiv/this.#yUnitDiv)-1 == i-(xdiv-1) || (((ydiv/this.#yUnitDiv)*2)-1)  == i-(xdiv-1) ? 
+                        ySeperatorColor : bannerBorderColor;
             }
             // Draw column divider
             lines[i] = this.#drawLine(0,paperSize.y*(((i-(xdiv-1))+1)/ydiv), 
@@ -633,3 +643,7 @@ class Grid {
 	    	currentToast.className.replace("show", ""); }, 4000);
     }
 }
+
+
+
+

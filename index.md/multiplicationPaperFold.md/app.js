@@ -2,6 +2,7 @@
 const mainStageElem = document.getElementById("cavasDiv");
 const canvas = document.getElementById("canvas");
 
+let isMobileDevice;
 let stage;
 
 let banner;
@@ -82,13 +83,17 @@ const paintSound = new Audio("res/sound/clayChirp.mp3");
 
 let mainPaper;
 
-
+function isTouchDevice() {
+	return (('ontouchstart' in window) ||
+	   (navigator.maxTouchPoints > 0) ||
+	   (navigator.msMaxTouchPoints > 0));
+}
 
 function main() {
 	stage = new createjs.Stage("canvas");
 	stage.enableMouseOver(10);
 
-	//isMobileDevice = isTouchDevice();
+	isMobileDevice = isTouchDevice();
 
 	// Enable touch input
 	createjs.Touch.enable(stage);
@@ -109,6 +114,15 @@ function main() {
 	
 	createjs.Ticker.framerate = 30;
 	createjs.Ticker.addEventListener("tick", stage);
+
+	
+	if (isMobileDevice){
+		console.log("Touch device detected")
+		window.addEventListener("click", function(event) {
+			minimizeDropupButtonMenus();
+		});
+	}
+	
 
 	// displays mouse location on stage, Development use only
 	let distxDOM = document.getElementById("distx")
@@ -211,15 +225,15 @@ function buildBanner(){
 //---------------------------------------------------------------------
 let rowNum = document.getElementById("rNum");
 
-
-
 function enableButtons() {
 	//let buttonAddBlock = document.getElementById("button_add_block");
 	let button_show_unit= document.getElementById("button_show_unit");
 	let button_unit		= document.getElementById("button_unit");
-	let button_1x1		= document.getElementById("button_1x1");
-	let button_2x2		= document.getElementById("button_2x2");
-	let button_3x3		= document.getElementById("button_3x3");
+	let rUp = document.getElementById("rUp");
+	let rDown = document.getElementById("rDown");
+	let cUp = document.getElementById("cUp");
+	let cDown = document.getElementById("cDown");
+
 	let button_define	= document.getElementById("button_define");
 	let button_product	= document.getElementById("button_product");
 	let button_display	= document.getElementById("button_display");
@@ -231,15 +245,38 @@ function enableButtons() {
 	handlePaper(button_display);
 	handleReset(buttonReset);
 	handleDefine(button_define);
+	handleUnit(button_unit);
 
 	button_show_unit.onclick = function(){
 		mainPaper.revealUnit();
 	}
 
-	handleUnit(button_unit);
-
 	button_product.onclick = function() {
 		mainPaper.findProduct();
+	}
+
+
+	let rUnitNum = document.getElementById("rUnitNum");
+	let cUnitNum = document.getElementById("cUnitNum");
+	rUp.onclick = function() {
+		if (rUnitNum.value == mainPaper.getMaxUnit()) { return; }
+		rUnitNum.value = parseInt(rUnitNum.value)+1;
+		mainPaper.updateGridSections(cUnitNum.value, rUnitNum.value, true);
+	}
+	rDown.onclick = function() {
+		if (rUnitNum.value == 1) { return; }
+		rUnitNum.value = parseInt(rUnitNum.value)-1;
+		mainPaper.updateGridSections(cUnitNum.value, rUnitNum.value, true);
+	}
+	cUp.onclick = function() {
+		if (cUnitNum.value == mainPaper.getMaxUnit()) { return; }
+		cUnitNum.value = parseInt(cUnitNum.value)+1;
+		mainPaper.updateGridSections(cUnitNum.value, rUnitNum.value, true);
+	}
+	cDown.onclick = function() {
+		if (cUnitNum.value == 1) { return; }
+		cUnitNum.value = parseInt(cUnitNum.value)-1;
+		mainPaper.updateGridSections(cUnitNum.value, rUnitNum.value, true);
 	}
 }
 
@@ -331,7 +368,11 @@ function handleDefine(button_define) {
 			}
 		});
 	}
-	
+}
+
+function minimizeDropupButtonMenus() {
+	document.getElementById("dropup_unit").className = "dropup-unit";
+	document.getElementById("dropup_fraction").className = "dropup-fraction";
 }
 
 
