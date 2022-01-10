@@ -9,8 +9,12 @@ class Grid {
     #xdiv;
     #ydiv;
     #MAXDIV = 12;
+    #MAXUNIT = 3;
 
+    #xUnitDiv;
+    #yUnitDiv;
     #gridDiv;
+    
     #gridDivDisplay;
 
     #color_red = "#94c2fe";
@@ -32,6 +36,8 @@ class Grid {
 
         this.#xdiv = 1;
         this.#ydiv = 1;
+        this.#xUnitDiv = 1;
+        this.#yUnitDiv = 1;
         this.#gridDiv = 1;
 
         this.#paper.x = x-(this.#paperSize.x/2);
@@ -105,16 +111,39 @@ class Grid {
         }
     }
 
+    /*
     updateGridSections(div, clear){
         if (div > this.#MAXDIV) { return; }
         this.#gridDiv = div;
         this.updateGrid(div, div, clear);
         this.updateDefineFractions(0,1,0,1);
-        this.#frac.leftFrac.children[3].text = this.#ydiv/this.#gridDiv;
+        this.#frac.leftFrac.children[3].text = this.#xdiv/this.#gridDiv;
         this.#frac.topFrac.children[3].text = this.#ydiv/this.#gridDiv;
     }
+    */
+    updateGridSections(xdiv, ydiv, clear){
+        console.log("updateGridSections " + xdiv)
+        if (xdiv > this.#MAXUNIT || ydiv > this.#MAXUNIT ) { 
+            this.#toastAlert("Units cannot be larger than " + this.#MAXUNIT);
+            return; 
+        }
+        if (xdiv <= 0 || ydiv <= 0 ) { 
+            this.#toastAlert("Units cannot be less than 1");
+            return; 
+        }
+        console.log(xdiv + " " + ydiv)
+        this.#xUnitDiv = xdiv;
+        this.#yUnitDiv = ydiv;
+        
+        this.updateGrid(xdiv, ydiv, clear);
+        this.updateDefineFractions(0,1,0,1);
+        this.#frac.leftFrac.children[3].text = this.#xdiv/this.#xUnitDiv;
+        this.#frac.topFrac.children[3].text = this.#ydiv/this.#yUnitDiv;
+    }
+    
 
     updateGrid(xdiv, ydiv, clear) {
+        console.log("updateGrid: " + xdiv)
         if (xdiv > this.#MAXDIV || ydiv > this.#MAXDIV) { return; }
 
         PlaySound(bloopSound,.4);
@@ -122,8 +151,8 @@ class Grid {
         let yClear = (this.#xdiv == xdiv && this.#ydiv != ydiv) || clear;
 
         // Update global paper divider variables
-        this.#xdiv = xdiv;
-        this.#ydiv = ydiv;
+        this.#xdiv = xdiv == 0 ? 1 : xdiv;
+        this.#ydiv = ydiv == 0 ? 1 : ydiv;
         // Remove all current dividers
         this.#grid.forEach(element => this.#paper.removeChild(element));
         // Generate new divider objects
@@ -161,6 +190,7 @@ class Grid {
             let slideTo = (this.#paperSize.y/this.#ydiv)*this.#frac.leftFrac.children[1].text
             this.#nodeRow.y = slideTo;
             this.#nodeRow.cover.graphics.command.h = slideTo;
+            console.log("resetSliders " + this.#paperSize.y + " "+ this.#ydiv+ " "+ this.#frac.leftFrac.children[1].text);
         }
     }
 
@@ -173,33 +203,11 @@ class Grid {
 
     updateStageFractions(rNum, rDen, cNum, cDen){
         let update = true;
+        if (!this.isValidInput(rNum, rDen, cNum, cDen)) { return; }
 
-        if (rNum/rDen <= 1 && cNum/cDen <= 1) {
-            if (!this.isValidInput(rNum, rDen, cNum, cDen, 1)) { return; }
-            this.#gridDiv = 1;
-            this.updateGrid(cDen*this.#gridDiv, rDen*this.#gridDiv)
-        } else if(rNum/rDen <= 2 && cNum/cDen <= 2) {
-            if (!this.isValidInput(rNum, rDen, cNum, cDen, 2)) { return; }
-            this.#gridDiv = 2;
-            this.updateGrid(cDen*this.#gridDiv, rDen*this.#gridDiv)
-        } else if(rNum/rDen <= 3 && cNum/cDen <= 3){
-            if (!this.isValidInput(rNum, rDen, cNum, cDen, 3)) { return; }
-            this.#gridDiv = 3;
-            this.updateGrid(cDen*this.#gridDiv, rDen*this.#gridDiv)
-        } else {
-            update = false;
-            if (rDen == 0 || cDen == 0) { 
-                this.#toastAlert("Cannot divide by zero");
-                //alert("Cannot divide by zero")
-            } 
-            if (rNum/rDen > 3 || cNum/cDen > 3) {
-                this.#toastAlert("Fractions cannot be larger than 3");
-            }
-            else {
-                this.#toastAlert("An error occured, please select different values");
-            }
-            
-        }
+        this.#yUnitDiv = Math.ceil(rNum/rDen);
+        this.#xUnitDiv = Math.ceil(cNum/cDen);
+        this.updateGrid(cDen*this.#xUnitDiv, rDen*this.#yUnitDiv);
 
         if (update){
             this.#frac.leftFrac.children[1].text = rNum;
@@ -211,32 +219,42 @@ class Grid {
         }
     }
 
-    isValidInput(rNum, rDen, cNum, cDen, div){
-        if (rNum*rDen > Math.pow(this.#MAXDIV/div,2)) {
-
-        }
+    isValidInput(rNum, rDen, cNum, cDen){
         if (rNum > this.#MAXDIV) {
-            this.#toastAlert("Fractions numerators cannot exceed " + this.#MAXDIV);
+            this.#toastAlert("Numerators cannot exceed " + this.#MAXDIV);
             this.#frac.leftFrac.children[1].text = "0";
             this.updateDefineFractions(0, -1, -1, -1);
             return false;
         }
         if (rDen > this.#MAXDIV ) {
-            this.#toastAlert("Fractions denominators cannot exceed " + this.#MAXDIV);
+            this.#toastAlert("Denominators cannot exceed " + this.#MAXDIV);
             this.#frac.leftFrac.children[3].text = "0";
             this.updateDefineFractions(-1, 1, -1, -1);
             return false;
         }
         if (cNum > this.#MAXDIV) {
-            this.#toastAlert("Fractions numerators cannot exceed " + this.#MAXDIV);
+            this.#toastAlert("Numerators cannot exceed " + this.#MAXDIV);
             this.#frac.topFrac.children[1].text = "0";
             this.updateDefineFractions(-1, -1, 0, -1);
             return false;
         }
         if (cDen > this.#MAXDIV) {
-            this.#toastAlert("Fractions denominators cannot exceed " + this.#MAXDIV);
+            this.#toastAlert("Denominators cannot exceed " + this.#MAXDIV);
             this.#frac.topFrac.children[3].text = "0";
             this.updateDefineFractions(-1, -1, -1, 1);
+            return false;
+        }
+        if (rDen == 0 || cDen == 0) { 
+            this.#toastAlert("Cannot divide by zero");
+            return false;
+        } 
+        if (rNum/rDen > this.#MAXUNIT || cNum/cDen > this.#MAXUNIT) {
+            this.#toastAlert("Fractions cannot be larger than " + this.#MAXUNIT);
+            return false;
+        }
+        if ((rNum/rDen > 1 && (rNum/rDen)%1 < 1/(this.#MAXDIV/2)) || 
+            (cNum/cDen > 1 && (cNum/cDen)%1 < 1/(this.#MAXDIV/2))) {
+            this.#toastAlert("Fractional components above 1 cannot be less than 1/" + (this.#MAXDIV/2));
             return false;
         }
         return true;
@@ -278,7 +296,7 @@ class Grid {
         let rect = new createjs.Shape();
         
         rect.graphics.setStrokeStyle(5).beginStroke("white")
-        .drawRoundRectComplex(0,0,this.#paperSize.x/this.#gridDiv,this.#paperSize.y/this.#gridDiv,5,5,5,5);
+        .drawRoundRectComplex(0,0,this.#paperSize.x/this.#xUnitDiv,this.#paperSize.y/this.#yUnitDiv,5,5,5,5);
         rect.alpha = 0;
         rect.shadow = new createjs.Shadow("#FFFFFF", 0, 0, 25);
         rect.paper = this.#paper;
@@ -292,8 +310,6 @@ class Grid {
         }
         
     }
-
-    
 
     #buildFracSet(n){
         let leftFrac = this.#buildFrac(-50, (this.#paperSize.y*.5), n[0].n, n[0].d, this.#color_red , fontSize);
@@ -323,7 +339,6 @@ class Grid {
         let line = this.#drawLine(-(font*(5/6)),(font*(5/12)),(font*(5/6)),(font*(5/12)), color); 
         line.textAlign = 'center';
 
-        //denom = num == 0 ? 0 : denom;
         var fractDenom = new createjs.Text(denom, font+"px Balsamiq Sans", color);
         fractDenom.textAlign = 'center';
         fractDenom.y = (font*(5/6));
@@ -372,39 +387,36 @@ class Grid {
         minus.x = xMinus;
         minusHit.source = this;
 
-        //this.#gridDiv
         if(type == "row") {
             plusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#gridDiv
-                event.target.source.updateGrid(event.target.source.#xdiv,event.target.source.#ydiv+i);
+                let i = event.target.source.#yUnitDiv
+                event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)+parseFloat(i));
                 event.target.source.updateDefineFractions(0, event.target.source.#ydiv/i, -1, event.target.source.#xdiv/i);
                 event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/i;
              });
-            //plusHit.on("click", addRow); 
             minusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#gridDiv
+                let i = event.target.source.#yUnitDiv
                 if (event.target.source.#ydiv <= i) {
                     console.log(event.target.source.#ydiv)
                 } else {
-                    event.target.source.updateGrid(event.target.source.#xdiv,event.target.source.#ydiv-i);
+                    event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)-parseFloat(i));
                     event.target.source.updateDefineFractions(0, event.target.source.#ydiv, -1, event.target.source.#xdiv);
                     event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/i;
                 }
              });
         } else {
             plusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#gridDiv
-                event.target.source.updateGrid(event.target.source.#xdiv+i,event.target.source.#ydiv);
+                let i = event.target.source.#xUnitDiv
+                event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)+parseFloat(i),event.target.source.#ydiv);
                 event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
                 event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/i;
              });
-            //plusHit.on("click", addRow); 
             minusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#gridDiv
+                let i = event.target.source.#xUnitDiv
                 if (event.target.source.#xdiv <= i) {
                     console.log(event.target.source.#xdiv)
                 } else {
-                    event.target.source.updateGrid(event.target.source.#xdiv-i,event.target.source.#ydiv);
+                    event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)-parseFloat(i),event.target.source.#ydiv);
                     event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
                     event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/i;
                 }
@@ -418,15 +430,16 @@ class Grid {
     // Generates n*n grid
     #generateGrid(paperSize, xdiv, ydiv){
         let lines = [(xdiv-1)+(ydiv-1)];
-        let seperatorColor = this.#gridDiv <= 1 ? bannerBorderColor : "white";
+        let xSeperatorColor = this.#xUnitDiv <= 1 ? bannerBorderColor : "white";
+        let ySeperatorColor = this.#yUnitDiv <= 1 ? bannerBorderColor : "white";
 
         for (let i = 0; i < (xdiv-1); i++){
             // Modifies color of grid to seperate "whole" numbers
             let color;
-            if (this.#gridDiv <= 2) {
-                color = (xdiv/this.#gridDiv)-1 == i ? seperatorColor : bannerBorderColor;
+            if (this.#xUnitDiv <= 2) {
+                color = (xdiv/this.#xUnitDiv)-1 == i ? xSeperatorColor : bannerBorderColor;
             } else {
-                color = (xdiv/this.#gridDiv)-1 == i || (((xdiv/this.#gridDiv)*2)-1)  == i ? seperatorColor : bannerBorderColor;
+                color = (xdiv/this.#xUnitDiv)-1 == i || (((xdiv/this.#xUnitDiv)*2)-1)  == i ? xSeperatorColor : bannerBorderColor;
             }
             // Draw row divider
             lines[i] = this.#drawLine(paperSize.x*((i+1)/xdiv),0, 
@@ -436,10 +449,10 @@ class Grid {
         for (let i = (xdiv-1); i < (xdiv-1)+(ydiv-1); i++){
             // Modifies color of grid to seperate "whole" numbers
             let color;
-            if (this.#gridDiv <= 2) {
-                color = (ydiv/this.#gridDiv)-1 == i-(xdiv-1) ? seperatorColor : bannerBorderColor;
+            if (this.#yUnitDiv <= 2) {
+                color = (ydiv/this.#yUnitDiv)-1 == i-(xdiv-1) ? ySeperatorColor : bannerBorderColor;
             } else {
-                color = (ydiv/this.#gridDiv)-1 == i-(xdiv-1) || (((ydiv/this.#gridDiv)*2)-1)  == i-(xdiv-1) ? seperatorColor : bannerBorderColor;
+                color = (ydiv/this.#yUnitDiv)-1 == i-(xdiv-1) || (((ydiv/this.#yUnitDiv)*2)-1)  == i-(xdiv-1) ? ySeperatorColor : bannerBorderColor;
             }
             // Draw column divider
             lines[i] = this.#drawLine(0,paperSize.y*(((i-(xdiv-1))+1)/ydiv), 
@@ -517,7 +530,7 @@ class Grid {
             let numVal = (this.x/width);
             evt.target.cover.graphics.command.w = this.x;
             evt.target.frac.children[1].text = Math.round(numVal);
-            evt.target.frac.children[3].text = Math.round(div/evt.target.properties.#gridDiv);
+            evt.target.frac.children[3].text = Math.round(div/evt.target.properties.#xUnitDiv);
 
             evt.target.properties.updateDefineFractions(-1,-1,evt.target.frac.children[1].text,evt.target.frac.children[3].text);
         });
@@ -593,7 +606,7 @@ class Grid {
             evt.target.cover.graphics.command.h = this.y;
             let numVal = this.y/width;
             evt.target.frac.children[1].text = Math.round(numVal);
-            evt.target.frac.children[3].text = Math.round(div/evt.target.properties.#gridDiv);
+            evt.target.frac.children[3].text = Math.round(div/evt.target.properties.#yUnitDiv);
 
             evt.target.properties.updateDefineFractions(evt.target.frac.children[1].text,evt.target.frac.children[3].text, -1,-1);
         });

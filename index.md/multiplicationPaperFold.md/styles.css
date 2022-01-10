@@ -207,12 +207,12 @@ footer > h1 {
 
 .dropup:hover .dropup-content {	
 	display: block;
-}
-
-.dropup:hover .dropup-fraction {	
-	display: block;
+	
 }
   
+/*////////////////////////////////////////////////////////////////////*/
+/*///////////////////       FRACTION CONTAINER      //////////////////*/
+/*////////////////////////////////////////////////////////////////////*/
 
 .fracContainer {  display: grid;
 	grid-template-columns: 100px 100px;
@@ -271,9 +271,33 @@ footer > h1 {
 	margin: auto; 
 }
   
+.dropup:hover .dropup-fraction {	
+	display: block;
+}
 
 .dropup-fraction {	
 	display: none;
+	position: absolute;
+	background: transparent;
+	border-radius: 25px;
+	border: 5px solid var(--border);
+	background-color: var(--dark_background);
+	height:220px;
+	width: 250px;
+	box-sizing: border-box;
+    padding: 10px;
+
+	bottom: 65px;
+	left: -7vw;
+	z-index: 1;
+}
+
+.dropup:hover .dropup-fraction-disabled {	
+	display: block;
+}
+
+.dropup-fraction-disabled {	
+	display: block;
 	position: absolute;
 	background: transparent;
 	border-radius: 25px;
@@ -298,7 +322,121 @@ footer > h1 {
 	color: var(--button_text);
 }
 
+
+/*////////////////////////////////////////////////////////////////////*/
+/*//////////////////////      UNIT CONTAINER      ////////////////////*/
+/*////////////////////////////////////////////////////////////////////*/
+
+/* DROPUP CONTAINER */
+.dropup_u {	
+	position: relative;
+}
+
+/* DROPUP CONTENT */
+.dropup-content {	
+	display: none;
+	position: absolute;
+	background: transparent;
+	bottom: 65px;
+	z-index: 1;
+}
+
+.dropup_u:hover .dropup-content {	
+	display: block;
+	
+}
+
+.unitContainer {  display: grid;
+	grid-template-columns: 100px 100px;
+	grid-template-rows: 80px 15px 80px;
+	gap: 0px 10px;
+	grid-auto-flow: row;
+	grid-template-areas:
+	  "unitRow rUnitNum"
+	  "unitCenterSep unitCenterSep"
+	  "unitColumn cUnitNum";
+}
+  
+.unitRow { 	
+	grid-area: unitRow; 
+	font-family: 'Balsamiq Sans', cursive;
+	font-size: x-large;	
+	color: var(--row_blue);
+	margin: auto;
+}
+.rUnitNum { 
+	grid-area: rUnitNum;
+	margin: auto;
+ }
+
+.unitCenterSep { grid-area: unitCenterSep; }
+
+.unitColumn { 	
+	grid-area: unitColumn;	
+	font-family: 'Balsamiq Sans', cursive;
+	font-size: x-large;
+	color: var(--col_red);
+	margin: auto;
+}
+.cUnitNum { 
+	grid-area: cUnitNum;
+	margin: auto;
+}
+  
+.dropup_u:hover .dropup-unit {	
+	display: block;
+}
+
+.dropup-unit {	
+	display: none;
+	position: absolute;
+	background: transparent;
+	border-radius: 25px;
+	border: 5px solid var(--border);
+	background-color: var(--dark_background);
+	height:220px;
+	width: 250px;
+	box-sizing: border-box;
+    padding: 10px;
+
+	bottom: 65px;
+	left: -7vw;
+	z-index: 1;
+}
+
+.dropup_u:hover .dropup-unit-disabled {	
+	display: block;
+}
+
+.dropup-unit-disabled {	
+	display: block;
+	position: absolute;
+	background: transparent;
+	border-radius: 25px;
+	border: 5px solid var(--border);
+	background-color: var(--dark_background);
+	height:220px;
+	width: 250px;
+	box-sizing: border-box;
+    padding: 10px;
+
+	bottom: 65px;
+	left: -7vw;
+	z-index: 1;
+}
+
+.unitNumBox {
+	width: 80px;
+	background-color: var(--button_grey);
+	text-align:center;
+	font-family: 'Balsamiq Sans', cursive;
+	font-size: xx-large;
+	color: var(--button_text);
+}
+
+
 /* SUB-DROPUP BUTTONS (Reduced Width) (BASE and BLOCK) */
+/*
 .buttonDropup {
 	background-color: var(--button_grey);
 	font-family: 'Balsamiq Sans', cursive;
@@ -323,39 +461,7 @@ footer > h1 {
 	transition-duration: 0.2s;
 	transform: translateY(0px);
 }
-
-/* SUB-DROPUP BUTTONS (Full Width) (PAINT) */
-.buttonDropupFull {
-	background-color: var(--button_grey);
-  	font-family: 'Balsamiq Sans', cursive;
-  	font-size: medium;
-  	color:var(--button_text);
-	height:40px;
-	min-width: 80px;
-	width: 6vw;
-	border-radius: 20px;
-	transition-duration: 0.6s;
-}
-
-.buttonDropupFull:hover {
-	background-color: var(--main_blue); 
-	border: 2px solid var(--main_blue);
-	transform: translateY(-4px);
-	color: var(--button_text);
-}
-
-.buttonDropupFull:active {
-	background-color: var(--main_blue);
-	box-shadow: 0 5px var(--button_grey_shadow);
-	transition-duration: 0.2s;
-	transform: translateY(0px);
-}
-  
-.buttonDropupFull:disabled {
-	background-color:var(--main_blue);
-	cursor:not-allowed;
-	color:var(--disabled_grey);
-}
+*/
 
 /* TOAST MESSAGE */
 #snackbarTutorial {

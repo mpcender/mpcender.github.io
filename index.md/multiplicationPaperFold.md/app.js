@@ -216,7 +216,7 @@ let rowNum = document.getElementById("rNum");
 function enableButtons() {
 	//let buttonAddBlock = document.getElementById("button_add_block");
 	let button_show_unit= document.getElementById("button_show_unit");
-	let button_grid		= document.getElementById("button_grid");
+	let button_unit		= document.getElementById("button_unit");
 	let button_1x1		= document.getElementById("button_1x1");
 	let button_2x2		= document.getElementById("button_2x2");
 	let button_3x3		= document.getElementById("button_3x3");
@@ -232,30 +232,56 @@ function enableButtons() {
 	handleReset(buttonReset);
 	handleDefine(button_define);
 
-
-	
-
 	button_show_unit.onclick = function(){
 		mainPaper.revealUnit();
 	}
 
-	button_grid.onclick = function() {
-		//PlaySound(bloopSound,.4);
-	}
-
-	button_1x1.onclick = function() {
-		mainPaper.updateGridSections(1, true);
-	}
-	button_2x2.onclick = function() {
-		mainPaper.updateGridSections(2, true);
-	}
-	button_3x3.onclick = function() {
-		mainPaper.updateGridSections(3, true);
-	}
-
+	handleUnit(button_unit);
 
 	button_product.onclick = function() {
 		mainPaper.findProduct();
+	}
+}
+
+function handleUnit(button_unit){
+	let rUnitNum = document.getElementById("rUnitNum");
+	let cUnitNum = document.getElementById("cUnitNum");
+	enableHandlers(rUnitNum);
+	enableHandlers(cUnitNum);
+
+	button_unit.onclick = function() {
+		mainPaper.updateGridSections(cUnitNum.value, rUnitNum.value, true);
+	}
+
+	function define(){
+		document.getElementById("dropup_unit").className = "dropup-unit";
+		mainPaper.updateGridSections(cUnitNum.value, rUnitNum.value,  true);
+	}
+	
+	function enableHandlers(element){
+		element.value = 1;
+		enablePersistentEntryPopupOnClick(element);
+		enableEnterOnEntryFields(element);
+	}
+
+	function enablePersistentEntryPopupOnClick(element){
+		element.onclick = function() {
+			document.getElementById("dropup_unit").className = "dropup-unit-disabled";
+		}
+	}
+	// Allows clicking "ENTER" to submit text entry units.
+	function enableEnterOnEntryFields(id){
+		// Execute a function when the user releases a key on the keyboard
+		id.addEventListener("keyup", function(event) {
+			// Number 13 is the "Enter" key on the keyboard
+			if (event.keyCode === 13) {
+				document.getElementById("dropup_unit").className = "dropup-unit";
+				define();
+			}
+			if (event.keyCode === 27) {
+				document.getElementById("dropup_unit").className = "dropup-unit";
+			}
+		});
 	}
 }
 
@@ -264,11 +290,11 @@ function handleDefine(button_define) {
 	let rDen = document.getElementById("rDen");
 	let cNum = document.getElementById("cNum");
 	let cDen = document.getElementById("cDen");
-	// Allows clicking "ENTER" to submit text entry fractions.
-	enableEnterOnEntryFields(rNum);
-	enableEnterOnEntryFields(rDen);
-	enableEnterOnEntryFields(cNum);
-	enableEnterOnEntryFields(cDen);
+	enableHandlers(rNum);
+	enableHandlers(rDen);
+	enableHandlers(cNum);
+	enableHandlers(cDen);
+	
 	// Set max text entry (with arrow keys) to paper object max Div
 	rNum.max = rDen.max = cNum.max = cDen.max = mainPaper.getMaxDiv();
   
@@ -276,6 +302,23 @@ function handleDefine(button_define) {
 		define();
 	}
 
+	function define(){
+		document.getElementById("dropup_fraction").className = "dropup-fraction";
+	  	mainPaper.updateStageFractions(rNum.value, rDen.value, cNum.value, cDen.value);
+	}
+	
+	function enableHandlers(element){
+		enablePersistentFracEntryPopupOnClick(element);
+		enableEnterOnEntryFields(element);
+	}
+
+	function enablePersistentFracEntryPopupOnClick(element){
+		element.onclick = function() {
+			document.getElementById("dropup_fraction").className = "dropup-fraction-disabled";
+			
+		}
+	}
+	// Allows clicking "ENTER" to submit text entry fractions.
 	function enableEnterOnEntryFields(id){
 		// Execute a function when the user releases a key on the keyboard
 		id.addEventListener("keyup", function(event) {
@@ -283,11 +326,10 @@ function handleDefine(button_define) {
 			if (event.keyCode === 13) {
 				define();
 			}
+			if (event.keyCode === 27) {
+				document.getElementById("dropup_fraction").className = "dropup-fraction";
+			}
 		});
-	}
-
-	function define(){
-	  	mainPaper.updateStageFractions(rNum.value, rDen.value, cNum.value, cDen.value);
 	}
 	
 }

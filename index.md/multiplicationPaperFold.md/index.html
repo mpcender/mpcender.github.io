@@ -55,15 +55,33 @@
 				   </div>
 				</td>
 				<td>
-					<div class="dropup">
-						<button class="button" id="button_grid">
+					<div class="dropup_u">
+						<button class="button" id="button_unit">
 							Set Unit
 						</button>
+						<div class="dropup-unit" id="dropup_unit">
+							<div class="unitContainer">
+								<div class="unitRow">row</div>
+								<div class="rUnitNum">
+									<input class="unitNumBox" type="number" 
+											id="rUnitNum" min = "1" max="3" required>
+								</div>
+								<div class="unitCenterSep"></div>
+
+								<div class="unitColumn">column</div>
+								<div class="cUnitNum">
+									<input class="unitNumBox" type="number" 
+											id="cUnitNum" min = "1" max="3" required>
+								</div>
+							  </div>
+						</div>
+						<!--
 						<div class="dropup-content">
 						  	<button class="buttonDropup" id="button_1x1">1x1</button>
 						  	<button class="buttonDropup" id="button_2x2">2x2</button>
 						  	<button class="buttonDropup" id="button_3x3">3x3</button>
 						</div>
+						-->
 					</div>
 				</td>
 				<td>
@@ -71,7 +89,7 @@
 						<button class="button" id="button_define">
 							Define Fractions
 						</button>
-						<div class="dropup-fraction">
+						<div class="dropup-fraction" id="dropup_fraction">
 							<div class="fracContainer">
 								<div class="Row">row</div>
 								<div class="rNum">
@@ -98,10 +116,7 @@
 											id="cDen" autocomplete="off" 
 											min = "0" max="100" required>
 								</div>
-								
 							  </div>
-							
-
 						</div>​
 					</div>
 					
