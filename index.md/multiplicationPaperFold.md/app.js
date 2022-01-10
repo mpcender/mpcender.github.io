@@ -155,6 +155,9 @@ function resizeUpdate(){
     resizeTimer = setTimeout(function() {
         resize();
     }, 100);
+
+	// Paper Size
+	let s = .65;
 	
 	function resize() {
 		windowSizeX = window.innerWidth;
@@ -169,8 +172,8 @@ function resizeUpdate(){
 			banner.children[1].x = canvas.width/2;
 
 			// Evaluate window constrained new xy for paper size
-			let x = window.innerWidth*.70 > minWidth*.70 ? window.innerWidth*.70 : minWidth*.70;
-			let y = window.innerHeight*.70 > minHeight*.70 ? window.innerHeight*.70: minHeight*.70;
+			let x = window.innerWidth*s > minWidth*s ? window.innerWidth*s : minWidth*s;
+			let y = window.innerHeight*s > minHeight*s ? window.innerHeight*s: minHeight*s;
 			//console.log("xy = [" + (mainStageElem.clientWidth/2) + "," + (mainStageElem.clientHeight/2) + "]")
 			mainPaper.resizePaper(x > y ? y : x, 
 				mainStageElem.clientWidth*.50, 
