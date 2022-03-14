@@ -63,6 +63,12 @@ class Grid {
     getCol() {
         return this.#xdiv;
     }
+    getXUnit() {
+        return this.#xUnitDiv;
+    }
+    getYUnit() {
+        return this.#yUnitDiv;
+    }
     
     resizePaper(size, x, y){
         let fracOff = false;
@@ -204,8 +210,8 @@ class Grid {
         let update = true;
         if (!this.isValidInput(rNum, rDen, cNum, cDen)) { return; }
 
-        this.#yUnitDiv = Math.ceil(rNum/rDen);
-        this.#xUnitDiv = Math.ceil(cNum/cDen);
+        this.#yUnitDiv = rNum/rDen == 0 ? 1 : Math.ceil(rNum/rDen);
+        this.#xUnitDiv = cNum/cDen == 0 ? 1 : Math.ceil(cNum/cDen);
         this.updateGrid(cDen*this.#xUnitDiv, rDen*this.#yUnitDiv);
 
         if (update){
@@ -302,9 +308,12 @@ class Grid {
 
     revealUnit(){
         let rect = new createjs.Shape();
+
+        let x = this.#xUnitDiv < 1 ? 1 : this.#xUnitDiv;
+        let y = this.#yUnitDiv < 1 ? 1 : this.#yUnitDiv;
         
         rect.graphics.setStrokeStyle(5).beginStroke("white")
-        .drawRoundRectComplex(0,0,this.#paperSize.x/this.#xUnitDiv,this.#paperSize.y/this.#yUnitDiv,5,5,5,5);
+        .drawRoundRectComplex(0,0,this.#paperSize.x/x , this.#paperSize.y/y ,5,5,5,5);
         rect.alpha = 0;
         rect.shadow = new createjs.Shadow("#FFFFFF", 0, 0, 25);
         rect.paper = this.#paper;
@@ -397,36 +406,40 @@ class Grid {
 
         if(type == "row") {
             plusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#yUnitDiv
-                event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)+parseFloat(i));
-                event.target.source.updateDefineFractions(0, event.target.source.#ydiv/i, -1, event.target.source.#xdiv/i);
-                event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/i;
+                let ix = event.target.source.#xUnitDiv
+                let iy = event.target.source.#yUnitDiv
+                event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)+parseFloat(iy));
+                event.target.source.updateDefineFractions(0, event.target.source.#ydiv/iy, -1, event.target.source.#xdiv/ix);
+                event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/iy;
              });
             minusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#yUnitDiv
-                if (event.target.source.#ydiv <= i) {
+                let ix = event.target.source.#xUnitDiv
+                let iy = event.target.source.#yUnitDiv
+                if (event.target.source.#ydiv <= iy) {
                     //console.log(event.target.source.#ydiv)
                 } else {
-                    event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)-parseFloat(i));
-                    event.target.source.updateDefineFractions(0, event.target.source.#ydiv, -1, event.target.source.#xdiv);
-                    event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/i;
+                    event.target.source.updateGrid(parseFloat(event.target.source.#xdiv),parseFloat(event.target.source.#ydiv)-parseFloat(iy));
+                    event.target.source.updateDefineFractions(0, event.target.source.#ydiv/iy, -1, event.target.source.#xdiv/ix);
+                    event.target.source.#frac.leftFrac.children[3].text = event.target.source.#ydiv/iy;
                 }
              });
         } else {
             plusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#xUnitDiv
-                event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)+parseFloat(i),event.target.source.#ydiv);
-                event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
-                event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/i;
+                let ix = event.target.source.#xUnitDiv
+                let iy = event.target.source.#yUnitDiv
+                event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)+parseFloat(ix),event.target.source.#ydiv);
+                event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/iy, 0, event.target.source.#xdiv/ix);
+                event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/ix;
              });
             minusHit.addEventListener("click", function(event) { 
-                let i = event.target.source.#xUnitDiv
-                if (event.target.source.#xdiv <= i) {
+                let ix = event.target.source.#xUnitDiv
+                let iy = event.target.source.#yUnitDiv
+                if (event.target.source.#xdiv <= ix) {
                     //console.log(event.target.source.#xdiv)
                 } else {
-                    event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)-parseFloat(i),event.target.source.#ydiv);
-                    event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/i, 0, event.target.source.#xdiv/i);
-                    event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/i;
+                    event.target.source.updateGrid(parseFloat(event.target.source.#xdiv)-parseFloat(ix),event.target.source.#ydiv);
+                    event.target.source.updateDefineFractions(-1, event.target.source.#ydiv/iy, 0, event.target.source.#xdiv/ix);
+                    event.target.source.#frac.topFrac.children[3].text = event.target.source.#xdiv/ix;
                 }
              });
         }

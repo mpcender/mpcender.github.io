@@ -326,6 +326,8 @@ function handleUnit(button_unit){
 }
 
 function handleDefine(button_define) {
+	let rUnitNum = document.getElementById("rUnitNum");
+	let cUnitNum = document.getElementById("cUnitNum");
 	let rNum = document.getElementById("rNum");
 	let rDen = document.getElementById("rDen");
 	let cNum = document.getElementById("cNum");
@@ -345,6 +347,8 @@ function handleDefine(button_define) {
 	function define(){
 		document.getElementById("dropup_fraction").className = "dropup-fraction";
 	  	mainPaper.updateStageFractions(rNum.value, rDen.value, cNum.value, cDen.value);
+		rUnitNum.value = mainPaper.getYUnit();
+		cUnitNum.value = mainPaper.getXUnit();
 	}
 	
 	function enableHandlers(element){
