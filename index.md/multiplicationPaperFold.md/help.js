@@ -15,7 +15,7 @@ function handleHelp(buttonHelp){
 		});
 
 		action(1, "Welcome to Fraction Multiplication with Virtual Paper Folding! " + 
-        "<br><br><a href=\"https://pcmathoer.wordpress.com/vm/\" target=\"_blank\" rel=\"noopener noreferrer\" colo=\"94c2fe\" >"+
+        "<br><br><a href=\"https://youtu.be/R2_ChzGNc6g\" target=\"_blank\" rel=\"noopener noreferrer\" colo=\"94c2fe\" >"+
         "Click here for the full tutorial</a>")
 
 		stage.addChild(rect);

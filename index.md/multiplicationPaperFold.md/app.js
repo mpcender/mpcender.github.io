@@ -125,6 +125,7 @@ function main() {
 	
 
 	// displays mouse location on stage, Development use only
+	/*
 	let distxDOM = document.getElementById("distx")
 	let distyDOM = document.getElementById("disty")
 	distxDOM.style.color = distyDOM.style.color = "white";
@@ -137,6 +138,7 @@ function main() {
 			distyDOM.innerHTML = "Dist y: " +distY.toString();
 		}
 	});
+	*/
 }
 
 //------------------------------------------------------------------------------
@@ -207,7 +209,7 @@ function buildBanner(){
 					mainStageElem.clientWidth,
 					bannerHeight)
 
-	let text = new createjs.Text("Paper Folding", 
+	let text = new createjs.Text("Fraction Multiplication", 
 	fontSize+"px Balsamiq Sans", bannerFontColor);;
 	text.textAlign ="center";
 	
