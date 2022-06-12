@@ -148,7 +148,7 @@ footer > h1 {
 	cursor:not-allowed;
 }
 
-/* SMALL BUTTON */
+/* SMALL BUTTON (HELP & REFRESH */
 .buttonSmall {
 	background-color: var(--button_grey);
 	font-family: 'Balsamiq Sans', cursive;
@@ -197,24 +197,15 @@ footer > h1 {
 }
 
 /* DROPUP CONTENT */
-.dropup-content {	
-	display: none;
-	position: absolute;
-	background: transparent;
-	bottom: 65px;
-	z-index: 1;
-}
-
-.dropup:hover .dropup-content {	
-	display: block;
-}
-
 .dropup:hover .dropup-fraction {	
 	display: block;
 }
+.dropup:focus-within .dropup-fraction {	
+	display: block;
+}
   
-
-.fracContainer {  display: grid;
+.fracContainer {  
+	display: grid;
 	grid-template-columns: 60px 100px 10px 60px 100px;
 	grid-template-rows: 40px 40px;
 	gap: 5px 0px;
@@ -235,6 +226,7 @@ footer > h1 {
 	grid-area: leftNum;
 	margin: auto;
 }
+
 .leftDen { 
 	grid-area: leftDen;
 	margin: auto; 
@@ -284,65 +276,13 @@ footer > h1 {
 	font-size: xx-large;
 	color: var(--button_text);
 }
-
-/* SUB-DROPUP BUTTONS (Reduced Width) (BASE and BLOCK) */
-.buttonDropup {
-	background-color: var(--button_grey);
-	font-family: 'Balsamiq Sans', cursive;
-	font-size: medium;
-	color: var(--button_text);
-	height:40px;
-	width: 7vw;
-	border-radius: 20px;
-	transition-duration: 0.6s;
+.fracNumBox:focus  + .dropup-fraction  {	
+	display: block;
+ }
+.fracNumBox:focus {	
+	background-color: var(--border);
 }
 
-.buttonDropup:hover {
-	background-color: var(--main_blue); 
-	border: 2px solid var(--main_blue);
-	transform: translateY(-4px);
-	color: var(--button_text); 
-}
-
-.buttonDropup:active {
-	background-color: var(--main_blue);
-	box-shadow: 0 5px var(--button_grey_shadow);
-	transition-duration: 0.2s;
-	transform: translateY(0px);
-}
-
-/* SUB-DROPUP BUTTONS (Full Width) (PAINT) */
-.buttonDropupFull {
-	background-color: var(--button_grey);
-  	font-family: 'Balsamiq Sans', cursive;
-  	font-size: medium;
-  	color:var(--button_text);
-	height:40px;
-	min-width: 80px;
-	width: 6vw;
-	border-radius: 20px;
-	transition-duration: 0.6s;
-}
-
-.buttonDropupFull:hover {
-	background-color: var(--main_blue); 
-	border: 2px solid var(--main_blue);
-	transform: translateY(-4px);
-	color: var(--button_text);
-}
-
-.buttonDropupFull:active {
-	background-color: var(--main_blue);
-	box-shadow: 0 5px var(--button_grey_shadow);
-	transition-duration: 0.2s;
-	transform: translateY(0px);
-}
-  
-.buttonDropupFull:disabled {
-	background-color:var(--main_blue);
-	cursor:not-allowed;
-	color:var(--disabled_grey);
-}
 
 /* TOAST MESSAGE */
 #snackbarTutorial {

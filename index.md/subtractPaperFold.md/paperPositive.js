@@ -189,7 +189,7 @@ class PaperPositive {
         this.#grid = newGrid;
         
         // dont attempt at add dividers for 1x1 grid
-        if (this.#grid.length >= 1) { 
+        if (this.#grid.length > 1) { 
             // Add nsew dividers to stage
             try {
               this.#grid.forEach(element => this.#paper.addChild(element));
@@ -300,7 +300,7 @@ class PaperPositive {
             (this.#paperSize.x+25), (this.#paperSize.y*.5), -80, 50);
         row.rotation = -90;
         */
-        let col = this.#generateStageRowColButton("left", 
+        let col = this.#generateStageRowColButton("add", 
             (this.#paperSize.x*.5), (this.#paperSize.y+25), -80, 50);
         
         //this.#rowText = row;

@@ -184,7 +184,7 @@ class PaperNegative {
         this.#grid = newGrid;
         
         // dont attempt at add dividers for 1x1 grid
-        if (this.#grid.length >= 1) { 
+        if (this.#grid.length > 1) { 
             try {
                 this.#grid.forEach(element => this.#paper.addChild(element));
               } catch (error) {
@@ -288,9 +288,14 @@ class PaperNegative {
     }
 
     #buildRowColButtons() {
-        let row = this.#generateStageRowColButton("right", 
+        /*
+        let row = this.#generateStageRowColButton("subtract", 
             (this.#paperSize.x+25), (this.#paperSize.y*.5), -80, 50);
         row.rotation = -90;
+        */
+
+        let row = this.#generateStageRowColButton("subtract", 
+            (this.#paperSize.x*.5), (this.#paperSize.y+25), -110, 80);
         /*
         let col = this.#generateStageRowColButton("column", 
             (this.#paperSize.x*.5), (this.#paperSize.y+25), -100, 70);

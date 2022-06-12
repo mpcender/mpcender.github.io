@@ -272,6 +272,10 @@ function enableButtons() {
 	handleHelp(buttonHelp);
 	handleReset(buttonReset);
 
+	handleFracEnter(document.getElementById("leftNum"))
+	handleFracEnter(document.getElementById("leftDen"))
+	handleFracEnter(document.getElementById("rightNum"))
+	handleFracEnter(document.getElementById("rightDen"))
 
 	button_find_diff.disabled = true;
 	disableArrow();
@@ -291,31 +295,45 @@ function updateFractionDisplay(lnum, lden, rnum, rden){
 	
 }
 
-
+function handleFracEnter(numBox){
+	numBox.addEventListener("keypress", function(event) {
+		// If the user presses the "Enter" key on the keyboard
+		if (event.key === "Enter") {
+			define()
+			event.target.blur();
+			console.log(event.target.focus)
+		}
+	});
+}
 
 function handleDefine(button_define){
 	// initial setup
 	updateFractionDisplay(0,1,0,1);
 
 	button_define.onclick = function() {
-		stageBlocks.forEach(node => {
-			stage.removeChild(node);
-		});
-		stageBlocks = [];
-		// Get user entered values
-		let posNum = document.getElementById("leftNum").value;
-		let posDen = document.getElementById("leftDen").value;
-		let negNum = document.getElementById("rightNum").value;
-		let negDen = document.getElementById("rightDen").value;
-
-		// Update respective grids
-		positivePaper.defineGrid(posNum, posDen);
-		negativePaper.defineGrid(negNum, negDen);
-
-		button_repartition.disabled = false;
-		button_find_diff.disabled = true;
-		disableArrow();
+		define();
+		button_define.blur();
 	}
+}
+
+function define() {
+	stageBlocks.forEach(node => {
+		stage.removeChild(node);
+	});
+	stageBlocks = [];
+	// Get user entered values
+	let posNum = document.getElementById("leftNum").value;
+	let posDen = document.getElementById("leftDen").value;
+	let negNum = document.getElementById("rightNum").value;
+	let negDen = document.getElementById("rightDen").value;
+
+	// Update respective grids
+	positivePaper.defineGrid(posNum, posDen);
+	negativePaper.defineGrid(negNum, negDen);
+
+	button_repartition.disabled = false;
+	button_find_diff.disabled = true;
+	disableArrow();
 }
 
 
