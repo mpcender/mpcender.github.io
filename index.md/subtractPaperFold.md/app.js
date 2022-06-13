@@ -177,7 +177,7 @@ function resizeUpdate(){
 			// Evaluate window constrained new xy for paper size
 			let x = window.innerWidth*s > minWidth*s ? window.innerWidth*s : minWidth*s;
 			let y = window.innerHeight*s > minHeight*s ? window.innerHeight*s: minHeight*s;
-			//console.log("xy = [" + (mainStageElem.clientWidth/2) + "," + (mainStageElem.clientHeight/2) + "]")
+			
 			positivePaper.resizePaper(x > y ? y : x, 
 				mainStageElem.clientWidth*.23, 
 				mainStageElem.clientHeight*.50);
@@ -289,28 +289,28 @@ function enableButtons() {
 // 				   		BUTTON EVENT HANDLERS
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-function updateFractionDisplay(lnum, lden, rnum, rden){
-	document.getElementById("leftNum").value = lnum;
-	document.getElementById("leftDen").value = lden;
-	document.getElementById("rightNum").value = rnum;
-	document.getElementById("rightDen").value = rden;
-	
-}
-
+/**
+ *  Allow "ENTER" key on 'Define' fractions
+ * @param {*} numBox 
+ */
 function handleFracEnter(numBox){
 	numBox.addEventListener("keypress", function(event) {
 		// If the user presses the "Enter" key on the keyboard
 		if (event.key === "Enter") {
+			// Set and update user eneterd values
 			define()
+			// Unfocus number box after enter pressed
 			event.target.blur();
-			console.log(event.target.focus)
 		}
 	});
 }
 
 function handleDefine(button_define){
 	// initial setup
-	updateFractionDisplay(0,1,0,1);
+	document.getElementById("leftNum").value = 0;
+	document.getElementById("leftDen").value = 1;
+	document.getElementById("rightNum").value = 0;
+	document.getElementById("rightDen").value = 1;
 
 	button_define.onclick = function() {
 		define();
@@ -318,6 +318,9 @@ function handleDefine(button_define){
 	}
 }
 
+/**
+ * Set and update user eneterd values
+ */
 function define() {
 	stageBlocks.forEach(node => {
 		stage.removeChild(node);
@@ -373,7 +376,7 @@ function handleRepartition(button_repartition){
 function handleDifference(button_find_diff) {
 	button_find_diff.onclick = function() {
 		if (tweenRunningCount > 0 ) {return;}
-
+		PlaySlide();
 		button_find_diff.disabled = true;
 		swarm();
 		disableArrow();
@@ -383,9 +386,6 @@ function handleDifference(button_find_diff) {
 function swarm() {
 	posIndex = posTile.length-1;
 	negIndex = negTile.length-1;
-
-	//console.log(positivePaper.getValue() + "  " +  negativePaper.getValue());
-	console.log("swarm")
 	
 	if (positivePaper.getValue() >= negativePaper.getValue() ){
 		let collision = negIndex+1;
@@ -445,6 +445,7 @@ function shadeColor(color, percent) {
 }
 
 function handleSwarmComplete(evt) {
+
 	tweenRunningCount--;
 	slideRunning--;
 
@@ -462,6 +463,7 @@ function handleSwarmComplete(evt) {
 	negativePaper.decrementNumerator();
 
 	if (tweenRunningCount == 0) {
+		PlaySound(new Audio("res/sound/explosionDebris.mp3"), .1);
 		posLenTrack = posTile.length;
 		negLenTrack = negTile.length;
 	}
@@ -475,8 +477,6 @@ function handleSwarmComplete(evt) {
 
 
 function tweenScoot(node, xTween, yTween){
-	console.log(node);
-
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", stage);
 	tweenRunningCount++;
@@ -510,7 +510,6 @@ function tileGen(node, row, col) {
 			inc++;
 		}
 	}
-	console.log(tiles)
 
 	return tiles;
 }
@@ -550,19 +549,6 @@ function resetStage() {
 	main();
 }
 
-/*
-function clear(iterable) {
-	iterable.forEach(element => {
-		stage.removeChild(element);
-	})
-}
-*/
-
-function PlaySound(soundObj, volume) {
-	soundObj.volume = volume;
-	soundObj.play();
-}
-
 
 function buildArrowButtons() {
 	arrowButtonContainer = new createjs.Container();
@@ -571,10 +557,10 @@ function buildArrowButtons() {
 	let drHit = createHit(0,0,120,70);
 	drHit.addEventListener("click", function(event) { 
 		if (tweenRunningCount > 0 ) {return;}
+		PlaySlide();
 		posIndex = posTile.length-1;
 		negIndex = negTile.length-1;
 		let collision = posTile.length;
-		console.log("POS->NEG COLLISIONS " + collision)
 		for (let i = 0; i < collision; i++) {
 			tweenSwarm(posTile[posIndex--], negTile[negIndex--]);
 		}	
@@ -587,6 +573,7 @@ function buildArrowButtons() {
 	let singleRight = new createjs.Container();
 	let srHit = createHit(0,85,120,70);
 	srHit.addEventListener("click", function(event) { 
+		PlaySlide();
         // single pos to neg
 		tweenSwarm(posTile[posLenTrack-1], negTile[negLenTrack-1]);
 		// Allows tween to increment to next block before animation complete
@@ -599,6 +586,7 @@ function buildArrowButtons() {
 	let dlHit = createHit(0,200,120,70);
 	dlHit.addEventListener("click", function(event) { 
 		if (tweenRunningCount > 0 ) {return;}
+		PlaySlide();
 		posIndex = posTile.length-1;
 		negIndex = negTile.length-1;
 		let collision = negTile.length;
@@ -615,6 +603,7 @@ function buildArrowButtons() {
 	let singleLeft = new createjs.Container();
 	let slHit = createHit(0,285,120,70);
 	slHit.addEventListener("click", function(event) { 
+		PlaySlide();
         // single neg to pos
 		tweenSwarm(negTile[negLenTrack-1], posTile[posLenTrack-1]);
 		// Allows tween to increment to next block before animation complete
@@ -693,4 +682,26 @@ function toastAlert(message) {
     currentToast.className = "show";
     toastTimeout = setTimeout(function(){ currentToast.className = 
     	currentToast.className.replace("show", ""); }, 4000);
+}
+
+function PlaySlide() {
+	var soundObj  = new Audio();
+	var src1  = document.createElement("source");
+	src1.type = "audio/mpeg";
+	src1.src  = "res/sound/wipe.mp3";
+	soundObj.appendChild(src1);
+
+	soundObj.volume = 1;
+	soundObj.play();
+}
+
+//const bloopSound = new Audio("res/sound/bloop.mp3");
+//const trashSound = new Audio("res/sound/trash.mp3");
+//const slideSound = new Audio("res/sound/slide.mp3");
+//const paintSound = new Audio("res/sound/clayChirp.mp3");
+
+
+function PlaySound(soundObj, volume) {
+	soundObj.volume = volume;
+	soundObj.play();
 }

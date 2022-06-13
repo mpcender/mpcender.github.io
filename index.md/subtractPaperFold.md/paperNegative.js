@@ -252,9 +252,6 @@ class PaperNegative {
         .wait(3000)
         .to({alpha:0}, 500)
         .to({y: orig}, 0);
-
-        //return [rowNum, rowDen, colNum, colDen]
-        //console.log(this.#frac.leftFrac.children[0].text)
     }
 
     #buildFracSet(n){

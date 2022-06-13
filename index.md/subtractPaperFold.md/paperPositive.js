@@ -134,10 +134,7 @@ class PaperPositive {
     }
 
     setRow(mult){
-        console.log("NUM: " +this.#num_val);
         this.#num_val = this.#num_val*mult;
-        
-        console.log("NUM: " +this.#num_val + " Fill ");
         
         this.#ydiv = mult;
         this.#frac.posFrac.children[0].text = this.#num_val;
@@ -261,7 +258,6 @@ class PaperPositive {
         .to({y: orig}, 0);
 
         //return [rowNum, rowDen, colNum, colDen]
-        //console.log(this.#frac.posFrac.children[0].text)
     }
 
     #buildFracSet(n){
@@ -322,7 +318,6 @@ class PaperPositive {
         
         let text = new createjs.Text(type, "32px Balsamiq Sans", this.#left_font_color);
         text.textAlign = 'center';
-        console.log(text)
 
         let minusHit = new createjs.Shape();
         minusHit.graphics.beginFill(bannerBorderColor).drawRoundRectComplex(xMinus-5,0,34,34,5,5,5,5);
@@ -426,7 +421,6 @@ class PaperPositive {
         
     
         dragger.on("mousedown", function (evt) {
-            console.log(evt)
             dragger.oldX = dragger.x;
             //dragger.oldY = dragger.y;
             this.parent.addChild(this);
