@@ -270,15 +270,14 @@ footer > h1 {
 
 .fracNumBox {
 	width: 80px;
+	
 	background-color: var(--button_grey);
 	text-align:center;
 	font-family: 'Balsamiq Sans', cursive;
 	font-size: xx-large;
 	color: var(--button_text);
 }
-.fracNumBox:focus  + .dropup-fraction  {	
-	display: block;
- }
+
 .fracNumBox:focus {	
 	background-color: var(--border);
 }

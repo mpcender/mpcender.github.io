@@ -89,6 +89,8 @@ let button_repartition;
 let stageBlocks;
 let posIndex;
 let negIndex;
+let posLenTrack = 0
+let negLenTrack = 0
 
 let arrowButtonContainer;
 let arrows= [];
@@ -350,6 +352,8 @@ function handleRepartition(button_repartition){
 		// Generate individual tiles
 		posTile = tileGen(positivePaper, positivePaper.getRow(), positivePaper.getFillVal());
 		negTile = tileGen(negativePaper, negativePaper.getFillVal(), negativePaper.getCol());
+		posLenTrack = posTile.length;
+		negLenTrack = negTile.length;
 		stageBlocks = posTile.concat(negTile);
 
 		// Reset sliders
@@ -368,6 +372,8 @@ function handleRepartition(button_repartition){
 
 function handleDifference(button_find_diff) {
 	button_find_diff.onclick = function() {
+		if (tweenRunningCount > 0 ) {return;}
+
 		button_find_diff.disabled = true;
 		swarm();
 		disableArrow();
@@ -379,6 +385,7 @@ function swarm() {
 	negIndex = negTile.length-1;
 
 	//console.log(positivePaper.getValue() + "  " +  negativePaper.getValue());
+	console.log("swarm")
 	
 	if (positivePaper.getValue() >= negativePaper.getValue() ){
 		let collision = negIndex+1;
@@ -395,7 +402,7 @@ function swarm() {
 
 function tweenSwarm(nodeA, nodeB){
 	if ( typeof nodeA  == 'undefined' || typeof nodeB == 'undefined') { return; }
-
+	
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.addEventListener("tick", stage);
 	tweenRunningCount++;
@@ -405,12 +412,36 @@ function tweenSwarm(nodeA, nodeB){
 	ptB = { x: nodeB.graphics.command.x, y: nodeB.graphics.command.y};
 	nodeA.mutDes = nodeB;
 
-	createjs.Tween.get(nodeA, { loop: false }, null, false)
+	nodeA.shadow = new createjs.Shadow(shadeColor(nodeA.graphics._fill.style, 200), 0 ,0 , 10);
+
+	createjs.Tween.get(nodeA, { loop: false })
 		.to({ 
 			x: -(ptA.x-ptB.x), 
 			y: -(ptA.y-ptB.y), }, 800, createjs.Ease.get(1))
 		.to({alpha:0}, 200)
 		.call(handleSwarmComplete);
+}
+
+// Allow color shade manipulation on tween shadow (https://stackoverflow.com/a/13532993)
+function shadeColor(color, percent) {
+
+    var R = parseInt(color.substring(1,3),16);
+    var G = parseInt(color.substring(3,5),16);
+    var B = parseInt(color.substring(5,7),16);
+
+    R = parseInt(R * (100 + percent) / 100);
+    G = parseInt(G * (100 + percent) / 100);
+    B = parseInt(B * (100 + percent) / 100);
+
+    R = (R<255)?R:255;  
+    G = (G<255)?G:255;  
+    B = (B<255)?B:255;  
+
+    var RR = ((R.toString(16).length==1)?"0"+R.toString(16):R.toString(16));
+    var GG = ((G.toString(16).length==1)?"0"+G.toString(16):G.toString(16));
+    var BB = ((B.toString(16).length==1)?"0"+B.toString(16):B.toString(16));
+
+    return "#"+RR+GG+BB;
 }
 
 function handleSwarmComplete(evt) {
@@ -430,6 +461,12 @@ function handleSwarmComplete(evt) {
 	positivePaper.decrementNumerator();
 	negativePaper.decrementNumerator();
 
+	if (tweenRunningCount == 0) {
+		posLenTrack = posTile.length;
+		negLenTrack = negTile.length;
+	}
+
+	// disable relevant buttons when either side is 0
 	if (negTile.length == 0 || posTile.length == 0) { 
 		disableArrow(); 
 		button_find_diff.disabled = true;
@@ -526,6 +563,7 @@ function PlaySound(soundObj, volume) {
 	soundObj.play();
 }
 
+
 function buildArrowButtons() {
 	arrowButtonContainer = new createjs.Container();
 
@@ -549,10 +587,11 @@ function buildArrowButtons() {
 	let singleRight = new createjs.Container();
 	let srHit = createHit(0,85,120,70);
 	srHit.addEventListener("click", function(event) { 
-		if (tweenRunningCount > 0 ) {return;}
         // single pos to neg
-		console.log((posTile.length-1) + "," +  (negTile.length-1));
-		tweenSwarm(posTile[posTile.length-1], negTile[negTile.length-1]);
+		tweenSwarm(posTile[posLenTrack-1], negTile[negLenTrack-1]);
+		// Allows tween to increment to next block before animation complete
+		posLenTrack--;
+		negLenTrack--;
     });
 	singleRight.addChild(srHit, drawArrow(24, 120, 0, 75, "#0048ff"));
 
@@ -576,9 +615,11 @@ function buildArrowButtons() {
 	let singleLeft = new createjs.Container();
 	let slHit = createHit(0,285,120,70);
 	slHit.addEventListener("click", function(event) { 
-		if (tweenRunningCount > 0 ) {return;}
         // single neg to pos
-		tweenSwarm(negTile[negTile.length-1], posTile[posTile.length-1]);
+		tweenSwarm(negTile[negLenTrack-1], posTile[posLenTrack-1]);
+		// Allows tween to increment to next block before animation complete
+		posLenTrack--;
+		negLenTrack--;
     });
 	singleLeft.addChild(slHit, drawArrow(95, 320, 180, 75, "#ff1b1b"));
 
