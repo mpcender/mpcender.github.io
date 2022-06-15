@@ -3,22 +3,12 @@ const mainStageElem = document.getElementById("cavasDiv");
 const canvas = document.getElementById("canvas");
 
 let stage;
-
 let banner;
 // height of stage division banners
 const bannerHeight = 30;
 const fontSize = 24;
 const minHeight = 650;
 const minWidth = 800;
-
-
-// Node stage tracker (enables collision detection)
-let stageNodeTracker = [];
-
-// draw select box variables
-let stageSelectorBox;
-let objectEventActive = false;
-let selectedObjects = [];
 
 // Delay on stage update on resize (1 second)
 let resizeTimer = null;
@@ -28,59 +18,30 @@ const resizeWait = 1000;
 let tweenRunningCount = 0;
 // Duration of node tween transition (ms)
 const tweenDuration = 900;
-// Shape object tween controll
-let xTween;
-let yTween;
-// Node objects hidden during tween, reactivated on tween complete
-let tweenHidden = [];
-
-// Pixel size of each subNode object 
-const nodeSize = 25;
-const nodeShadowSize = 40;
-const nodeOpacity = .6;
-const borderThickness = 1.5;
-// Largest subnodes in a container
-const maxNodeGroup = 256;
-
 
 // COLOR Properties
 let style = getComputedStyle(document.body)
-let mainBlue = style.getPropertyValue("--main_blue");
 let border = style.getPropertyValue("--border");
 let buttonText = style.getPropertyValue("--button_text");
 let darkBackground = style.getPropertyValue("--dark_background");
+//let mainBlue = style.getPropertyValue("--main_blue");
 //let buttonGrey = style.getPropertyValue("--button_grey");
 //let buttonShadow = style.getPropertyValue("--button_grey_shadow");
 //let disabledButton = style.getPropertyValue("--disabled_grey");
 
 // Color codes for container node color change
-// Import CSS node color propery values			
-let colors = [	style.getPropertyValue("--blue_node").replaceAll("\"", ""),
-				style.getPropertyValue("--red_node").replaceAll("\"", ""),
-				style.getPropertyValue("--yellow_node").replaceAll("\"", ""),
-				style.getPropertyValue("--green_node").replaceAll("\"", "")];
-let colorsOff = [style.getPropertyValue("--blue_offset_node").replaceAll("\"", ""),
-				style.getPropertyValue("--red_offset_node").replaceAll("\"", ""),
-				style.getPropertyValue("--yellow_offset_node").replaceAll("\"", ""),
-				style.getPropertyValue("--green_offset_node").replaceAll("\"", "")]
-let shadowColors = ["#69a5ff", "#ff6b7d", "#ffd46e", "#caff75"];
 let bannerBorderColor = border;
 let bannerFontColor = buttonText;
-// Toggle color seperation of node blocks
-let currentColor = 0;
 
 // AUDIO clip variables
-let slideRunning = 0;
-let trashRunning = 0;
-
 const bloopSound = new Audio("res/sound/bloop.mp3");
 const trashSound = new Audio("res/sound/trash.mp3");
 const slideSound = new Audio("res/sound/slide.mp3");
 const paintSound = new Audio("res/sound/clayChirp.mp3");
+// Audio animation tracker
+let slideRunning = 0;
 
-// User input regex for integer value
-//const regInt = new RegExp('^[0-9]$');
-
+// Paper objects
 let positivePaper;
 let negativePaper;
 
@@ -104,14 +65,10 @@ function main() {
 	stageBlocks.negTile = [];
 	
 	//stage.enableMouseOver(10);
-
 	//isMobileDevice = isTouchDevice();
 
 	// Enable touch input
 	createjs.Touch.enable(stage);
-
-	// initialize - used for selecting, group-move, and delete
-	stageNodeTracker = new Array();
 
 	// Draw all stage elements
 	drawStage();
@@ -238,9 +195,6 @@ function drawStage(){
 	buildArrowButtons();
 	//buildPaper({x: 550, y: 550}, mainStageElem.clientWidth/2, mainStageElem.clientHeight/2);
 }
-
-
-
 
 function buildBanner(){
 	let banner = new createjs.Container();
