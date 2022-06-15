@@ -72,6 +72,7 @@ let currentColor = 0;
 // AUDIO clip variables
 let slideRunning = 0;
 let trashRunning = 0;
+
 const bloopSound = new Audio("res/sound/bloop.mp3");
 const trashSound = new Audio("res/sound/trash.mp3");
 const slideSound = new Audio("res/sound/slide.mp3");
@@ -97,7 +98,11 @@ let arrows= [];
 
 function main() {
 	stage = new createjs.Stage("canvas");
+	canvas.x = canvas.y = 0;
 	stageBlocks = [];
+	stageBlocks.posTile = [];
+	stageBlocks.negTile = [];
+	
 	//stage.enableMouseOver(10);
 
 	//isMobileDevice = isTouchDevice();
@@ -151,18 +156,17 @@ function main() {
 //-----------------------------------------------------------------
 function resizeUpdate(){
 	clearTimeout(resizeTimer);
-    resize();
+    //resize();
 	resizeTimer = setTimeout(function() {
         resize();
     }, 100);
 	
 
 	function resize() {
-		windowSizeX = window.innerWidth;
-		windowSizeY = window.innerHeight;
-		
-		canvas.height = mainStageElem.clientHeight;
+		canvas.x = window.innerWidth;
+		canvas.y = window.innerHeight;
 		canvas.width = mainStageElem.clientWidth;
+		canvas.height = mainStageElem.clientHeight;
 
 		// Rebuild Banner
 		if (banner != null){
@@ -177,27 +181,43 @@ function resizeUpdate(){
 			// Evaluate window constrained new xy for paper size
 			let x = window.innerWidth*s > minWidth*s ? window.innerWidth*s : minWidth*s;
 			let y = window.innerHeight*s > minHeight*s ? window.innerHeight*s: minHeight*s;
+			let size = x > y ? y : x;
 			
-			positivePaper.resizePaper(x > y ? y : x, 
+			positivePaper.resizePaper(size, 
 				mainStageElem.clientWidth*.23, 
 				mainStageElem.clientHeight*.50);
-			negativePaper.resizePaper(x > y ? y : x, 
+			negativePaper.resizePaper(size, 
 				mainStageElem.clientWidth*.73, 
 				mainStageElem.clientHeight*.50);
 			resizeArrows();
 		}
 
-		// Remove generated blocks from stage on resize.
-		stageBlocks.forEach(node => {
-			/*
-			node.graphics.command.h = 
-			node.graphics.command.w = 
-			node.graphics.command.x = 
-			node.graphics.command.y = 
-			*/
-			stage.removeChild(node);
+		// disable slider and plus/minus if in "find difference mode"
+		if (stageBlocks.length != 0) {
+			positivePaper.disableInput();
+			negativePaper.disableInput();
+			positivePaper.setFraction();
+			negativePaper.setFraction();
+		}
+
+		// Resize generated blocks
+		stageBlocks.posTile.forEach(node => {
+			let w = positivePaper._paperSize.x/positivePaper.getCol();
+			let h = positivePaper._paperSize.y/positivePaper.getRow();
+			node.graphics.command.x = (positivePaper._paper.x+2)+(node.col*w); 
+			node.graphics.command.y = (positivePaper._paper.y+1)+(node.row*h);
+			node.graphics.command.w = w;
+			node.graphics.command.h = h;
 		});
-		stageBlocks = [];
+		stageBlocks.negTile.forEach(node => {
+			let w = negativePaper._paperSize.x/negativePaper.getCol();
+			let h = negativePaper._paperSize.y/negativePaper.getRow();
+			node.graphics.command.x = (negativePaper._paper.x+2)+(node.col*w); 
+			node.graphics.command.y = (negativePaper._paper.y+1)+(node.row*h);
+			node.graphics.command.w = w;
+			node.graphics.command.h = h;
+		});
+
 	}
 }
 
@@ -215,8 +235,7 @@ function drawStage(){
 	positivePaper = new PaperPositive({x: 400, y: 400}, mainStageElem.clientWidth*.25, mainStageElem.clientHeight*.50);
 	negativePaper = new PaperNegative({x: 400, y: 400}, mainStageElem.clientWidth*.75, mainStageElem.clientHeight*.50);
 	
-	buildArrowButtons()
-                
+	buildArrowButtons();
 	//buildPaper({x: 550, y: 550}, mainStageElem.clientWidth/2, mainStageElem.clientHeight/2);
 }
 
@@ -305,15 +324,21 @@ function handleFracEnter(numBox){
 	});
 }
 
+/**
+ * "DEFINE" button behavior
+ * @param {*} button_define 
+ */
 function handleDefine(button_define){
-	// initial setup
+	// Initial fraction values set to 0.
 	document.getElementById("leftNum").value = 0;
 	document.getElementById("leftDen").value = 1;
 	document.getElementById("rightNum").value = 0;
 	document.getElementById("rightDen").value = 1;
 
 	button_define.onclick = function() {
+		// Update values with user input
 		define();
+		// Remove focus so popup can close
 		button_define.blur();
 	}
 }
@@ -336,15 +361,20 @@ function define() {
 	positivePaper.defineGrid(posNum, posDen);
 	negativePaper.defineGrid(negNum, negDen);
 
+	// Disable extended functionality
 	button_repartition.disabled = false;
 	button_find_diff.disabled = true;
 	disableArrow();
 }
 
-
+/**
+ * Evaluate & execute partitions (dividers) for paper objects
+ * @param {*} button_repartition 
+ */
 function handleRepartition(button_repartition){
 	button_repartition.onclick = function() {
 		
+		// If paper object row/cols equivalent, do nothing
 		if (positivePaper.getRow() == negativePaper.getRow() 
 			&& positivePaper.getCol() == negativePaper.getCol() ) { return; }
 
@@ -352,17 +382,20 @@ function handleRepartition(button_repartition){
 		positivePaper.setRow(negativePaper.getRow());
 		negativePaper.setCol(positivePaper.getCol());
 
-		// Generate individual tiles
-		posTile = tileGen(positivePaper, positivePaper.getRow(), positivePaper.getFillVal());
-		negTile = tileGen(negativePaper, negativePaper.getFillVal(), negativePaper.getCol());
+		// Generate individual tiles (for animation)
+		let posTile = tileGen(positivePaper, positivePaper.getRow(), positivePaper.getFillVal());
+		let negTile = tileGen(negativePaper, negativePaper.getFillVal(), negativePaper.getCol());
 		posLenTrack = posTile.length;
 		negLenTrack = negTile.length;
 		stageBlocks = posTile.concat(negTile);
+		stageBlocks.posTile = posTile;
+		stageBlocks.negTile = negTile;
 
 		// Reset sliders
 		positivePaper.resetSliders();
 		negativePaper.resetSliders();
 
+		// 
 		positivePaper.disableInput();
 		negativePaper.disableInput();
 
@@ -384,18 +417,18 @@ function handleDifference(button_find_diff) {
 }
 
 function swarm() {
-	posIndex = posTile.length-1;
-	negIndex = negTile.length-1;
+	posIndex = stageBlocks.posTile.length-1;
+	negIndex = stageBlocks.negTile.length-1;
 	
 	if (positivePaper.getValue() >= negativePaper.getValue() ){
 		let collision = negIndex+1;
 		for (let i = 0; i < collision; i++) {
-			tweenSwarm(negTile[negIndex--], posTile[posIndex--]);
+			tweenSwarm(stageBlocks.negTile[negIndex--], stageBlocks.posTile[posIndex--]);
 		}
 	} else {
 		let collision = posIndex+1;
 		for (let i = 0; i < collision; i++) {
-			tweenSwarm(posTile[posIndex--], negTile[negIndex--]);
+			tweenSwarm(stageBlocks.posTile[posIndex--], stageBlocks.negTile[negIndex--]);
 		}
 	}
 }
@@ -451,6 +484,10 @@ function handleSwarmComplete(evt) {
 
 	stage.removeChild(evt.target.mutDes);
 	stage.removeChild(evt.target);
+
+	// Store tilesets
+	let posTile = stageBlocks.posTile;
+	let negTile = stageBlocks.negTile;
 	stageBlocks = stageBlocks.filter(b => b != evt.target.mutDes);
 	stageBlocks = stageBlocks.filter(b => b != evt.target);
 
@@ -458,14 +495,17 @@ function handleSwarmComplete(evt) {
 	posTile = posTile.filter(b => b != evt.target);
 	negTile = negTile.filter(b => b != evt.target.mutDes);
 	negTile = negTile.filter(b => b != evt.target);
+
+	stageBlocks.posTile = posTile;
+	stageBlocks.negTile = negTile;
 	
 	positivePaper.decrementNumerator();
 	negativePaper.decrementNumerator();
 
 	if (tweenRunningCount == 0) {
 		PlaySound(new Audio("res/sound/explosionDebris.mp3"), .1);
-		posLenTrack = posTile.length;
-		negLenTrack = negTile.length;
+		posLenTrack = stageBlocks.posTile.length;
+		negLenTrack = stageBlocks.negTile.length;
 	}
 
 	// disable relevant buttons when either side is 0
@@ -506,6 +546,30 @@ function tileGen(node, row, col) {
 				pt.x+j*w+j*1.5, pt.y+i*h+i, w, h
 			);
 			tiles[inc].alpha = .25;
+			tiles[inc].row = i;
+			tiles[inc].col = j;
+			stage.addChild(tiles[inc]);
+			inc++;
+		}
+	}
+
+	return tiles;
+}
+
+function resizeTiles(node, row, col) {
+	let w = (node.getPaperSize().x-(node.getCol())) / node.getCol();
+	let h = (node.getPaperSize().y-(node.getRow())) / node.getRow();
+	let pt = node.getCover().localToGlobal(0, 0);
+	
+	let tiles = [];
+	let inc = 0;
+	for (let i = 0; i < row; i++) {
+		for (let j = 0; j < col; j++) {
+			tiles[inc] = new createjs.Shape();
+			tiles[inc].graphics.beginFill(node.getColor()).drawRect(
+				pt.x+j*w+j*1.5, pt.y+i*h+i, w, h
+			);
+			tiles[inc].alpha = .25;
 			stage.addChild(tiles[inc]);
 			inc++;
 		}
@@ -531,8 +595,8 @@ function handleTweenComplete(evt) {
 
 function handlePaper(button_display) {
 	button_display.onclick = function() {
-		positivePaper.toggleFractionPositive();
-		negativePaper.toggleFractionNegative();
+		positivePaper.toggleFraction();
+		negativePaper.toggleFraction();
 	}
 }
 
@@ -551,6 +615,10 @@ function resetStage() {
 
 
 function buildArrowButtons() {
+	if (typeof arrowButtonContainer  != 'undefined') {
+		enableArrow();
+		return;
+	}
 	arrowButtonContainer = new createjs.Container();
 
 	let doubleRight = new createjs.Container();
@@ -558,11 +626,11 @@ function buildArrowButtons() {
 	drHit.addEventListener("click", function(event) { 
 		if (tweenRunningCount > 0 ) {return;}
 		PlaySlide();
-		posIndex = posTile.length-1;
-		negIndex = negTile.length-1;
-		let collision = posTile.length;
+		posIndex = stageBlocks.posTile.length-1;
+		negIndex = stageBlocks.negTile.length-1;
+		let collision = stageBlocks.posTile.length;
 		for (let i = 0; i < collision; i++) {
-			tweenSwarm(posTile[posIndex--], negTile[negIndex--]);
+			tweenSwarm(stageBlocks.posTile[posIndex--], stageBlocks.negTile[negIndex--]);
 		}	
     });
 	doubleRight.addChild(
@@ -575,7 +643,7 @@ function buildArrowButtons() {
 	srHit.addEventListener("click", function(event) { 
 		PlaySlide();
         // single pos to neg
-		tweenSwarm(posTile[posLenTrack-1], negTile[negLenTrack-1]);
+		tweenSwarm(stageBlocks.posTile[posLenTrack-1], stageBlocks.negTile[negLenTrack-1]);
 		// Allows tween to increment to next block before animation complete
 		posLenTrack--;
 		negLenTrack--;
@@ -587,11 +655,11 @@ function buildArrowButtons() {
 	dlHit.addEventListener("click", function(event) { 
 		if (tweenRunningCount > 0 ) {return;}
 		PlaySlide();
-		posIndex = posTile.length-1;
-		negIndex = negTile.length-1;
-		let collision = negTile.length;
+		posIndex = stageBlocks.posTile.length-1;
+		negIndex = stageBlocks.negTile.length-1;
+		let collision = stageBlocks.negTile.length;
 		for (let i = 0; i < collision; i++) {
-			tweenSwarm(negTile[negIndex--], posTile[posIndex--]);
+			tweenSwarm(stageBlocks.negTile[negIndex--], stageBlocks.posTile[posIndex--]);
 		}
         
     });
@@ -605,7 +673,7 @@ function buildArrowButtons() {
 	slHit.addEventListener("click", function(event) { 
 		PlaySlide();
         // single neg to pos
-		tweenSwarm(negTile[negLenTrack-1], posTile[posLenTrack-1]);
+		tweenSwarm(stageBlocks.negTile[negLenTrack-1], stageBlocks.posTile[posLenTrack-1]);
 		// Allows tween to increment to next block before animation complete
 		posLenTrack--;
 		negLenTrack--;
@@ -615,6 +683,7 @@ function buildArrowButtons() {
 	arrows = [doubleRight, singleRight, doubleLeft, singleLeft];
 	resizeArrows();
 	arrowButtonContainer.addChild(doubleRight, singleRight, doubleLeft, singleLeft);
+	doubleRight.stage = stage;
 	stage.addChild(arrowButtonContainer);
 }
 
@@ -694,12 +763,6 @@ function PlaySlide() {
 	soundObj.volume = 1;
 	soundObj.play();
 }
-
-//const bloopSound = new Audio("res/sound/bloop.mp3");
-//const trashSound = new Audio("res/sound/trash.mp3");
-//const slideSound = new Audio("res/sound/slide.mp3");
-//const paintSound = new Audio("res/sound/clayChirp.mp3");
-
 
 function PlaySound(soundObj, volume) {
 	soundObj.volume = volume;
