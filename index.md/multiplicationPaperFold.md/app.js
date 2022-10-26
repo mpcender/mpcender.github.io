@@ -93,7 +93,7 @@ function main() {
 	stage = new createjs.Stage("canvas");
 	stage.enableMouseOver(10);
 
-	
+	isMobileDevice = isTouchDevice();
 
 	// Enable touch input
 	createjs.Touch.enable(stage);
@@ -116,7 +116,12 @@ function main() {
 	createjs.Ticker.addEventListener("tick", stage);
 
 	
-	
+	if (isMobileDevice){
+		console.log("Touch device detected")
+		window.addEventListener("click", function(event) {
+			minimizeDropupButtonMenus();
+		});
+	}
 	
 
 	// displays mouse location on stage, Development use only

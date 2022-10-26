@@ -38,12 +38,23 @@ function init() {
 		questionText = qt;
 	}
 
+	// create stage and point it to the canvas:
+	canvas = document.getElementById("testCanvas");
+	stage = new createjs.Stage(canvas);
+
 	isMobileDevice = isTouchDevice();
 	if (isMobileDevice){
 		console.log("MOBILE DEVICE")
 		
 		window.onresize = resizeMobile;
 		resizeMobile();
+
+		/*window.addEventListener("load",function() {
+			setTimeout(function(){
+				// This hides the address bar:
+				window.scrollTo(0, 1);
+			}, 0);
+		});*/
 	} else {
 		console.log("NOT A MOBILE DEVICE")
 		window.onresize = resize;
@@ -52,9 +63,7 @@ function init() {
 	}
 
 	
-	// create stage and point it to the canvas:
-	canvas = document.getElementById("testCanvas");
-	stage = new createjs.Stage(canvas);
+	
 
 	// enable touch interactions if supported on the current device:
 	createjs.Touch.enable(stage);
@@ -115,15 +124,33 @@ function resizeMobile() {
 	var canvas = document.querySelector('canvas');
 	var ctx = canvas.getContext('2d');
 
+	console.log(stage)
+	//console.log(container)
+	
+	
+
 	var height = window.innerHeight*.95;
 	var width = window.innerWidth*.95; 
+	window.scrollTo(0, 1);
+	//console.log(height + " " + width);
+	//stage.x = 100;
 
-	/*if (window.orientation == 90) {
+	/*
+	if (window.orientation == 90) {
+		
 		console.log(canvas)
+		window.scrollTo(0, 1);
+		stage.x = 0;
+		stage.y = 0;
+		stage.rotation = 0;
 		
 	} else {
-		var height = window.innerHeight*.95;
-		var width = window.innerWidth*.95;
+		var height = window.innerWidth*.95; 
+		var width = window.innerHeight*.95; 
+		stage.x = 500;
+		stage.y = 0;
+		stage.rotation = 90;
+		console.log(canvas)
 	}
 	*/
 
