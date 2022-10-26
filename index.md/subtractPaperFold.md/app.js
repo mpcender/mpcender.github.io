@@ -63,6 +63,8 @@ function main() {
 	stageBlocks = [];
 	stageBlocks.posTile = [];
 	stageBlocks.negTile = [];
+
+	
 	
 	//stage.enableMouseOver(10);
 	//isMobileDevice = isTouchDevice();
