@@ -19,6 +19,13 @@ var questionText = "";
 var snapToGrid = true;
 var tweensOnTheRun = 0;
 
+
+function isTouchDevice() {
+	return (('ontouchstart' in window) ||
+	   (navigator.maxTouchPoints > 0) ||
+	   (navigator.msMaxTouchPoints > 0));
+}
+
 function init() {
 	qn = getParameterByName("qn");
 	initValue = getParameterByName("inVal");
@@ -30,7 +37,21 @@ function init() {
 	if (qt != null && qt != "") {
 		questionText = qt;
 	}
-	resize();
+
+	isMobileDevice = isTouchDevice();
+	if (isMobileDevice){
+		console.log("MOBILE DEVICE")
+		
+		window.onresize = resizeMobile;
+		resizeMobile();
+	} else {
+		console.log("NOT A MOBILE DEVICE")
+		window.onresize = resize;
+		console.log(window.orientation)
+		resize();
+	}
+
+	
 	// create stage and point it to the canvas:
 	canvas = document.getElementById("testCanvas");
 	stage = new createjs.Stage(canvas);
@@ -89,6 +110,29 @@ function resize() {
 	
 	canvas.style.width = width+'px';
 	canvas.style.height = height+'px';
+}
+function resizeMobile() {
+	var canvas = document.querySelector('canvas');
+	var ctx = canvas.getContext('2d');
+
+	var height = window.innerHeight*.95;
+	var width = window.innerWidth*.95; 
+
+	/*if (window.orientation == 90) {
+		console.log(canvas)
+		
+	} else {
+		var height = window.innerHeight*.95;
+		var width = window.innerWidth*.95;
+	}
+	*/
+
+	// Our canvas must cover full height of screen
+	// regardless of the resolution
+	console.log("resizing");
+
+	canvas.width = width;
+	canvas.height = height;
 }
 
 function stop() {
